@@ -37,7 +37,7 @@ module.exports = ({
                   ]
                 : []),
             new webpack.DefinePlugin({
-                assert: "window.assert",
+                assert: watch ? "window.assert" : "false && window.assert",
                 assertAlways: "window.assert",
                 MOD_METADATA: webpack.DefinePlugin.runtimeValue(
                     function () {
@@ -260,7 +260,10 @@ module.exports = ({
                                 {
                                     pattern: /import {([^{}]*?)} from "shapez\/([^{}";]*?)";/gms,
                                     replacement: (match, variables, path) => {
-                                        return `const {${variables}} = shapez;`;
+                                        return `const {${variables.replace(
+                                            /([^,\s]\s*) as(\s+[^,])/g,
+                                            "$1:$2"
+                                        )}} = shapez;`;
                                     },
                                 },
                                 {

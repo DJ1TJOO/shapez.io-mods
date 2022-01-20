@@ -193,7 +193,6 @@ export class MultiplayerHUD extends BaseHUDPart {
                 const startOffset = connectedWsPoint
                     .sub(startWsPoint)
                     .normalize()
-                    // @ts-ignore
                     .multiplyScalar(globalConfig.tileSize * 0.3);
                 const effectiveStartPoint = startWsPoint.add(startOffset);
                 const effectiveEndPoint = connectedWsPoint.sub(startOffset);
@@ -239,13 +238,9 @@ export class MultiplayerHUD extends BaseHUDPart {
         }
 
         parameters.context.beginRoundedRect(
-            // @ts-ignore
             entityBounds.x * globalConfig.tileSize - drawBorder,
-            // @ts-ignore
             entityBounds.y * globalConfig.tileSize - drawBorder,
-            // @ts-ignore
             entityBounds.w * globalConfig.tileSize + 2 * drawBorder,
-            // @ts-ignore
             entityBounds.h * globalConfig.tileSize + 2 * drawBorder,
             4
         );
@@ -255,7 +250,6 @@ export class MultiplayerHUD extends BaseHUDPart {
 
         // HACK to draw the entity sprite
         const previewSprite = metaBuilding.getBlueprintSprite(rotationVariant, currentVariant);
-        // @ts-ignore
         staticComp.origin = worldPos.divideScalar(globalConfig.tileSize).subScalars(0.5, 0.5);
         staticComp.drawSpriteOnBoundsClipped(parameters, previewSprite);
         staticComp.origin = mouseTile;
@@ -436,22 +430,22 @@ export class MultiplayerHUD extends BaseHUDPart {
  * @param {GameRoot} root
  */
 export function createHud(root) {
-    // const part = new MultiplayerHUD(root);
-    // // @ts-ignore
-    // root.hud.parts.multiplayer = part;
-    // this.signals.hudElementInitialized.dispatch(part);
-    // part.initialize();
-    // this.signals.hudElementFinalized.dispatch(part);
-    // // Draw multiplayer hud
-    // this.modInterface.runAfterMethod(
-    //     GameHUD,
-    //     "draw",
-    //     /**
-    //      * @this {GameHUD}
-    //      */
-    //     function (parameters) {
-    //         // @ts-ignore
-    //         this.root.hud.parts.multiplayer.draw(parameters);
-    //     }
-    // );
+    const part = new MultiplayerHUD(root);
+    // @ts-ignore
+    root.hud.parts.multiplayer = part;
+    this.signals.hudElementInitialized.dispatch(part);
+    part.initialize();
+    this.signals.hudElementFinalized.dispatch(part);
+    // Draw multiplayer hud
+    this.modInterface.runAfterMethod(
+        GameHUD,
+        "draw",
+        /**
+         * @this {GameHUD}
+         */
+        function (parameters) {
+            // @ts-ignore
+            this.root.hud.parts.multiplayer.draw(parameters);
+        }
+    );
 }
