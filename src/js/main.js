@@ -1,14 +1,12 @@
-import { globalConfig } from "shapez/core/config";
 import { makeDivElement, makeButton } from "shapez/core/utils";
-import { GameHUD } from "shapez/game/hud/hud";
 import { Mod } from "shapez/mods/mod";
 import { SerializerInternal } from "shapez/savegame/serializer_internal";
 import { MainMenuState } from "shapez/states/main_menu";
 import { T } from "shapez/translations";
-import { createHud, MultiplayerHUD } from "./multiplayer/multiplayer_hud";
+import { createHud } from "./multiplayer/multiplayer_hud";
 import { multiplayerNotifications } from "./multiplayer/multiplayer_notifications";
 import { MultiplayerState } from "./states/multiplayer";
-import { InMultiplayerGameState } from "./states/multiplayer_ingame";
+import { createMultiplayerGameState, InMultiplayerGameState } from "./states/multiplayer_ingame";
 
 class ModImpl extends Mod {
     init() {
@@ -17,8 +15,10 @@ class ModImpl extends Mod {
         // Register states
         this.signals.appBooted.add(() => {
             this.app.stateMgr.register(MultiplayerState);
-            this.modInterface.registerGameState(InMultiplayerGameState);
         });
+
+        // Edit ingame state to add multiplayer
+        createMultiplayerGameState(this.modInterface);
 
         // Add multiplayer notifications
         multiplayerNotifications(this.modInterface);
@@ -82,4 +82,3 @@ class ModImpl extends Mod {
         }
     }
 }
-//gulp-reload!

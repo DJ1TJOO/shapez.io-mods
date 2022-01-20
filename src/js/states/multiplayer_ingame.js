@@ -1,36 +1,31 @@
-import { globalConfig } from "shapez/core/config";
-import { APPLICATION_ERROR_OCCURED } from "shapez/core/error_handler";
-import { GameState } from "shapez/core/game_state";
-import { createLogger, logSection } from "shapez/core/logging";
+import { createLogger } from "shapez/core/logging";
 import { Signal } from "shapez/core/signal";
-import { waitNextFrame } from "shapez/core/utils";
 import { GameCore } from "shapez/game/core";
-import { GameLoadingOverlay } from "shapez/game/game_loading_overlay";
-import { KeyActionMapper } from "shapez/game/key_action_mapper";
-import { MUSIC } from "shapez/platform/sound";
-import { Savegame } from "shapez/savegame/savegame";
-import { MultiplayerHUD } from "../multiplayer/multiplayer_hud";
 import { MultiplayerPeer } from "../multiplayer/multiplayer_peer";
 import { MultiplayerSavegame } from "../multiplayer/multiplayer_savegame";
 
 const logger = createLogger("state/ingame");
 import Peer from "simple-peer";
+import { ModInterface } from "shapez/mods/mod_interface";
+import { GameCreationPayload, InGameState } from "shapez/states/ingame";
+import { HUDSettingsMenu } from "shapez/game/hud/parts/settings_menu";
+import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
 
 // Different sub-states
 const stages = {
-    s3_createCore: "🌈 3: Create core",
-    s4_A_initEmptyGame: "🌈 4/A: Init empty game",
-    s4_B_resumeGame: "🌈 4/B: Resume game",
+    s3_createCore: "s3_createCore",
+    s4_A_initEmptyGame: "s4_A_initEmptyGame",
+    s4_B_resumeGame: "s4_B_resumeGame",
 
-    s5_firstUpdate: "🌈 5: First game update",
-    s6_postLoadHook: "🌈 6: Post load hook",
-    s7_warmup: "🌈 7: Warmup",
+    s5_firstUpdate: "s5_firstUpdate",
+    s6_postLoadHook: "s6_postLoadHook",
+    s7_warmup: "s7_warmup",
 
-    s10_gameRunning: "🌈 10: Game finally running",
+    s10_gameRunning: "s10_gameRunning",
 
-    leaving: "🌈 Saving, then leaving the game",
-    destroyed: "🌈 DESTROYED: Core is empty and waits for state leave",
-    initFailed: "🌈 ERROR: Initialization failed!",
+    leaving: "leaving",
+    destroyed: "destroyed",
+    initFailed: "initFailed",
 };
 
 export const gameCreationAction = {
@@ -40,7 +35,10 @@ export const gameCreationAction = {
 
 // Typehints
 export class MultiplayerConnection {
-    constructor(peer, gameData) {
+    constructor(id, peer, gameData) {
+        /** @type {String} */
+        this.id = id;
+
         /** @type {Peer.Instance} */
         this.peer = peer;
 
@@ -49,336 +47,134 @@ export class MultiplayerConnection {
     }
 }
 
-export class GameCreationPayload {
-    constructor() {
-        /** @type {boolean|undefined} */
-        this.fastEnter;
+/**
+ * @typedef {GameCreationPayload & {
+ *      connection: MultiplayerConnection|undefined,
+ *      host: String|undefined,
+ * }} MultiplayerGameCreationPayload
+ *
+ * @typedef {InGameState & {
+ *      creationPayload: MultiplayerGameCreationPayload,
+ *      peer: MultiplayerPeer|undefined,
+ *      isMultiplayer:() => boolean,
+ *      isHost:() =>  boolean,
+ * }} InMultiplayerGameState
+ */
 
-        /** @type {Savegame} */
-        this.savegame;
-
-        /** @type {string|undefined} */
-        this.connectionId;
-
+/**
+ * @param {ModInterface} modInterface
+ */
+export function createMultiplayerGameState(modInterface) {
+    modInterface.extendClass(GameCreationPayload, () => ({
         /** @type {MultiplayerConnection|undefined} */
-        this.connection;
-
+        connection: undefined,
         /** @type {String|undefined} */
-        this.host;
-    }
-}
+        host: undefined,
+    }));
 
-export class InMultiplayerGameState extends GameState {
-    constructor() {
-        super("InMultiplayerGameState");
-
-        /** @type {GameCreationPayload} */
-        this.creationPayload = null;
-
-        // Stores current stage
-        this.stage = "";
-
-        /** @type {GameCore} */
-        this.core = null;
-
-        /** @type {KeyActionMapper} */
-        this.keyActionMapper = null;
-
-        /** @type {GameLoadingOverlay} */
-        this.loadingOverlay = null;
-
-        /** @type {Savegame} */
-        this.savegame = null;
-
-        this.boundInputFilter = this.filterInput.bind(this);
+    modInterface.extendClass(InGameState, () => ({
+        /**
+         * @this {InMultiplayerGameState}
+         */
+        isMultiplayer() {
+            return !!this.creationPayload.host || !!this.creationPayload.connection;
+        },
 
         /**
-         * Whether we are currently saving the game
-         * @TODO: This doesn't realy fit here
+         * @this {InMultiplayerGameState}
          */
-        this.currentSavePromise = null;
-    }
+        isHost() {
+            return !!this.creationPayload.host;
+        },
+    }));
 
-    /**
-     * Switches the game into another sub-state
-     * @param {string} stage
-     */
-    switchStage(stage) {
-        assert(stage, "Got empty stage");
-        if (stage !== this.stage) {
-            this.stage = stage;
-            logger.log(this.stage);
-            return true;
-        } else {
-            // log(this, "Re entering", stage);
-            return false;
-        }
-    }
+    modInterface.replaceMethod(
+        InGameState,
+        "stage3CreateCore",
+        /**
+         * @this {InMultiplayerGameState}
+         */
+        function () {
+            if (this.switchStage(stages.s3_createCore)) {
+                logger.log("Creating new game core");
+                this.core = new GameCore(this.app);
 
-    // GameState implementation
-    getInnerHTML() {
-        return "";
-    }
+                if (this.isMultiplayer() && !this.isHost()) {
+                    const multiplayerSavegame = new MultiplayerSavegame(
+                        this.app,
+                        this.creationPayload.connection.gameData
+                    );
+                    // @ts-ignore
+                    this.core.initializeRoot(this, multiplayerSavegame, this.creationPayload.gameModeId);
 
-    getThemeMusic() {
-        return MUSIC.theme;
-    }
+                    // No saving multiplayer game on remote
+                    this.core.root.signals.gameSaved.removeAll();
+                    this.core.root.signals.gameSaved.add(
+                        this.core.root.hud.parts["gameMenu"].onGameSaved,
+                        this
+                    );
 
-    onBeforeExit() {
-        // logger.log("Saving before quitting");
-        // return this.doSave().then(() => {
-        //     logger.log(this, "Successfully saved");
-        //     // this.stageDestroyed();
-        // });
-    }
-
-    onAppPause() {
-        // if (this.stage === stages.s10_gameRunning) {
-        //     logger.log("Saving because app got paused");
-        //     this.doSave();
-        // }
-    }
-
-    getHasFadeIn() {
-        return false;
-    }
-
-    getPauseOnFocusLost() {
-        return false;
-    }
-
-    getHasUnloadConfirmation() {
-        return true;
-    }
-
-    onLeave() {
-        if (this.core) {
-            this.stageDestroyed();
-        }
-        this.app.inputMgr.dismountFilter(this.boundInputFilter);
-    }
-
-    onResized(w, h) {
-        super.onResized(w, h);
-        if (this.stage === stages.s10_gameRunning) {
-            this.core.resize(w, h);
-        }
-    }
-
-    // ---- End of GameState implementation
-
-    /**
-     * Goes back to the menu state
-     */
-    goBackToMenu() {
-        this.saveThenGoToState("MainMenuState");
-    }
-
-    /**
-     * Goes back to the settings state
-     */
-    goToSettings() {
-        this.saveThenGoToState("SettingsState", {
-            backToStateId: this.key,
-            backToStatePayload: this.creationPayload,
-        });
-    }
-
-    /**
-     * Goes back to the settings state
-     */
-    goToKeybindings() {
-        this.saveThenGoToState("KeybindingsState", {
-            backToStateId: this.key,
-            backToStatePayload: this.creationPayload,
-        });
-    }
-
-    /**
-     * Moves to a state outside of the game
-     * @param {string} stateId
-     * @param {any=} payload
-     */
-    saveThenGoToState(stateId, payload) {
-        if (this.stage === stages.leaving || this.stage === stages.destroyed) {
-            logger.warn(
-                "Tried to leave game twice or during destroy:",
-                this.stage,
-                "(attempted to move to",
-                stateId,
-                ")"
-            );
-            return;
-        }
-        this.stageLeavingGame();
-        this.doSave().then(() => {
-            this.stageDestroyed();
-            this.moveToState(stateId, payload);
-        });
-    }
-
-    onBackButton() {
-        // do nothing
-    }
-
-    /**
-     * Called when the game somehow failed to initialize. Resets everything to basic state and
-     * then goes to the main menu, showing the error
-     * @param {string} err
-     */
-    onInitializationFailure(err) {
-        if (this.switchStage(stages.initFailed)) {
-            logger.error("Init failure:", err);
-            this.stageDestroyed();
-            this.moveToState("MainMenuState", { loadError: err });
-        }
-    }
-
-    // STAGES
-
-    /**
-     * Creates the game core instance, and thus the root
-     */
-    stage3CreateCore() {
-        if (this.switchStage(stages.s3_createCore)) {
-            logger.log("Creating new game core");
-            this.core = new GameCore(this.app);
-
-            if (this.connection) {
-                this.multiplayerSavegame = new MultiplayerSavegame(this.app, this.connection.gameData);
-                // @ts-ignore
-                this.core.initializeRoot(this, this.multiplayerSavegame);
-
-                this.core.root.signals.gameSaved.removeAll();
-                this.core.root.signals.gameSaved.add(this.core.root.hud.parts["gameMenu"].onGameSaved, this);
-
-                if (this.multiplayerSavegame.hasGameDump()) {
-                    this.stage4bResumeGame();
+                    // Check if savegame is valid
+                    if (multiplayerSavegame.hasGameDump()) {
+                        this.stage4bResumeGame();
+                    } else {
+                        this.onInitializationFailure("The multiplayer game could not be loaded.");
+                    }
                 } else {
-                    this.onInitializationFailure("The multiplayer game could not be loaded.");
-                }
-            } else {
-                //@ts-ignore
-                this.core.initializeRoot(this, this.savegame);
+                    // Default and host
+                    this.core.initializeRoot(this, this.savegame, this.gameModeId);
 
-                if (this.savegame.hasGameDump()) {
-                    this.stage4bResumeGame();
-                } else {
-                    this.app.gameAnalytics.handleGameStarted();
-                    this.stage4aInitEmptyGame();
+                    if (this.savegame.hasGameDump()) {
+                        this.stage4bResumeGame();
+                    } else {
+                        this.app.gameAnalytics.handleGameStarted();
+                        this.stage4aInitEmptyGame();
+                    }
                 }
             }
         }
-    }
+    );
 
-    /**
-     * Initializes a new empty game
-     */
-    stage4aInitEmptyGame() {
-        if (this.switchStage(stages.s4_A_initEmptyGame)) {
-            this.core.initNewGame();
-            this.stage5FirstUpdate();
-        }
-    }
-
-    /**
-     * Resumes an existing game
-     */
-    stage4bResumeGame() {
-        if (this.switchStage(stages.s4_B_resumeGame)) {
-            if (!this.core.initExistingGame()) {
-                this.onInitializationFailure("Savegame is corrupt and can not be restored.");
-                return;
-            }
-            this.app.gameAnalytics.handleGameResumed();
+    modInterface.runAfterMethod(
+        InGameState,
+        "stage4bResumeGame",
+        /**
+         * @this {InMultiplayerGameState}
+         */
+        function () {
             this.core.root.signals["constantSignalChange"] = new Signal();
-            this.stage5FirstUpdate();
         }
-    }
+    );
 
-    /**
-     * Performs the first game update on the game which initializes most caches
-     */
-    stage5FirstUpdate() {
-        if (this.switchStage(stages.s5_firstUpdate)) {
-            this.core.root.logicInitialized = true;
-            this.core.updateLogic();
-            this.stage6PostLoadHook();
-        }
-    }
-
-    /**
-     * Call the post load hook, this means that we have loaded the game, and all systems
-     * can operate and start to work now.
-     */
-    stage6PostLoadHook() {
-        if (this.switchStage(stages.s6_postLoadHook)) {
-            logger.log("Post load hook");
-            this.core.postLoadHook();
-            this.stage7Warmup();
-        }
-    }
-
-    /**
-     * This makes the game idle and draw for a while, because we run most code this way
-     * the V8 engine can already start to optimize it. Also this makes sure the resources
-     * are in the VRAM and we have a smooth experience once we start.
-     */
-    stage7Warmup() {
-        if (this.switchStage(stages.s7_warmup)) {
-            if (this.creationPayload.fastEnter) {
-                this.warmupTimeSeconds = globalConfig.warmupTimeSecondsFast;
-            } else {
-                this.warmupTimeSeconds = globalConfig.warmupTimeSecondsRegular;
-            }
-        }
-    }
-
-    /**
-     * The final stage where this game is running and updating regulary.
-     */
-    stage10GameRunning() {
-        if (this.switchStage(stages.s10_gameRunning)) {
-            this.core.root.signals.readyToRender.dispatch();
-
-            logSection("GAME STARTED", "#26a69a");
-
-            // Initial resize, might have changed during loading (this is possible)
-            this.core.resize(this.app.screenWidth, this.app.screenHeight);
+    modInterface.runAfterMethod(
+        InGameState,
+        "stage10GameRunning",
+        /**
+         * @this {InMultiplayerGameState}
+         */
+        function () {
+            if (!this.isMultiplayer()) return;
 
             //Connect
-            if (this.connectionId) this.peer = new MultiplayerPeer(this, this.connection.peer);
-            else this.peer = new MultiplayerPeer(this);
+            if (this.isHost()) {
+                this.peer = new MultiplayerPeer(this);
+            } else {
+                this.peer = new MultiplayerPeer(this, this.creationPayload.connection.peer);
+            }
         }
-    }
+    );
 
-    /**
-     * This stage destroys the whole game, used to cleanup
-     */
-    stageDestroyed() {
-        if (this.switchStage(stages.destroyed)) {
-            try {
-                // Cleanup all api calls
-                this.cancelAllAsyncOperations();
-            } catch (error) {
-                // Nothing
-            }
-
-            if (this.syncer) {
-                this.syncer.cancelSync();
-                this.syncer = null;
-            }
-
-            // Cleanup core
-            if (this.core) {
-                this.core.destruct();
-                this.core = null;
-            }
-
-            if (this.peer) {
+    modInterface.runAfterMethod(
+        InGameState,
+        "stageDestroyed",
+        /**
+         * @this {InMultiplayerGameState}
+         */
+        function () {
+            if (this.isMultiplayer() && this.peer) {
                 //Disconnect peers
-                if (this.connectionId) {
-                    this.connection.peer.destroy();
+                if (this.creationPayload.connection) {
+                    this.creationPayload.connection.peer.destroy();
                 } else {
                     for (let i = 0; i < this.peer.connections.length; i++) {
                         this.peer.connections[i].peer.destroy();
@@ -386,132 +182,50 @@ export class InMultiplayerGameState extends GameState {
                 }
             }
         }
-    }
+    );
 
-    /**
-     * When leaving the game
-     */
-    stageLeavingGame() {
-        if (this.switchStage(stages.leaving)) {
-            // ...
-        }
-    }
-
-    // END STAGES
-
-    /**
-     * Filters the input (keybindings)
-     */
-    filterInput() {
-        return this.stage === stages.s10_gameRunning;
-    }
-
-    /**
-     * @param {GameCreationPayload} payload
-     */
-    onEnter(payload) {
-        this.app.inputMgr.installFilter(this.boundInputFilter);
-
-        this.creationPayload = payload;
-        this.savegame = payload.savegame;
-        this.connectionId = payload.connectionId;
-        this.connection = payload.connection;
-        this.host = payload.host;
-
-        this.loadingOverlay = new GameLoadingOverlay(this.app, this.getDivElement());
-        this.loadingOverlay.showBasic();
-
-        // Remove unneded default element
-        document.body.querySelector(".modalDialogParent").remove();
-
-        this.asyncChannel.watch(waitNextFrame()).then(() => this.stage3CreateCore());
-    }
-
-    /**
-     * Render callback
-     * @param {number} dt
-     */
-    onRender(dt) {
-        if (APPLICATION_ERROR_OCCURED) {
-            // Application somehow crashed, do not do anything
-            return;
-        }
-
-        if (this.stage === stages.s7_warmup) {
-            this.core.draw();
-            this.warmupTimeSeconds -= dt / 1000.0;
-            if (this.warmupTimeSeconds < 0) {
-                logger.log("Warmup completed");
-                this.stage10GameRunning();
+    modInterface.replaceMethod(
+        HUDSettingsMenu,
+        "shouldPauseGame",
+        /**
+         * @this {HUDSettingsMenu}
+         */
+        function () {
+            if (/** @type {InMultiplayerGameState}*/ (this.root.gameState).isMultiplayer()) {
+                return false;
+            } else {
+                return this.visible;
             }
         }
+    );
 
-        if (this.stage === stages.s10_gameRunning) {
-            this.core.tick(dt);
-        }
-
-        // If the stage is still active (This might not be the case if tick() moved us to game over)
-        if (this.stage === stages.s10_gameRunning) {
-            // Only draw if page visible
-            if (this.app.pageVisible) {
-                this.core.draw();
-            }
-
-            this.loadingOverlay.removeIfAttached();
-        } else {
-            if (!this.loadingOverlay.isAttached()) {
-                this.loadingOverlay.showBasic();
+    modInterface.replaceMethod(
+        HUDSettingsMenu,
+        "shouldPauseRendering",
+        /**
+         * @this {HUDSettingsMenu}
+         */
+        function () {
+            if (/** @type {InMultiplayerGameState}*/ (this.root.gameState).isMultiplayer()) {
+                return false;
+            } else {
+                return this.visible;
             }
         }
-    }
+    );
 
-    onBackgroundTick(dt) {
-        this.onRender(dt);
-    }
-
-    /**
-     * Saves the game
-     */
-
-    doSave() {
-        if (!this.savegame || !this.savegame.isSaveable()) {
-            return Promise.resolve();
+    modInterface.replaceMethod(
+        HUDModalDialogs,
+        "shouldPauseRendering",
+        /**
+         * @this {HUDModalDialogs}
+         */
+        function () {
+            if (/** @type {InMultiplayerGameState}*/ (this.root.gameState).isMultiplayer()) {
+                return false;
+            } else {
+                return this.dialogStack.length > 0;
+            }
         }
-
-        if (APPLICATION_ERROR_OCCURED) {
-            logger.warn("skipping save because application crashed");
-            return Promise.resolve();
-        }
-
-        if (
-            this.stage !== stages.s10_gameRunning &&
-            this.stage !== stages.s7_warmup &&
-            this.stage !== stages.leaving
-        ) {
-            logger.warn("Skipping save because game is not ready");
-            return Promise.resolve();
-        }
-
-        if (this.currentSavePromise) {
-            logger.warn("Skipping double save and returning same promise");
-            return this.currentSavePromise;
-        }
-        logger.log("Starting to save game ...");
-        this.savegame.updateData(this.core.root);
-
-        this.currentSavePromise = this.savegame
-            .writeSavegameAndMetadata()
-            .catch(err => {
-                // Catch errors
-                logger.warn("Failed to save:", err);
-            })
-            .then(() => {
-                // Clear promise
-                logger.log("Saved!");
-                this.core.root.signals.gameSaved.dispatch();
-                this.currentSavePromise = null;
-            });
-
-        return this.currentSavePromise;
-    }
+    );
 }

@@ -265,7 +265,7 @@ export class MultiplayerState extends GameState {
                 savegame
                     .readAsync()
                     .then(() => {
-                        this.moveToState("InMultiplayerGameState", {
+                        this.moveToState("InGameState", {
                             savegame,
                             host: host,
                         });
@@ -445,10 +445,9 @@ export class MultiplayerState extends GameState {
                                 );
                         }
 
-                        const connection = new MultiplayerConnection(pc, gameDataJson);
-                        this.moveToState("InMultiplayerGameState", {
+                        const connection = new MultiplayerConnection(connectionId, pc, gameDataJson);
+                        this.moveToState("InGameState", {
                             connection,
-                            connectionId,
                         });
                     }
 

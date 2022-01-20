@@ -1919,31 +1919,6 @@ declare module "shapez/game/components/static_map_entity" {
     import { enumDirection } from "shapez/core/vector";
     import { DrawParameters } from "shapez/core/draw_parameters";
 }
-declare module "shapez/game/items/boolean_item" {
-    /**
-     * Returns whether the item is Boolean and TRUE
-     * @param {BaseItem} item
-     * @returns {boolean}
-     */
-    export function isTrueItem(item: BaseItem): boolean;
-    /**
-     * Returns whether the item is truthy
-     * @param {BaseItem} item
-     * @returns {boolean}
-     */
-    export function isTruthyItem(item: BaseItem): boolean;
-    export class BooleanItem extends BaseItem {
-        static getSchema(): import("shapez/savegame/serialization_data_types").TypePositiveInteger;
-        /**
-         * @param {number} value
-         */
-        constructor(value: number);
-        value: number;
-    }
-    export const BOOL_FALSE_SINGLETON: BooleanItem;
-    export const BOOL_TRUE_SINGLETON: BooleanItem;
-    import { BaseItem } from "shapez/game/base_item";
-}
 declare module "shapez/core/dpi_manager" {
     /**
      * Returns the current dpi
@@ -1993,6 +1968,31 @@ declare module "shapez/core/dpi_manager" {
         w: number,
         h: number
     ): void;
+}
+declare module "shapez/game/items/boolean_item" {
+    /**
+     * Returns whether the item is Boolean and TRUE
+     * @param {BaseItem} item
+     * @returns {boolean}
+     */
+    export function isTrueItem(item: BaseItem): boolean;
+    /**
+     * Returns whether the item is truthy
+     * @param {BaseItem} item
+     * @returns {boolean}
+     */
+    export function isTruthyItem(item: BaseItem): boolean;
+    export class BooleanItem extends BaseItem {
+        static getSchema(): import("shapez/savegame/serialization_data_types").TypePositiveInteger;
+        /**
+         * @param {number} value
+         */
+        constructor(value: number);
+        value: number;
+    }
+    export const BOOL_FALSE_SINGLETON: BooleanItem;
+    export const BOOL_TRUE_SINGLETON: BooleanItem;
+    import { BaseItem } from "shapez/game/base_item";
 }
 declare module "shapez/game/colors" {
     export type enumColors = string;
@@ -2459,6 +2459,42 @@ declare module "shapez/game/belt_path" {
          * @param {DrawParameters} parameters
          */
         draw(parameters: DrawParameters): void;
+        /**
+         *
+         * @param {HTMLCanvasElement} canvas
+         * @param {CanvasRenderingContext2D} context
+         * @param {number} w
+         * @param {number} h
+         * @param {number} dpi
+         * @param {object} param0
+         * @param {string} param0.direction
+         * @param {Array<[Vector, BaseItem]>} param0.stack
+         * @param {GameRoot} param0.root
+         * @param {number} param0.zoomLevel
+         */
+        drawShapesInARow(
+            canvas: HTMLCanvasElement,
+            context: CanvasRenderingContext2D,
+            w: number,
+            h: number,
+            dpi: number,
+            {
+                direction,
+                stack,
+                root,
+                zoomLevel,
+            }: {
+                direction: string;
+                stack: Array<[Vector, BaseItem]>;
+                root: GameRoot;
+                zoomLevel: number;
+            }
+        ): void;
+        /**
+         * @param {Array<[Vector, BaseItem]>} stack
+         * @param {DrawParameters} parameters
+         */
+        drawDrawStack(stack: Array<[Vector, BaseItem]>, parameters: DrawParameters, directionProp: any): void;
     }
     import { BasicSerializableObject } from "shapez/savegame/serialization";
     import { GameRoot } from "shapez/game/root";
@@ -3945,7 +3981,7 @@ declare module "shapez/game/systems/wire" {
          */
         hasValue(): boolean;
     }
-    export class WireSystem extends GameSystemWithFilter {
+    export class WireSystem extends GameSystem {
         constructor(root: any);
         /**
          * @type {Object<enumWireVariant, Object<enumWireType, AtlasSprite>>}
@@ -4023,7 +4059,7 @@ declare module "shapez/game/systems/wire" {
     }
     import { Entity } from "shapez/game/entity";
     import { BaseItem } from "shapez/game/base_item";
-    import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
+    import { GameSystem } from "shapez/game/game_system";
     import { StaleAreaDetector } from "shapez/core/stale_area_detector";
     import { Vector } from "shapez/core/vector";
     import { enumDirection } from "shapez/core/vector";
@@ -6936,7 +6972,7 @@ declare module "shapez/game/systems/belt" {
     /**
      * Manages all belts
      */
-    export class BeltSystem extends GameSystemWithFilter {
+    export class BeltSystem extends GameSystem {
         constructor(root: any);
         /**
          * @type {Object.<enumDirection, Array<AtlasSprite>>}
@@ -7021,7 +7057,7 @@ declare module "shapez/game/systems/belt" {
          */
         drawBeltPathDebug(parameters: DrawParameters): void;
     }
-    import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
+    import { GameSystem } from "shapez/game/game_system";
     import { BeltPath } from "shapez/game/belt_path";
     import { Entity } from "shapez/game/entity";
     import { DrawParameters } from "shapez/core/draw_parameters";
@@ -7434,7 +7470,7 @@ declare module "shapez/game/systems/wired_pins" {
     import { MapChunkView } from "shapez/game/map_chunk_view";
 }
 declare module "shapez/game/systems/belt_underlays" {
-    export class BeltUnderlaysSystem extends GameSystemWithFilter {
+    export class BeltUnderlaysSystem extends GameSystem {
         constructor(root: any);
         underlayBeltSprites: any[];
         staleArea: StaleAreaDetector;
@@ -7474,7 +7510,7 @@ declare module "shapez/game/systems/belt_underlays" {
          */
         drawChunk(parameters: DrawParameters, chunk: MapChunkView): void;
     }
-    import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
+    import { GameSystem } from "shapez/game/game_system";
     import { StaleAreaDetector } from "shapez/core/stale_area_detector";
     import { Rectangle } from "shapez/core/rectangle";
     import { Vector } from "shapez/core/vector";
@@ -7576,7 +7612,7 @@ declare module "shapez/game/systems/lever" {
     import { MapChunkView } from "shapez/game/map_chunk_view";
 }
 declare module "shapez/game/systems/display" {
-    export class DisplaySystem extends GameSystemWithFilter {
+    export class DisplaySystem extends GameSystem {
         constructor(root: any);
         /** @type {Object<string, import("shapez/core/draw_utils").AtlasSprite>} */
         displaySprites: {
@@ -7595,7 +7631,7 @@ declare module "shapez/game/systems/display" {
          */
         drawChunk(parameters: import("shapez/core/draw_utils").DrawParameters, chunk: MapChunkView): void;
     }
-    import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
+    import { GameSystem } from "shapez/game/game_system";
     import { BaseItem } from "shapez/game/base_item";
     import { MapChunkView } from "shapez/game/map_chunk_view";
 }
@@ -7663,17 +7699,14 @@ declare module "shapez/game/systems/filter" {
 }
 declare module "shapez/game/systems/item_producer" {
     export class ItemProducerSystem extends GameSystemWithFilter {
-        /** @param {GameRoot} root */
-        constructor(root: GameRoot);
+        constructor(root: any);
         item: import("shapez/game/base_item").BaseItem;
     }
     import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
-    import { GameRoot } from "shapez/game/root";
 }
 declare module "shapez/game/systems/constant_producer" {
     export class ConstantProducerSystem extends GameSystemWithFilter {
-        /** @param {GameRoot} root */
-        constructor(root: GameRoot);
+        constructor(root: any);
         /**
          *
          * @param {DrawParameters} parameters
@@ -7685,12 +7718,10 @@ declare module "shapez/game/systems/constant_producer" {
     import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
     import { DrawParameters } from "shapez/core/draw_parameters";
     import { MapChunk } from "shapez/game/map_chunk";
-    import { GameRoot } from "shapez/game/root";
 }
 declare module "shapez/game/systems/goal_acceptor" {
     export class GoalAcceptorSystem extends GameSystemWithFilter {
-        /** @param {GameRoot} root */
-        constructor(root: GameRoot);
+        constructor(root: any);
         puzzleCompleted: boolean;
         /**
          *
@@ -7703,7 +7734,6 @@ declare module "shapez/game/systems/goal_acceptor" {
     import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
     import { DrawParameters } from "shapez/core/draw_parameters";
     import { MapChunk } from "shapez/game/map_chunk";
-    import { GameRoot } from "shapez/game/root";
 }
 declare module "shapez/game/systems/zone" {
     export class ZoneSystem extends GameSystem {
@@ -12302,9 +12332,9 @@ declare module "shapez/mods/mod_interface" {
         registerGameTheme({ id, name, theme }: { id: string; name: string; theme: any }): void;
         /**
          * Registers a new state class, should be a GameState derived class
-         * @param {typeof GameState} stateClass
+         * @param {typeof import("shapez/core/game_state").GameState} stateClass
          */
-        registerGameState(stateClass: any): void;
+        registerGameState(stateClass: typeof import("shapez/core/game_state").GameState): void;
         /**
          * @param {object} param0
          * @param {"regular"|"wires"} param0.toolbar
@@ -12389,13 +12419,10 @@ declare module "shapez/mods/mod_interface" {
         extendObject(prototype: any, extender: ({ $super, $old }: { $super: any; $old: any }) => any): void;
         /**
          *
-         * @param {typeof Object} classHandle
+         * @param {Class} classHandle
          * @param {({ $super, $old }) => any} extender
          */
-        extendClass(
-            classHandle: typeof Object,
-            extender: ({ $super, $old }: { $super: any; $old: any }) => any
-        ): void;
+        extendClass(classHandle: any, extender: ({ $super, $old }: { $super: any; $old: any }) => any): void;
         /**
          *
          * @param {string} id

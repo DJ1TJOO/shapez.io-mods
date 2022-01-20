@@ -48,17 +48,6 @@ export class MultiplayerHUD extends BaseHUDPart {
                 user.currentWorldPos = tracing;
             }
 
-            /**
-             * Shrimps code for curved paths (maybe for later)
-             */
-            // const pos = tracing.sub(user.currentWorldPos);
-            // const norm = pos.normalize();
-            // const acc = norm.multiplyScalar(6);
-            // user.velocity.addInplace(acc);
-            // user.velocity = user.velocity.min(new Vector(5, 5));
-            // user.velocity = user.velocity.multiplyScalar(0.95);
-            // if (user.velocity.x > 1 || user.velocity.y > 1) user.currentWorldPos.addInplace(user.velocity);
-
             user.currentWorldPos.x = Math.floor(this.lerp(user.currentWorldPos.x, tracing.x, 0.13));
             user.currentWorldPos.y = Math.floor(this.lerp(user.currentWorldPos.y, tracing.y, 0.13));
             user.currentMouseTile = user.currentWorldPos.toTileSpace();
@@ -87,7 +76,7 @@ export class MultiplayerHUD extends BaseHUDPart {
                 this.ingameState.core.root.camera.screenToWorld(mousePosition);
         }
 
-        if (this.ingameState.peer.host) {
+        if (this.ingameState.isHost()) {
             for (let i = 0; i < this.ingameState.peer.connections.length; i++) {
                 MultiplayerPacket.sendPacket(
                     this.ingameState.peer.connections[i].peer,

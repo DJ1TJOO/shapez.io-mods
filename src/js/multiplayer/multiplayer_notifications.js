@@ -174,7 +174,11 @@ export function multiplayerNotifications(modInterface) {
                     );
             } else {
                 const message = peer.user.username + ": " + value;
-                if (peer.host) {
+                if (
+                    /** @type {import("../states/multiplayer_ingame").InMultiplayerGameState} */ (
+                        this.root.gameState
+                    ).isHost()
+                ) {
                     for (let i = 0; i < peer.connections.length; i++) {
                         MultiplayerPacket.sendPacket(
                             peer.connections[i].peer,

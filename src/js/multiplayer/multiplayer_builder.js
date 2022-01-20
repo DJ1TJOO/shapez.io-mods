@@ -1,5 +1,4 @@
 import { Vector } from "shapez/core/vector";
-import { getBuildingDataFromCode } from "shapez/game/building_codes";
 
 export class MultiplayerBuilder {
     constructor(ingameState, peer) {
@@ -10,8 +9,8 @@ export class MultiplayerBuilder {
     /**
      * Tries to delete the given building
      */
-    tryDeleteBuilding(building) {
-        if (!this.ingameState.core.root.logic.canDeleteBuilding(building)) {
+    tryDeleteBuilding(building, force = false) {
+        if (!force && !this.ingameState.core.root.logic.canDeleteBuilding(building)) {
             return false;
         }
         this.peer.multiplayerDestroy.push(building.components.StaticMapEntity.origin);
@@ -25,7 +24,7 @@ export class MultiplayerBuilder {
      * Removes all entities with a RemovableMapEntityComponent which need to get
      * removed before placing this entity
      */
-    freeEntityAreaBeforeBuild(entity) {
+    freeEntityAreaBeforeBuild(entity, force = false) {
         const staticComp = entity.components.StaticMapEntity;
         const rect = staticComp.getTileSpaceBounds();
         // Remove any removeable colliding entities on the same layer
@@ -33,12 +32,16 @@ export class MultiplayerBuilder {
             for (let y = rect.y; y < rect.y + rect.h; ++y) {
                 const contents = this.ingameState.core.root.map.getLayerContentXY(x, y, entity.layer);
                 if (contents) {
-                    assertAlways(
-                        contents.components.StaticMapEntity.getMetaBuilding().getIsReplaceable(),
-                        "Tried to replace non-repleaceable entity"
-                    );
-                    if (!this.tryDeleteBuilding(contents)) {
-                        assertAlways(false, "Tried to replace non-repleaceable entity #2");
+                    if (!force) {
+                        assertAlways(
+                            contents.components.StaticMapEntity.getMetaBuilding().getIsReplaceable(),
+                            "Tried to replace non-repleaceable entity"
+                        );
+                        if (!this.tryDeleteBuilding(contents)) {
+                            assertAlways(false, "Tried to replace non-repleaceable entity #2");
+                        }
+                    } else {
+                        this.tryDeleteBuilding(contents, true);
                     }
                 }
             }
