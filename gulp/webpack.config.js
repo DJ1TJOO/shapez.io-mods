@@ -55,6 +55,7 @@ module.exports = ({
                                 id: `"${json.name}"`,
                                 version: `"${json.version}"`,
                                 author: `"${json.author}"`,
+                                settings: JSON.stringify(json["mod-info"].settings),
                             };
                         } catch (error) {}
                         return info;

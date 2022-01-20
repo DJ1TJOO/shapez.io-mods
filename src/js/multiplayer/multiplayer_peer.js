@@ -4,7 +4,6 @@ import { getBuildingDataFromCode } from "shapez/game/building_codes";
 import { MODS } from "shapez/mods/modloader";
 import { types } from "shapez/savegame/serialization";
 import { T } from "shapez/translations";
-import user from "../user";
 import { MultiplayerBuilder } from "./multiplayer_builder";
 import {
     MultiplayerPacket,
@@ -26,6 +25,7 @@ import io from "socket.io-client";
 import { enumNotificationType } from "shapez/game/hud/parts/notifications";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
 import { config } from "./multiplayer_peer_config";
+import { getMod } from "../getMod";
 
 export class MultiplayerPeer {
     /**
@@ -43,7 +43,7 @@ export class MultiplayerPeer {
 
         this.user = {
             _id: v4(),
-            username: user.name,
+            username: getMod().settings.user.name,
         };
         this.users = [];
 

@@ -7,7 +7,11 @@
         "website": "https://github.com/dj1tjoo",
         "description": "mod_descripiton",
         "settings": {
-            "showOtherPlayers": true
+            "showOtherPlayers": true,
+            "user": {
+                "name": "",
+                "lastServer": ""
+            }
         }
     },
     "license": "GPL-3.0-only",

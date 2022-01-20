@@ -15,7 +15,6 @@ import {
 import { GameLoadingOverlay } from "shapez/game/game_loading_overlay";
 import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
 import { T } from "shapez/translations";
-import user from "../user";
 import io from "socket.io-client";
 import wrtc from "wrtc";
 import Peer from "simple-peer";
@@ -23,10 +22,12 @@ import { MODS } from "shapez/mods/modloader";
 import { MultiplayerPacketTypes, FlagPacketFlags } from "../multiplayer/multiplayer_packets";
 import { MultiplayerConnection } from "./multiplayer_ingame";
 import { config } from "../multiplayer/multiplayer_peer_config";
+import { getMod } from "../getMod";
 
 export class MultiplayerState extends GameState {
     constructor() {
         super("MultiplayerState");
+        this.mod = getMod();
     }
 
     getInnerHTML() {
@@ -140,7 +141,7 @@ export class MultiplayerState extends GameState {
         );
 
         // @ts-ignore
-        const { optionSelected } = this.dialogs.showOptionChooser(T.settings.labels.language.title, {
+        const { optionSelected } = this.dialogs.showOptionChooser(T.this.mod.settings.labels.language.title, {
             active: this.app.settings.getLanguage(),
             options: setting.options.map(option => ({
                 value: setting.valueGetter(option),
@@ -230,20 +231,21 @@ export class MultiplayerState extends GameState {
      * @param {import("shapez/savegame/savegame_typedefs").SavegameMetadata} game
      */
     resumeGame(game) {
+        console.log(this.mod.settings);
         this.app.analytics.trackUiClick("resume_game");
         // Get information for host
         const userInput = new FormElementInput({
             id: "userInput",
             label: T.multiplayer.joinMultiplayer.username,
             placeholder: "",
-            defaultValue: user.name,
+            defaultValue: this.mod.settings.user.name,
             validator: val => val.trim().length > 0,
         });
         const hostInput = new FormElementInput({
             id: "hostInput",
             label: T.multiplayer.joinMultiplayer.host,
             placeholder: "",
-            defaultValue: "",
+            defaultValue: this.mod.settings.user.lastServer,
             validator: val => val.trim().length > 0,
         });
 
@@ -259,9 +261,12 @@ export class MultiplayerState extends GameState {
         //@ts-ignore
         dialog.buttonSignals.ok.add(() => {
             this.app.adProvider.showVideoAd().then(() => {
-                user.name = userInput.getValue().trim();
+                this.mod.settings.user.name = userInput.getValue().trim();
                 const host = hostInput.getValue().trim();
-                user.lastServer = host;
+                this.mod.settings.user.lastServer = host;
+                this.mod.saveSettings();
+                console.log(this.mod.settings);
+                console.log(getMod().settings);
                 this.app.analytics.trackUiClick("resume_game_adcomplete");
                 const savegame = this.app.savegameMgr.getSavegameById(game.internalId);
                 savegame
@@ -288,14 +293,14 @@ export class MultiplayerState extends GameState {
             id: "userInput",
             label: T.multiplayer.joinMultiplayer.username,
             placeholder: "",
-            defaultValue: user.name,
+            defaultValue: this.mod.settings.user.name,
             validator: val => val.trim().length > 0,
         });
         const hostInput = new FormElementInput({
             id: "hostInput",
             label: T.multiplayer.joinMultiplayer.host,
             placeholder: "",
-            defaultValue: "",
+            defaultValue: this.mod.settings.user.lastServer,
             validator: val => val.trim().length > 0,
         });
 
@@ -321,9 +326,10 @@ export class MultiplayerState extends GameState {
         // When confirmed, create connection
         // @ts-ignore
         dialog.buttonSignals.ok.add(() => {
-            user.name = userInput.getValue().trim();
+            this.mod.settings.user.name = userInput.getValue().trim();
             const host = hostInput.getValue().trim();
-            user.lastServer = host;
+            this.mod.settings.user.lastServer = host;
+            this.mod.saveSettings();
             const connectionId = connectIdInput.getValue().trim();
 
             this.loadingOverlay = new GameLoadingOverlay(this.app, this.getDivElement());

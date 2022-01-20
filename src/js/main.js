@@ -78,7 +78,14 @@ class ModImpl extends Mod {
         }
         if (!this.settings.showOtherPlayers) {
             this.settings.showOtherPlayers = true;
-            this.saveSettings();
         }
+        if (!this.settings.user) {
+            this.settings.user = {
+                name: "",
+                lastServer: "",
+            };
+        }
+
+        this.saveSettings();
     }
 }
