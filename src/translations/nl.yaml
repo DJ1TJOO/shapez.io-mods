@@ -1,0 +1,41 @@
+multiplayer:
+    name: Multiplayer
+    back: Terug
+    join: Meedoen
+    createMultiplayerGameHost:
+        title: Multiplayer Spel
+        desc: Voer een multiplayer spel server in.
+
+    joinMultiplayerGame:
+        title: Multiplayer Spel
+        desc: Voer de multiplayer spelcode in die je van de host hebt gekregen
+
+    joinMultiplayerGameHost:
+        title: Multiplayer Spel
+        desc: Voer een multiplayer spel server in die je hebt gekregen van de host.
+
+    multiplayerGameError:
+        title: Spel niet gevonden
+        desc: Het multiplayer spel waaraan je wilde deelnemen is niet gevonden of bestaat niet.
+
+    multiplayerGameConnectionError:
+        title: Verbinden gefaald
+        desc: "Gefaald om met de server verbinging te maken: <host>"
+
+    notSameMods:
+        title: Niet dezelfde mods geïnstalleerd
+        desc: Je hebt niet de zelfde mods de geïnstalleerd als de owner
+
+    user:
+        disconnected: <username> heeft het spel verlaten
+        joined: <username> heeft zich aangesloten
+
+    username:
+        title: Multiplayer Spel
+        desc: Voer een gebruikers naam in.
+
+    shareCode: Deel de code met je vrienden
+    hostOnly: Alleen de host kan de spel code krijgen
+    commands:
+        error: Er is een fout opgetreden bij het uitvoeren van de '<cmd>' command
+        doesNotExist: Het command '<cmd>' bestaat niet

@@ -1,0 +1,39 @@
+multiplayer:
+    name: Multiplayer
+    back: Back
+    join: Join
+    createMultiplayerGameHost:
+        title: Multiplayer Game
+        desc: Enter a multiplayer game server.
+
+    joinMultiplayer:
+        title: Multiplayer
+        username: Username
+        host: Host
+        id: Game code
+
+    multiplayerGameError:
+        title: Game not found
+        desc: The multiplayer game you wanted to join is not found or does not exist.
+
+    multiplayerGameConnectionError:
+        title: Failed to connect
+        desc: "Failed to connect to the server: <host>"
+
+    notSameMods:
+        title: Not same mods installed
+        desc: You don't have the same mods installed as the owner
+
+    user:
+        disconnected: <username> has disconnected
+        joined: <username> has joined the game
+
+    username:
+        title: Multiplayer Game
+        desc: Enter an username.
+
+    shareCode: Share the code with your friends
+    hostOnly: Only the host can get the game code
+    commands:
+        error: There was an error while executing the '<cmd>' command
+        doesNotExist: The command '<cmd>' doesn't exist

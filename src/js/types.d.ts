@@ -37,7 +37,7 @@ declare const desiredMsDelay: number;
 declare let lastTick: number;
 declare module "shapez/core/config.local" {
     namespace _default {
-        const externalModUrl: string;
+        export const externalModUrl: string;
     }
     export default _default;
 }
@@ -46,15 +46,15 @@ declare module "shapez/core/config" {
     export const SUPPORT_TOUCH: false;
     export const IS_MAC: boolean;
     export namespace THIRDPARTY_URLS {
-        const discord: string;
-        const github: string;
-        const reddit: string;
-        const shapeViewer: string;
-        const privacyPolicy: string;
-        const standaloneStorePage: string;
-        const stanaloneCampaignLink: string;
-        const puzzleDlcStorePage: string;
-        const levelTutorialVideos: {
+        export const discord: string;
+        export const github: string;
+        export const reddit: string;
+        export const shapeViewer: string;
+        export const privacyPolicy: string;
+        export const standaloneStorePage: string;
+        export const stanaloneCampaignLink: string;
+        export const puzzleDlcStorePage: string;
+        export const levelTutorialVideos: {
             21: string;
             25: string;
             26: string;
@@ -62,11 +62,11 @@ declare module "shapez/core/config" {
     }
     export const A_B_TESTING_LINK_TYPE: "steam_2_npr";
     export namespace globalConfig {
-        const minerSpeedItemsPerSecond: number;
-        const mapChunkWorldSize: number;
-        const mapChunkOverviewMinZoom: number;
-        const warmupTimeSecondsFast: number;
-        const warmupTimeSecondsRegular: number;
+        export const minerSpeedItemsPerSecond: number;
+        export const mapChunkWorldSize: number;
+        export const mapChunkOverviewMinZoom: number;
+        export const warmupTimeSecondsFast: number;
+        export const warmupTimeSecondsRegular: number;
     }
     export const IS_MOBILE: boolean;
 }
@@ -77,7 +77,7 @@ declare module "shapez/core/logging" {
      * @param {Error|ErrorEvent} err
      */
     export function serializeError(err: Error | ErrorEvent): {
-        type: any;
+        type: string;
     };
     /**
      * Stringifies an object containing circular references and errors
@@ -439,7 +439,7 @@ declare module "shapez/core/utils" {
      * Starts a file chooser
      * @param {string} acceptedType
      */
-    export function startFileChoose(acceptedType?: string): any;
+    export function startFileChoose(acceptedType?: string): Promise<any>;
     /**
      *
      * @param {number} number
@@ -473,7 +473,7 @@ declare module "shapez/core/buffer_utils" {
      * Returns stats on the allocated buffers
      */
     export function getBufferStats(): {
-        backlogKeys: any;
+        backlogKeys: number;
         backlogSize: number;
         vramUsage: number;
         backlogVramUsage: number;
@@ -574,10 +574,10 @@ declare module "shapez/core/vector" {
     export function mixVector(v1: Vector, v2: Vector, a: number): Vector;
     export type enumDirection = string;
     export namespace enumDirection {
-        const top: string;
-        const right: string;
-        const bottom: string;
-        const left: string;
+        export const top: string;
+        export const right: string;
+        export const bottom: string;
+        export const left: string;
     }
     export type enumInvertedDirections = string;
     /**
@@ -637,8 +637,8 @@ declare module "shapez/core/vector" {
          * @param {number=} y
          */
         constructor(x?: number | undefined, y?: number | undefined);
-        x: number;
-        y: number;
+        x: any;
+        y: any;
         /**
          * return a copy of the vector
          * @returns {Vector}
@@ -913,8 +913,8 @@ declare module "shapez/core/vector" {
          * Creates a simple representation of the vector
          */
         serializeSimple(): {
-            x: number;
-            y: number;
+            x: any;
+            y: any;
         };
         /**
          * @returns {number}
@@ -1025,7 +1025,7 @@ declare module "shapez/savegame/serialization_data_types" {
          * @param {Object.<string, any>} enumeration
          */
         constructor(enumeration?: { [x: string]: any });
-        availableValues: any;
+        availableValues: any[];
     }
     export class TypeEntity extends BaseDataType {}
     export class TypeEntityWeakref extends BaseDataType {}
@@ -1547,22 +1547,22 @@ declare module "shapez/core/rectangle" {
 }
 declare module "shapez/platform/sound" {
     export namespace SOUNDS {
-        const uiClick: string;
-        const uiError: string;
-        const dialogError: string;
-        const dialogOk: string;
-        const swishHide: string;
-        const swishShow: string;
-        const badgeNotification: string;
-        const levelComplete: string;
-        const destroyBuilding: string;
-        const placeBuilding: string;
-        const placeBelt: string;
-        const copy: string;
+        export const uiClick: string;
+        export const uiError: string;
+        export const dialogError: string;
+        export const dialogOk: string;
+        export const swishHide: string;
+        export const swishShow: string;
+        export const badgeNotification: string;
+        export const levelComplete: string;
+        export const destroyBuilding: string;
+        export const placeBuilding: string;
+        export const placeBelt: string;
+        export const copy: string;
     }
     export namespace MUSIC {
-        const theme: string;
-        const menu: string;
+        export const theme: string;
+        export const menu: string;
     }
     export class SoundInstanceInterface {
         constructor(key: any, url: any);
@@ -1945,14 +1945,14 @@ declare module "shapez/core/dpi_manager" {
 declare module "shapez/game/colors" {
     export type enumColors = string;
     export namespace enumColors {
-        const red: string;
-        const green: string;
-        const blue: string;
-        const yellow: string;
-        const purple: string;
-        const cyan: string;
-        const white: string;
-        const uncolored: string;
+        export const red: string;
+        export const green: string;
+        export const blue: string;
+        export const yellow: string;
+        export const purple: string;
+        export const cyan: string;
+        export const white: string;
+        export const uncolored: string;
     }
     export type enumColorToShortcode = string;
     /** @enum {string} */
@@ -1980,8 +1980,8 @@ declare module "shapez/game/colors" {
 declare module "shapez/game/theme" {
     export function applyGameTheme(id: any): void;
     export namespace THEMES {
-        const dark: any;
-        const light: any;
+        export const dark: any;
+        export const light: any;
     }
     export let THEME: any;
 }
@@ -2017,10 +2017,10 @@ declare module "shapez/game/shape_definition" {
     export const TOP_LEFT: 3;
     export type enumSubShape = string;
     export namespace enumSubShape {
-        const rect: string;
-        const circle: string;
-        const star: string;
-        const windmill: string;
+        export const rect: string;
+        export const circle: string;
+        export const star: string;
+        export const windmill: string;
     }
     export type enumSubShapeToShortcode = string;
     /** @enum {string} */
@@ -2160,7 +2160,24 @@ declare module "shapez/game/shape_definition" {
     /**
      * Order is Q1 (tr), Q2(br), Q3(bl), Q4(tl)
      */
-    export type ShapeLayer = [ShapeLayerItem?, ShapeLayerItem?, ShapeLayerItem?, ShapeLayerItem?];
+    export type ShapeLayer = [
+        {
+            subShape: enumSubShape;
+            color: enumColors;
+        },
+        {
+            subShape: enumSubShape;
+            color: enumColors;
+        },
+        {
+            subShape: enumSubShape;
+            color: enumColors;
+        },
+        {
+            subShape: enumSubShape;
+            color: enumColors;
+        }
+    ];
     import { BasicSerializableObject } from "shapez/savegame/serialization";
     import { DrawParameters } from "shapez/core/draw_parameters";
     import { enumColors } from "shapez/game/colors";
@@ -2659,10 +2676,10 @@ declare module "shapez/game/components/belt_underlays" {
      */
     export type enumClippedBeltUnderlayType = string;
     export namespace enumClippedBeltUnderlayType {
-        const full: string;
-        const bottomOnly: string;
-        const topOnly: string;
-        const none: string;
+        export const full: string;
+        export const bottomOnly: string;
+        export const topOnly: string;
+        export const none: string;
     }
     /**
      * @typedef {{
@@ -2677,7 +2694,11 @@ declare module "shapez/game/components/belt_underlays" {
          * @param {Array<BeltUnderlayTile>=} param0.underlays Where to render belt underlays
          */
         constructor({ underlays }: { underlays?: Array<BeltUnderlayTile> | undefined });
-        underlays: BeltUnderlayTile[];
+        underlays: {
+            pos: Vector;
+            direction: enumDirection;
+            cachedType?: enumClippedBeltUnderlayType;
+        }[];
     }
     export type BeltUnderlayTile = {
         pos: Vector;
@@ -2697,22 +2718,22 @@ declare module "shapez/game/components/hub" {
 declare module "shapez/game/components/item_processor" {
     export type enumItemProcessorTypes = string;
     export namespace enumItemProcessorTypes {
-        const balancer: string;
-        const cutter: string;
-        const cutterQuad: string;
-        const rotater: string;
-        const rotaterCCW: string;
-        const rotater180: string;
-        const stacker: string;
-        const trash: string;
-        const mixer: string;
-        const painter: string;
-        const painterDouble: string;
-        const painterQuad: string;
-        const hub: string;
-        const filter: string;
-        const reader: string;
-        const goal: string;
+        export const balancer: string;
+        export const cutter: string;
+        export const cutterQuad: string;
+        export const rotater: string;
+        export const rotaterCCW: string;
+        export const rotater180: string;
+        export const stacker: string;
+        export const trash: string;
+        export const mixer: string;
+        export const painter: string;
+        export const painterDouble: string;
+        export const painterQuad: string;
+        export const hub: string;
+        export const filter: string;
+        export const reader: string;
+        export const goal: string;
     }
     export type enumItemProcessorRequirements = string;
     export namespace enumItemProcessorRequirements {
@@ -2756,7 +2777,7 @@ declare module "shapez/game/components/item_processor" {
          * Our current inputs
          * @type {Map<number, BaseItem>}
          */
-        inputSlots: any;
+        inputSlots: Map<number, BaseItem>;
         nextOutputSlot: number;
         /**
          * Current input count
@@ -2875,8 +2896,8 @@ declare module "shapez/game/components/storage" {
 declare module "shapez/game/components/underground_belt" {
     export type enumUndergroundBeltMode = string;
     export namespace enumUndergroundBeltMode {
-        const sender: string;
-        const receiver: string;
+        export const sender: string;
+        export const receiver: string;
     }
     /**
      * @typedef {{
@@ -2995,9 +3016,9 @@ declare module "shapez/core/stale_area_detector" {
 declare module "shapez/game/production_analytics" {
     export type enumAnalyticsDataSource = string;
     export namespace enumAnalyticsDataSource {
-        const produced: string;
-        const stored: string;
-        const delivered: string;
+        export const produced: string;
+        export const stored: string;
+        export const delivered: string;
     }
     export class ProductionAnalytics extends BasicSerializableObject {
         static getId(): string;
@@ -3053,51 +3074,51 @@ declare module "shapez/game/production_analytics" {
 }
 declare module "shapez/platform/achievement_provider" {
     export namespace ACHIEVEMENTS {
-        const belt500Tiles: string;
-        const blueprint100k: string;
-        const blueprint1m: string;
-        const completeLvl26: string;
-        const cutShape: string;
-        const darkMode: string;
-        const destroy1000: string;
-        const irrelevantShape: string;
-        const level100: string;
-        const level50: string;
-        const logoBefore18: string;
-        const mam: string;
-        const mapMarkers15: string;
-        const noBeltUpgradesUntilBp: string;
-        const noInverseRotater: string;
-        const oldLevel17: string;
-        const openWires: string;
-        const paintShape: string;
-        const place5000Wires: string;
-        const placeBlueprint: string;
-        const placeBp1000: string;
-        const play1h: string;
-        const play10h: string;
-        const play20h: string;
-        const produceLogo: string;
-        const produceMsLogo: string;
-        const produceRocket: string;
-        const rotateShape: string;
-        const speedrunBp30: string;
-        const speedrunBp60: string;
-        const speedrunBp120: string;
-        const stack4Layers: string;
-        const stackShape: string;
-        const store100Unique: string;
-        const storeShape: string;
-        const throughputBp25: string;
-        const throughputBp50: string;
-        const throughputLogo25: string;
-        const throughputLogo50: string;
-        const throughputRocket10: string;
-        const throughputRocket20: string;
-        const trash1000: string;
-        const unlockWires: string;
-        const upgradesTier5: string;
-        const upgradesTier8: string;
+        export const belt500Tiles: string;
+        export const blueprint100k: string;
+        export const blueprint1m: string;
+        export const completeLvl26: string;
+        export const cutShape: string;
+        export const darkMode: string;
+        export const destroy1000: string;
+        export const irrelevantShape: string;
+        export const level100: string;
+        export const level50: string;
+        export const logoBefore18: string;
+        export const mam: string;
+        export const mapMarkers15: string;
+        export const noBeltUpgradesUntilBp: string;
+        export const noInverseRotater: string;
+        export const oldLevel17: string;
+        export const openWires: string;
+        export const paintShape: string;
+        export const place5000Wires: string;
+        export const placeBlueprint: string;
+        export const placeBp1000: string;
+        export const play1h: string;
+        export const play10h: string;
+        export const play20h: string;
+        export const produceLogo: string;
+        export const produceMsLogo: string;
+        export const produceRocket: string;
+        export const rotateShape: string;
+        export const speedrunBp30: string;
+        export const speedrunBp60: string;
+        export const speedrunBp120: string;
+        export const stack4Layers: string;
+        export const stackShape: string;
+        export const store100Unique: string;
+        export const storeShape: string;
+        export const throughputBp25: string;
+        export const throughputBp50: string;
+        export const throughputLogo25: string;
+        export const throughputLogo50: string;
+        export const throughputRocket10: string;
+        export const throughputRocket20: string;
+        export const trash1000: string;
+        export const unlockWires: string;
+        export const upgradesTier5: string;
+        export const upgradesTier8: string;
     }
     export class AchievementProviderInterface {
         /** @param {Application} app */
@@ -3146,7 +3167,7 @@ declare module "shapez/platform/achievement_provider" {
          * @param {function} activate - Resolves when provider activation is complete
          */
         constructor(activate: Function);
-        map: any;
+        map: Map<any, any>;
         activate: Function;
         /** @param {GameRoot} root */
         initialize(root: GameRoot): void;
@@ -3282,15 +3303,15 @@ declare module "shapez/platform/achievement_provider" {
 declare module "shapez/game/components/wire" {
     export type enumWireType = string;
     export namespace enumWireType {
-        const forward: string;
-        const turn: string;
-        const split: string;
-        const cross: string;
+        export const forward: string;
+        export const turn: string;
+        export const split: string;
+        export const cross: string;
     }
     export type enumWireVariant = string;
     export namespace enumWireVariant {
-        const first: string;
-        const second: string;
+        export const first: string;
+        export const second: string;
     }
     export class WireComponent extends Component {
         /**
@@ -3324,34 +3345,34 @@ declare module "shapez/game/tutorial_goals" {
      */
     export type enumHubGoalRewards = string;
     export namespace enumHubGoalRewards {
-        const reward_cutter_and_trash: string;
-        const reward_rotater: string;
-        const reward_painter: string;
-        const reward_mixer: string;
-        const reward_stacker: string;
-        const reward_balancer: string;
-        const reward_tunnel: string;
-        const reward_rotater_ccw: string;
-        const reward_rotater_180: string;
-        const reward_miner_chainable: string;
-        const reward_underground_belt_tier_2: string;
-        const reward_belt_reader: string;
-        const reward_splitter: string;
-        const reward_cutter_quad: string;
-        const reward_painter_double: string;
-        const reward_storage: string;
-        const reward_merger: string;
-        const reward_wires_painter_and_levers: string;
-        const reward_display: string;
-        const reward_constant_signal: string;
-        const reward_logic_gates: string;
-        const reward_virtual_processing: string;
-        const reward_filter: string;
-        const reward_demo_end: string;
-        const reward_blueprints: string;
-        const reward_freeplay: string;
-        const no_reward: string;
-        const no_reward_freeplay: string;
+        export const reward_cutter_and_trash: string;
+        export const reward_rotater: string;
+        export const reward_painter: string;
+        export const reward_mixer: string;
+        export const reward_stacker: string;
+        export const reward_balancer: string;
+        export const reward_tunnel: string;
+        export const reward_rotater_ccw: string;
+        export const reward_rotater_180: string;
+        export const reward_miner_chainable: string;
+        export const reward_underground_belt_tier_2: string;
+        export const reward_belt_reader: string;
+        export const reward_splitter: string;
+        export const reward_cutter_quad: string;
+        export const reward_painter_double: string;
+        export const reward_storage: string;
+        export const reward_merger: string;
+        export const reward_wires_painter_and_levers: string;
+        export const reward_display: string;
+        export const reward_constant_signal: string;
+        export const reward_logic_gates: string;
+        export const reward_virtual_processing: string;
+        export const reward_filter: string;
+        export const reward_demo_end: string;
+        export const reward_blueprints: string;
+        export const reward_freeplay: string;
+        export const no_reward: string;
+        export const no_reward_freeplay: string;
     }
 }
 declare module "shapez/core/draw_utils" {
@@ -3430,7 +3451,7 @@ declare module "shapez/game/buildings/wire" {
     };
     export type wireVariants = string;
     export namespace wireVariants {
-        const second: string;
+        export const second: string;
     }
     export class MetaWireBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -3720,12 +3741,12 @@ declare module "shapez/game/map_chunk" {
 declare module "shapez/game/map_chunk_view" {
     export const CHUNK_OVERLAY_RES: 3;
     export namespace MOD_CHUNK_DRAW_HOOKS {
-        const backgroundLayerBefore: any[];
-        const backgroundLayerAfter: any[];
-        const foregroundDynamicBefore: any[];
-        const foregroundDynamicAfter: any[];
-        const staticBefore: any[];
-        const staticAfter: any[];
+        export const backgroundLayerBefore: any[];
+        export const backgroundLayerAfter: any[];
+        export const foregroundDynamicBefore: any[];
+        export const foregroundDynamicAfter: any[];
+        export const staticBefore: any[];
+        export const staticAfter: any[];
     }
     export class MapChunkView extends MapChunk {
         /**
@@ -3964,8 +3985,8 @@ declare module "shapez/game/systems/wire" {
 declare module "shapez/game/components/wired_pins" {
     export type enumPinSlotType = string;
     export namespace enumPinSlotType {
-        const logicalEjector: string;
-        const logicalAcceptor: string;
+        export const logicalEjector: string;
+        export const logicalAcceptor: string;
     }
     /** @typedef {{
      *   pos: Vector,
@@ -4033,18 +4054,18 @@ declare module "shapez/game/components/constant_signal" {
 declare module "shapez/game/components/logic_gate" {
     export type enumLogicGateType = string;
     export namespace enumLogicGateType {
-        const and: string;
-        const not: string;
-        const xor: string;
-        const or: string;
-        const transistor: string;
-        const analyzer: string;
-        const rotater: string;
-        const unstacker: string;
-        const cutter: string;
-        const compare: string;
-        const stacker: string;
-        const painter: string;
+        export const and: string;
+        export const not: string;
+        export const xor: string;
+        export const or: string;
+        export const transistor: string;
+        export const analyzer: string;
+        export const rotater: string;
+        export const unstacker: string;
+        export const cutter: string;
+        export const compare: string;
+        export const stacker: string;
+        export const painter: string;
     }
     export class LogicGateComponent extends Component {
         /**
@@ -4080,8 +4101,8 @@ declare module "shapez/game/components/display" {
 declare module "shapez/game/components/belt_reader" {
     export type enumBeltReaderType = string;
     export namespace enumBeltReaderType {
-        const wired: string;
-        const wireless: string;
+        export const wired: string;
+        export const wireless: string;
     }
     export class BeltReaderComponent extends Component {
         static getSchema(): {
@@ -4549,12 +4570,28 @@ declare module "shapez/core/globals" {
      * It would be nicer to have no globals, but this is the only one. I promise!
      * @type {Application} */
     export let GLOBAL_APP: Application;
+    export namespace BUILD_OPTIONS {
+        export const HAVE_ASSERT: any;
+        export const APP_ENVIRONMENT: any;
+        export const TRACKING_ENDPOINT: any;
+        export const CHINA_VERSION: any;
+        export const WEGAME_VERSION: any;
+        export const IS_DEV: any;
+        export const IS_RELEASE: any;
+        export const IS_MOBILE_APP: any;
+        export const IS_BROWSER: any;
+        export const IS_STANDALONE: any;
+        export const BUILD_TIME: any;
+        export const BUILD_COMMIT_HASH: any;
+        export const BUILD_VERSION: any;
+        export const ALL_UI_IMAGES: any;
+    }
     import { Application } from "shapez/application";
 }
 declare module "shapez/core/click_detector" {
     export const MAX_MOVE_DISTANCE_PX: 20 | 80;
     export namespace clickDetectorGlobals {
-        const lastTouchTime: number;
+        export const lastTouchTime: number;
     }
     /**
      * Click detector creation payload typehints
@@ -4732,322 +4769,322 @@ declare module "shapez/game/key_action_mapper" {
      */
     export function getStringForKeyCode(code: number): string;
     export namespace KEYCODES {
-        const Tab: number;
-        const Enter: number;
-        const Shift: number;
-        const Ctrl: number;
-        const Alt: number;
-        const Escape: number;
-        const Space: number;
-        const ArrowLeft: number;
-        const ArrowUp: number;
-        const ArrowRight: number;
-        const ArrowDown: number;
-        const Delete: number;
-        const F1: number;
-        const F2: number;
-        const F3: number;
-        const F4: number;
-        const F5: number;
-        const F6: number;
-        const F7: number;
-        const F8: number;
-        const F9: number;
-        const F10: number;
-        const F11: number;
-        const F12: number;
-        const Plus: number;
-        const Minus: number;
+        export const Tab: number;
+        export const Enter: number;
+        export const Shift: number;
+        export const Ctrl: number;
+        export const Alt: number;
+        export const Escape: number;
+        export const Space: number;
+        export const ArrowLeft: number;
+        export const ArrowUp: number;
+        export const ArrowRight: number;
+        export const ArrowDown: number;
+        export const Delete: number;
+        export const F1: number;
+        export const F2: number;
+        export const F3: number;
+        export const F4: number;
+        export const F5: number;
+        export const F6: number;
+        export const F7: number;
+        export const F8: number;
+        export const F9: number;
+        export const F10: number;
+        export const F11: number;
+        export const F12: number;
+        export const Plus: number;
+        export const Minus: number;
     }
     export namespace KEYMAPPINGS {
-        const mods: {};
-        namespace general {
-            namespace confirm {
-                import keyCode = KEYCODES.Enter;
+        export const mods: {};
+        export namespace general {
+            export namespace confirm {
+                import keyCode = Enter;
                 export { keyCode };
             }
-            namespace back {
-                import keyCode_1 = KEYCODES.Escape;
+            export namespace back {
+                import keyCode_1 = Escape;
                 export { keyCode_1 as keyCode };
                 export const builtin: boolean;
             }
         }
-        namespace ingame {
-            namespace menuOpenShop {
+        export namespace ingame {
+            export namespace menuOpenShop {
                 const keyCode_2: any;
                 export { keyCode_2 as keyCode };
             }
-            namespace menuOpenStats {
+            export namespace menuOpenStats {
                 const keyCode_3: any;
                 export { keyCode_3 as keyCode };
             }
-            namespace menuClose {
+            export namespace menuClose {
                 const keyCode_4: any;
                 export { keyCode_4 as keyCode };
             }
-            namespace toggleHud {
-                import keyCode_5 = KEYCODES.F2;
+            export namespace toggleHud {
+                import keyCode_5 = F2;
                 export { keyCode_5 as keyCode };
             }
-            namespace exportScreenshot {
-                import keyCode_6 = KEYCODES.F3;
+            export namespace exportScreenshot {
+                import keyCode_6 = F3;
                 export { keyCode_6 as keyCode };
             }
-            namespace toggleFPSInfo {
-                import keyCode_7 = KEYCODES.F4;
+            export namespace toggleFPSInfo {
+                import keyCode_7 = F4;
                 export { keyCode_7 as keyCode };
             }
-            namespace switchLayers {
+            export namespace switchLayers {
                 const keyCode_8: any;
                 export { keyCode_8 as keyCode };
             }
-            namespace showShapeTooltip {
-                import keyCode_9 = KEYCODES.Alt;
+            export namespace showShapeTooltip {
+                import keyCode_9 = Alt;
                 export { keyCode_9 as keyCode };
             }
         }
-        namespace navigation {
-            namespace mapMoveUp {
+        export namespace navigation {
+            export namespace mapMoveUp {
                 const keyCode_10: any;
                 export { keyCode_10 as keyCode };
             }
-            namespace mapMoveRight {
+            export namespace mapMoveRight {
                 const keyCode_11: any;
                 export { keyCode_11 as keyCode };
             }
-            namespace mapMoveDown {
+            export namespace mapMoveDown {
                 const keyCode_12: any;
                 export { keyCode_12 as keyCode };
             }
-            namespace mapMoveLeft {
+            export namespace mapMoveLeft {
                 const keyCode_13: any;
                 export { keyCode_13 as keyCode };
             }
-            namespace mapMoveFaster {
-                import keyCode_14 = KEYCODES.Shift;
+            export namespace mapMoveFaster {
+                import keyCode_14 = Shift;
                 export { keyCode_14 as keyCode };
             }
-            namespace centerMap {
-                import keyCode_15 = KEYCODES.Space;
+            export namespace centerMap {
+                import keyCode_15 = Space;
                 export { keyCode_15 as keyCode };
             }
-            namespace mapZoomIn {
-                import keyCode_16 = KEYCODES.Plus;
+            export namespace mapZoomIn {
+                import keyCode_16 = Plus;
                 export { keyCode_16 as keyCode };
                 export const repeated: boolean;
             }
-            namespace mapZoomOut {
-                import keyCode_17 = KEYCODES.Minus;
+            export namespace mapZoomOut {
+                import keyCode_17 = Minus;
                 export { keyCode_17 as keyCode };
                 const repeated_1: boolean;
                 export { repeated_1 as repeated };
             }
-            namespace createMarker {
+            export namespace createMarker {
                 const keyCode_18: any;
                 export { keyCode_18 as keyCode };
             }
         }
-        namespace buildings {
-            namespace constant_producer {
+        export namespace buildings {
+            export namespace constant_producer {
                 const keyCode_19: any;
                 export { keyCode_19 as keyCode };
             }
-            namespace goal_acceptor {
+            export namespace goal_acceptor {
                 const keyCode_20: any;
                 export { keyCode_20 as keyCode };
             }
-            namespace block {
+            export namespace block {
                 const keyCode_21: any;
                 export { keyCode_21 as keyCode };
             }
-            namespace belt {
+            export namespace belt {
                 const keyCode_22: any;
                 export { keyCode_22 as keyCode };
             }
-            namespace balancer {
+            export namespace balancer {
                 const keyCode_23: any;
                 export { keyCode_23 as keyCode };
             }
-            namespace underground_belt {
+            export namespace underground_belt {
                 const keyCode_24: any;
                 export { keyCode_24 as keyCode };
             }
-            namespace miner {
+            export namespace miner {
                 const keyCode_25: any;
                 export { keyCode_25 as keyCode };
             }
-            namespace cutter {
+            export namespace cutter {
                 const keyCode_26: any;
                 export { keyCode_26 as keyCode };
             }
-            namespace rotater {
+            export namespace rotater {
                 const keyCode_27: any;
                 export { keyCode_27 as keyCode };
             }
-            namespace stacker {
+            export namespace stacker {
                 const keyCode_28: any;
                 export { keyCode_28 as keyCode };
             }
-            namespace mixer {
+            export namespace mixer {
                 const keyCode_29: any;
                 export { keyCode_29 as keyCode };
             }
-            namespace painter {
+            export namespace painter {
                 const keyCode_30: any;
                 export { keyCode_30 as keyCode };
             }
-            namespace trash {
+            export namespace trash {
                 const keyCode_31: any;
                 export { keyCode_31 as keyCode };
             }
-            namespace item_producer {
+            export namespace item_producer {
                 const keyCode_32: any;
                 export { keyCode_32 as keyCode };
             }
-            namespace storage {
+            export namespace storage {
                 const keyCode_33: any;
                 export { keyCode_33 as keyCode };
             }
-            namespace reader {
+            export namespace reader {
                 const keyCode_34: any;
                 export { keyCode_34 as keyCode };
             }
-            namespace lever {
+            export namespace lever {
                 const keyCode_35: any;
                 export { keyCode_35 as keyCode };
             }
-            namespace filter {
+            export namespace filter {
                 const keyCode_36: any;
                 export { keyCode_36 as keyCode };
             }
-            namespace display {
+            export namespace display {
                 const keyCode_37: any;
                 export { keyCode_37 as keyCode };
             }
-            namespace wire {
+            export namespace wire {
                 const keyCode_38: any;
                 export { keyCode_38 as keyCode };
             }
-            namespace wire_tunnel {
+            export namespace wire_tunnel {
                 const keyCode_39: any;
                 export { keyCode_39 as keyCode };
             }
-            namespace constant_signal {
+            export namespace constant_signal {
                 const keyCode_40: any;
                 export { keyCode_40 as keyCode };
             }
-            namespace logic_gate {
+            export namespace logic_gate {
                 const keyCode_41: any;
                 export { keyCode_41 as keyCode };
             }
-            namespace virtual_processor {
+            export namespace virtual_processor {
                 const keyCode_42: any;
                 export { keyCode_42 as keyCode };
             }
-            namespace analyzer {
+            export namespace analyzer {
                 const keyCode_43: any;
                 export { keyCode_43 as keyCode };
             }
-            namespace comparator {
+            export namespace comparator {
                 const keyCode_44: any;
                 export { keyCode_44 as keyCode };
             }
-            namespace transistor {
+            export namespace transistor {
                 const keyCode_45: any;
                 export { keyCode_45 as keyCode };
             }
         }
-        namespace placement {
-            namespace pipette {
+        export namespace placement {
+            export namespace pipette {
                 const keyCode_46: any;
                 export { keyCode_46 as keyCode };
             }
-            namespace rotateWhilePlacing {
+            export namespace rotateWhilePlacing {
                 const keyCode_47: any;
                 export { keyCode_47 as keyCode };
             }
-            namespace rotateInverseModifier {
-                import keyCode_48 = KEYCODES.Shift;
+            export namespace rotateInverseModifier {
+                import keyCode_48 = Shift;
                 export { keyCode_48 as keyCode };
             }
-            namespace rotateToUp {
-                import keyCode_49 = KEYCODES.ArrowUp;
+            export namespace rotateToUp {
+                import keyCode_49 = ArrowUp;
                 export { keyCode_49 as keyCode };
             }
-            namespace rotateToDown {
-                import keyCode_50 = KEYCODES.ArrowDown;
+            export namespace rotateToDown {
+                import keyCode_50 = ArrowDown;
                 export { keyCode_50 as keyCode };
             }
-            namespace rotateToRight {
-                import keyCode_51 = KEYCODES.ArrowRight;
+            export namespace rotateToRight {
+                import keyCode_51 = ArrowRight;
                 export { keyCode_51 as keyCode };
             }
-            namespace rotateToLeft {
-                import keyCode_52 = KEYCODES.ArrowLeft;
+            export namespace rotateToLeft {
+                import keyCode_52 = ArrowLeft;
                 export { keyCode_52 as keyCode };
             }
-            namespace cycleBuildingVariants {
+            export namespace cycleBuildingVariants {
                 const keyCode_53: any;
                 export { keyCode_53 as keyCode };
             }
-            namespace cycleBuildings {
-                import keyCode_54 = KEYCODES.Tab;
+            export namespace cycleBuildings {
+                import keyCode_54 = Tab;
                 export { keyCode_54 as keyCode };
             }
-            namespace switchDirectionLockSide {
+            export namespace switchDirectionLockSide {
                 const keyCode_55: any;
                 export { keyCode_55 as keyCode };
             }
-            namespace copyWireValue {
+            export namespace copyWireValue {
                 const keyCode_56: any;
                 export { keyCode_56 as keyCode };
             }
         }
-        namespace massSelect {
-            namespace massSelectStart {
-                import keyCode_57 = KEYCODES.Ctrl;
+        export namespace massSelect {
+            export namespace massSelectStart {
+                import keyCode_57 = Ctrl;
                 export { keyCode_57 as keyCode };
             }
-            namespace massSelectSelectMultiple {
-                import keyCode_58 = KEYCODES.Shift;
+            export namespace massSelectSelectMultiple {
+                import keyCode_58 = Shift;
                 export { keyCode_58 as keyCode };
             }
-            namespace massSelectCopy {
+            export namespace massSelectCopy {
                 const keyCode_59: any;
                 export { keyCode_59 as keyCode };
             }
-            namespace massSelectCut {
+            export namespace massSelectCut {
                 const keyCode_60: any;
                 export { keyCode_60 as keyCode };
             }
-            namespace massSelectClear {
+            export namespace massSelectClear {
                 const keyCode_61: any;
                 export { keyCode_61 as keyCode };
             }
-            namespace confirmMassDelete {
-                import keyCode_62 = KEYCODES.Delete;
+            export namespace confirmMassDelete {
+                import keyCode_62 = Delete;
                 export { keyCode_62 as keyCode };
             }
-            namespace pasteLastBlueprint {
+            export namespace pasteLastBlueprint {
                 const keyCode_63: any;
                 export { keyCode_63 as keyCode };
             }
         }
-        namespace placementModifiers {
-            namespace lockBeltDirection {
-                import keyCode_64 = KEYCODES.Shift;
+        export namespace placementModifiers {
+            export namespace lockBeltDirection {
+                import keyCode_64 = Shift;
                 export { keyCode_64 as keyCode };
             }
-            namespace placementDisableAutoOrientation {
-                import keyCode_65 = KEYCODES.Ctrl;
+            export namespace placementDisableAutoOrientation {
+                import keyCode_65 = Ctrl;
                 export { keyCode_65 as keyCode };
             }
-            namespace placeMultiple {
-                import keyCode_66 = KEYCODES.Shift;
+            export namespace placeMultiple {
+                import keyCode_66 = Shift;
                 export { keyCode_66 as keyCode };
             }
-            namespace placeInverse {
-                import keyCode_67 = KEYCODES.Alt;
+            export namespace placeInverse {
+                import keyCode_67 = Alt;
                 export { keyCode_67 as keyCode };
             }
         }
@@ -5308,16 +5345,16 @@ declare module "shapez/game/hud/base_hud_part" {
 declare module "shapez/game/game_mode" {
     export type enumGameModeIds = string;
     export namespace enumGameModeIds {
-        const puzzleEdit: string;
-        const puzzlePlay: string;
-        const regular: string;
+        export const puzzleEdit: string;
+        export const puzzlePlay: string;
+        export const regular: string;
     }
     export type enumGameModeTypes = string;
-    export namespace enumGameModeTypes {
-        const _default: string;
-        export { _default as default };
-        export const puzzle: string;
-    }
+    /** @enum {string} */
+    export const enumGameModeTypes: {
+        default: string;
+        puzzle: string;
+    };
     export class GameMode extends BasicSerializableObject {
         /** @returns {string} */
         static getId(): string;
@@ -5365,7 +5402,7 @@ declare module "shapez/game/game_mode" {
         getMaximumZoom(): number;
         /** @returns {Object<string, Array>} */
         getUpgrades(): {
-            [x: string]: any[];
+            [x: string]: Array;
         };
         throughputDoesNotMatter(): boolean;
         /**
@@ -5433,8 +5470,7 @@ declare module "shapez/core/global_registries" {
     export type GameMode = import("shapez/game/game_mode").GameMode;
     /**
      * // These factories are here to remove circular dependencies
-     *
-     * /**
+    /**
      */
     export type MetaBuilding = import("shapez/game/meta_building").MetaBuilding;
 }
@@ -5801,9 +5837,9 @@ declare module "shapez/game/camera" {
     export const USER_INTERACT_TOUCHEND: "touchend";
     export type enumMouseButton = string;
     export namespace enumMouseButton {
-        const left: string;
-        const middle: string;
-        const right: string;
+        export const left: string;
+        export const middle: string;
+        export const right: string;
     }
     export class Camera extends BasicSerializableObject {
         static getId(): string;
@@ -5899,7 +5935,7 @@ declare module "shapez/game/camera" {
         /**
          * Returns effective world space viewport right
          */
-        getViewportRight(): number;
+        getViewportRight(): any;
         /**
          * Returns effective world space viewport top
          */
@@ -5907,7 +5943,7 @@ declare module "shapez/game/camera" {
         /**
          * Returns effective world space viewport bottom
          */
-        getViewportBottom(): number;
+        getViewportBottom(): any;
         /**
          * Returns the visible world space rect
          * @returns {Rectangle}
@@ -6127,8 +6163,8 @@ declare module "shapez/game/hud/dynamic_dom_attach" {
         timeToKeepSeconds: number;
         lastVisibleTime: number;
         attached: boolean;
-        internalIsClassAttached: boolean;
-        classAttachTimeout: number;
+        internalIsClassAttached: any;
+        classAttachTimeout: NodeJS.Timeout;
         /** @type {DOMRect} */
         lastComputedBounds: DOMRect;
         lastComputedBoundsTime: number;
@@ -6163,12 +6199,12 @@ declare module "shapez/game/hud/dynamic_dom_attach" {
 declare module "shapez/game/hud/parts/notifications" {
     export type enumNotificationType = string;
     export namespace enumNotificationType {
-        const saved: string;
-        const upgrade: string;
-        const success: string;
-        const info: string;
-        const warning: string;
-        const error: string;
+        export const saved: string;
+        export const upgrade: string;
+        export const success: string;
+        export const info: string;
+        export const warning: string;
+        export const error: string;
     }
     export class HUDNotifications extends BaseHUDPart {
         constructor(root: import("shapez/game/root").GameRoot);
@@ -6195,7 +6231,15 @@ declare module "shapez/game/hud/parts/waypoints" {
          * Serializes the waypoints
          */
         serialize(): {
-            waypoints: Waypoint[];
+            waypoints: {
+                label: string | null;
+                center: {
+                    x: number;
+                    y: number;
+                };
+                zoomLevel: number;
+                layer: any;
+            }[];
         };
         /**
          * Deserializes the waypoints
@@ -6531,138 +6575,78 @@ declare module "shapez/savegame/serialization" {
      * @returns {Schema}
      */
     export function extendSchema(base: Schema, newOne: Schema): Schema;
-    export namespace types {
-        export const int: TypeInteger;
-        export const uint: TypePositiveInteger;
-        export const float: TypeNumber;
-        export const ufloat: TypePositiveNumber;
-        export const string: TypeString;
-        export const entity: TypeEntity;
-        export const weakEntityRef: TypeEntityWeakref;
-        export const vector: TypeVector;
-        export const tileVector: TypeVector;
-        export const bool: TypeBoolean;
-        export const uintOrString: TypePositiveIntegerOrString;
+    export const types: {
+        int: TypeInteger;
+        uint: TypePositiveInteger;
+        float: TypeNumber;
+        ufloat: TypePositiveNumber;
+        string: TypeString;
+        entity: TypeEntity;
+        weakEntityRef: TypeEntityWeakref;
+        vector: TypeVector;
+        tileVector: TypeVector;
+        bool: TypeBoolean;
+        uintOrString: TypePositiveIntegerOrString;
         /**
          * @param {BaseDataType} wrapped
          */
-        export function nullable(wrapped: BaseDataType): TypeNullable;
-        /**
-         * @param {BaseDataType} wrapped
-         */
-        export function nullable(wrapped: BaseDataType): TypeNullable;
+        nullable(wrapped: BaseDataType): TypeNullable;
         /**
          * @param {FactoryTemplate<*>|SingletonFactoryTemplate<*>} registry
          */
-        export function classId(registry: any): TypeClassId;
-        /**
-         * @param {FactoryTemplate<*>|SingletonFactoryTemplate<*>} registry
-         */
-        export function classId(registry: any): TypeClassId;
+        classId(registry: any | any): TypeClassId;
         /**
          * @param {BaseDataType} valueType
          * @param {boolean=} includeEmptyValues
          */
-        export function keyValueMap(valueType: BaseDataType, includeEmptyValues?: boolean): TypeKeyValueMap;
-        /**
-         * @param {BaseDataType} valueType
-         * @param {boolean=} includeEmptyValues
-         */
-        export function keyValueMap(valueType: BaseDataType, includeEmptyValues?: boolean): TypeKeyValueMap;
+        keyValueMap(valueType: BaseDataType, includeEmptyValues?: boolean | undefined): TypeKeyValueMap;
         /**
          * @param {Object<string, any>} values
          */
-        function _enum(values: { [x: string]: any }): TypeEnum;
-        /**
-         * @param {Object<string, any>} values
-         */
-        export function _enum(values: { [x: string]: any }): TypeEnum;
-        export { _enum as enum };
+        enum(values: { [x: string]: any }): TypeEnum;
         /**
          * @param {FactoryTemplate<*>} registry
          * @param {(GameRoot, any) => object=} resolver
          */
-        export function obj(registry: any, resolver?: (GameRoot: any, any: any) => any): TypeClass;
-        /**
-         * @param {FactoryTemplate<*>} registry
-         * @param {(GameRoot, any) => object=} resolver
-         */
-        export function obj(registry: any, resolver?: (GameRoot: any, any: any) => any): TypeClass;
+        obj(registry: any, resolver?: (GameRoot: any, any: any) => object): TypeClass;
         /**
          * @param {FactoryTemplate<*>} registry
          */
-        export function objData(registry: any): TypeClassData;
-        /**
-         * @param {FactoryTemplate<*>} registry
-         */
-        export function objData(registry: any): TypeClassData;
+        objData(registry: any): TypeClassData;
         /**
          * @param {typeof BasicSerializableObject} cls
          */
-        export function knownType(cls: typeof BasicSerializableObject): TypeFixedClass;
-        /**
-         * @param {typeof BasicSerializableObject} cls
-         */
-        export function knownType(cls: typeof BasicSerializableObject): TypeFixedClass;
+        knownType(cls: typeof BasicSerializableObject): TypeFixedClass;
         /**
          * @param {BaseDataType} innerType
          */
-        export function array(innerType: BaseDataType): TypeArray;
+        array(innerType: BaseDataType): TypeArray;
         /**
          * @param {BaseDataType} innerType
          */
-        export function array(innerType: BaseDataType): TypeArray;
-        /**
-         * @param {BaseDataType} innerType
-         */
-        export function fixedSizeArray(innerType: BaseDataType): TypeArray;
-        /**
-         * @param {BaseDataType} innerType
-         */
-        export function fixedSizeArray(innerType: BaseDataType): TypeArray;
+        fixedSizeArray(innerType: BaseDataType): TypeArray;
         /**
          * @param {SingletonFactoryTemplate<*>} innerType
          */
-        export function classRef(registry: any): TypeMetaClass;
-        /**
-         * @param {SingletonFactoryTemplate<*>} innerType
-         */
-        export function classRef(registry: any): TypeMetaClass;
+        classRef(registry: any): TypeMetaClass;
         /**
          * @param {Object.<string, BaseDataType>} descriptor
          */
-        export function structured(descriptor: { [x: string]: BaseDataType }): TypeStructuredObject;
-        /**
-         * @param {Object.<string, BaseDataType>} descriptor
-         */
-        export function structured(descriptor: { [x: string]: BaseDataType }): TypeStructuredObject;
+        structured(descriptor: { [x: string]: BaseDataType }): TypeStructuredObject;
         /**
          * @param {BaseDataType} a
          * @param {BaseDataType} b
          */
-        export function pair(a: BaseDataType, b: BaseDataType): TypePair;
-        /**
-         * @param {BaseDataType} a
-         * @param {BaseDataType} b
-         */
-        export function pair(a: BaseDataType, b: BaseDataType): TypePair;
+        pair(a: BaseDataType, b: BaseDataType): TypePair;
         /**
          * @param {typeof BasicSerializableObject} classHandle
          * @param {SingletonFactoryTemplate<*>} registry
          */
-        export function classWithMetaclass(
+        classWithMetaclass(
             classHandle: typeof BasicSerializableObject,
             registry: any
         ): TypeClassFromMetaclass;
-        /**
-         * @param {typeof BasicSerializableObject} classHandle
-         * @param {SingletonFactoryTemplate<*>} registry
-         */
-        export function classWithMetaclass(
-            classHandle: typeof BasicSerializableObject,
-            registry: any
-        ): TypeClassFromMetaclass;
-    }
+    };
     export class BasicSerializableObject {
         static getId(): void;
         /**
@@ -6742,8 +6726,8 @@ declare module "shapez/game/time/game_time" {
         constructor(root: GameRoot);
         root: GameRoot;
         timeSeconds: number;
-        realtimeSeconds: number;
-        realtimeAdjust: number;
+        realtimeSeconds: any;
+        realtimeAdjust: any;
         /** @type {BaseGameSpeed} */
         speed: BaseGameSpeed;
         logicTimeBudget: number;
@@ -6855,7 +6839,7 @@ declare module "shapez/game/entity_manager" {
          *
          * @returns {Map<number, Entity>}
          */
-        getFrozenUidSearchMap(): any;
+        getFrozenUidSearchMap(): Map<number, Entity>;
         /**
          * Returns all entities having the given component
          * @param {typeof Component} componentHandle
@@ -7221,7 +7205,7 @@ declare module "shapez/game/systems/item_processor" {
      */
     export type ProcessorImplementationPayload = {
         entity: Entity;
-        items: any;
+        items: Map<number, BaseItem>;
         inputCount: number;
         outItems: Array<ProducedItem>;
     };
@@ -7304,7 +7288,7 @@ declare module "shapez/game/systems/static_map_entity" {
     export class StaticMapEntitySystem extends GameSystem {
         constructor(root: any);
         /** @type {Set<number>} */
-        drawnUids: any;
+        drawnUids: Set<number>;
         /**
          * Clears the uid list when a new frame started
          */
@@ -7348,7 +7332,7 @@ declare module "shapez/game/systems/storage" {
          * Stores which uids were already drawn to avoid drawing entities twice
          * @type {Set<number>}
          */
-        drawnUids: any;
+        drawnUids: Set<number>;
         clearDrawnUids(): void;
         /**
          * @param {DrawParameters} parameters
@@ -7400,7 +7384,7 @@ declare module "shapez/game/systems/wired_pins" {
 declare module "shapez/game/systems/belt_underlays" {
     export class BeltUnderlaysSystem extends GameSystemWithFilter {
         constructor(root: any);
-        underlayBeltSprites: import("shapez/core/sprites").AtlasSprite[];
+        underlayBeltSprites: any[];
         staleArea: StaleAreaDetector;
         /**
          * Called when an area changed - Resets all caches in the given area
@@ -7569,7 +7553,7 @@ declare module "shapez/game/systems/item_processor_overlays" {
         spriteDisabled: import("shapez/core/sprites").AtlasSprite;
         spriteDisconnected: import("shapez/core/sprites").AtlasSprite;
         readerOverlaySprite: import("shapez/core/sprites").AtlasSprite;
-        drawnUids: any;
+        drawnUids: Set<any>;
         clearDrawnUids(): void;
         /**
          *
@@ -7873,7 +7857,7 @@ declare module "shapez/core/request_channel" {
     export const PROMISE_ABORTED: "promise-aborted";
     export class RequestChannel {
         /** @type {Array<Promise>} */
-        pendingPromises: Array<Promise<any>>;
+        pendingPromises: Array<Promise>;
         /**
          *
          * @param {Promise<any>} promise
@@ -8122,8 +8106,8 @@ declare module "shapez/core/sensitive_utils.encrypt" {
      * Computes the crc for a given string
      * @param {string} str
      */
-    export function computeCrc(str: string): any;
-    export const CRC_PREFIX: any;
+    export function computeCrc(str: string): string;
+    export const CRC_PREFIX: string;
 }
 declare module "shapez/platform/storage" {
     export const FILE_NOT_FOUND: "file_not_found";
@@ -8176,7 +8160,7 @@ declare module "shapez/webworkers/compression.worker" {
     export {};
 }
 declare module "shapez/core/async_compression" {
-    export let compressionPrefix: any;
+    export let compressionPrefix: string;
     export const asyncCompressor: AsynCompression;
     export type JobEntry = {
         errorHandler: (arg0: any) => void;
@@ -8360,10 +8344,10 @@ declare module "shapez/savegame/schemas/1005" {
 declare module "shapez/game/buildings/balancer" {
     export type enumBalancerVariants = string;
     export namespace enumBalancerVariants {
-        const merger: string;
-        const mergerInverse: string;
-        const splitter: string;
-        const splitterInverse: string;
+        export const merger: string;
+        export const mergerInverse: string;
+        export const splitter: string;
+        export const splitterInverse: string;
     }
     export class MetaBalancerBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -8376,7 +8360,7 @@ declare module "shapez/game/buildings/balancer" {
 declare module "shapez/game/buildings/cutter" {
     export type enumCutterVariants = string;
     export namespace enumCutterVariants {
-        const quad: string;
+        export const quad: string;
     }
     export class MetaCutterBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -8389,7 +8373,7 @@ declare module "shapez/game/buildings/cutter" {
 declare module "shapez/game/buildings/miner" {
     export type enumMinerVariants = string;
     export namespace enumMinerVariants {
-        const chainable: string;
+        export const chainable: string;
     }
     export class MetaMinerBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -8411,9 +8395,9 @@ declare module "shapez/game/buildings/mixer" {
 declare module "shapez/game/buildings/painter" {
     export type enumPainterVariants = string;
     export namespace enumPainterVariants {
-        const mirrored: string;
-        const double: string;
-        const quad: string;
+        export const mirrored: string;
+        export const double: string;
+        export const quad: string;
     }
     export class MetaPainterBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -8426,8 +8410,8 @@ declare module "shapez/game/buildings/painter" {
 declare module "shapez/game/buildings/rotater" {
     export type enumRotaterVariants = string;
     export namespace enumRotaterVariants {
-        const ccw: string;
-        const rotate180: string;
+        export const ccw: string;
+        export const rotate180: string;
     }
     export class MetaRotaterBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -8471,7 +8455,7 @@ declare module "shapez/game/buildings/underground_belt" {
     export const arrayUndergroundRotationVariantToMode: string[];
     export type enumUndergroundBeltVariants = string;
     export namespace enumUndergroundBeltVariants {
-        const tier2: string;
+        export const tier2: string;
     }
     export const enumUndergroundBeltVariantToTier: {
         [x: string]: number;
@@ -8660,7 +8644,7 @@ declare module "shapez/game/hud/parts/base_toolbar" {
         /**
          * @param {MetaBuilding} metaBuilding
          */
-        inRequiredBuildings(metaBuilding: MetaBuilding): any;
+        inRequiredBuildings(metaBuilding: MetaBuilding): boolean;
     }
     import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
     import { MetaBuilding } from "shapez/game/meta_building";
@@ -8679,9 +8663,9 @@ declare module "shapez/game/buildings/constant_signal" {
 declare module "shapez/game/buildings/logic_gate" {
     export type enumLogicGateVariants = string;
     export namespace enumLogicGateVariants {
-        const not: string;
-        const xor: string;
-        const or: string;
+        export const not: string;
+        export const xor: string;
+        export const or: string;
     }
     export class MetaLogicGateBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -8689,6 +8673,7 @@ declare module "shapez/game/buildings/logic_gate" {
             variant: string;
         }[];
     }
+    export type enumVariantToGate = string;
     import { MetaBuilding } from "shapez/game/meta_building";
 }
 declare module "shapez/game/buildings/lever" {
@@ -8712,10 +8697,10 @@ declare module "shapez/game/buildings/wire_tunnel" {
 declare module "shapez/game/buildings/virtual_processor" {
     export type enumVirtualProcessorVariants = string;
     export namespace enumVirtualProcessorVariants {
-        const rotater: string;
-        const unstacker: string;
-        const stacker: string;
-        const painter: string;
+        export const rotater: string;
+        export const unstacker: string;
+        export const stacker: string;
+        export const painter: string;
     }
     export class MetaVirtualProcessorBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -8723,12 +8708,13 @@ declare module "shapez/game/buildings/virtual_processor" {
             variant: string;
         }[];
     }
+    export type enumVariantToGate = string;
     import { MetaBuilding } from "shapez/game/meta_building";
 }
 declare module "shapez/game/buildings/transistor" {
     export type enumTransistorVariants = string;
     export namespace enumTransistorVariants {
-        const mirrored: string;
+        export const mirrored: string;
     }
     export class MetaTransistorBuilding extends MetaBuilding {
         static getAllVariantCombinations(): {
@@ -8799,7 +8785,7 @@ declare module "shapez/game/tutorial_goals_mappings" {
      * @enum {TutorialGoalReward?}
      */
     export const enumHubGoalRewardsToContentUnlocked: {
-        [x: string]: TutorialGoalReward;
+        [x: string]: [typeof MetaBuilding, string][];
     };
     export type TutorialGoalReward = [typeof MetaBuilding, string][];
     import { MetaBuilding } from "shapez/game/meta_building";
@@ -8809,7 +8795,7 @@ declare module "shapez/game/hud/parts/unlock_notification" {
         constructor(root: import("shapez/game/root").GameRoot);
         visible: boolean;
         domAttach: DynamicDomAttach;
-        buttonShowTimeout: number;
+        buttonShowTimeout: NodeJS.Timeout;
         inputReciever: InputReceiver;
         element: HTMLDivElement;
         elemTitle: HTMLDivElement;
@@ -8890,7 +8876,7 @@ declare module "shapez/game/hud/parts/mass_selector" {
         constructor(root: import("shapez/game/root").GameRoot);
         currentSelectionStartWorld: Vector;
         currentSelectionEnd: Vector;
-        selectedUids: any;
+        selectedUids: Set<any>;
         /**
          * Handles the destroy callback and makes sure we clean our list
          * @param {Entity} entity
@@ -8954,8 +8940,8 @@ declare module "shapez/game/hud/parts/shop" {
 declare module "shapez/game/hud/parts/statistics_handle" {
     export type enumDisplayMode = string;
     export namespace enumDisplayMode {
-        const icons: string;
-        const detailed: string;
+        export const icons: string;
+        export const detailed: string;
     }
     /**
      * Stores how many seconds one unit is
@@ -8977,7 +8963,7 @@ declare module "shapez/game/hud/parts/statistics_handle" {
         definition: ShapeDefinition;
         root: GameRoot;
         intersectionObserver: IntersectionObserver;
-        visible: boolean;
+        visible: any;
         initElement(): void;
         element: HTMLDivElement;
         counter: HTMLSpanElement;
@@ -9234,7 +9220,7 @@ declare module "shapez/game/hud/parts/miner_highlight" {
          * @param {Set<number>} seenUids Which entities have already been processed
          * @returns {Array<Entity>} The connected miners
          */
-        findConnectedMiners(entity: Entity, seenUids?: any): Array<Entity>;
+        findConnectedMiners(entity: Entity, seenUids?: Set<number>): Array<Entity>;
     }
     import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
     import { Entity } from "shapez/game/entity";
@@ -9480,9 +9466,9 @@ declare module "shapez/game/hud/parts/interactive_tutorial" {
 }
 declare module "shapez/core/query_parameters" {
     export namespace queryParamOptions {
-        const embedProvider: any;
-        const fullVersion: boolean;
-        const sandboxMode: boolean;
+        export const embedProvider: any;
+        export const fullVersion: boolean;
+        export const sandboxMode: boolean;
     }
 }
 declare module "shapez/game/hud/parts/sandbox_controller" {
@@ -9537,7 +9523,11 @@ declare module "shapez/game/modes/regular" {
         improvement?: number;
         excludePrevious?: boolean;
     };
-    export type UpgradeTiers = TierRequirement[];
+    export type UpgradeTiers = {
+        required: Array<UpgradeRequirement>;
+        improvement?: number;
+        excludePrevious?: boolean;
+    }[];
     export type LevelDefinition = {
         shape: string;
         required: number;
@@ -9613,7 +9603,13 @@ declare module "shapez/savegame/savegame" {
             }
         );
         internalId: string;
-        metaDataRef: import("shapez/savegame/savegame_typedefs").SavegameMetadata;
+        metaDataRef: {
+            lastUpdate: number;
+            version: number;
+            internalId: string;
+            level: number;
+            name: string;
+        };
         /**
          * Returns if this game can be saved on disc
          * @returns {boolean}
@@ -9671,8 +9667,23 @@ declare module "shapez/savegame/savegame" {
     export type GameRoot = import("shapez/game/root").GameRoot;
     export type SavegameData = {
         version: number;
-        dump: import("shapez/savegame/savegame_typedefs").SerializedGame;
-        stats: import("shapez/savegame/savegame_typedefs").SavegameStats;
+        dump: {
+            camera: any;
+            time: any;
+            entityMgr: any;
+            map: any;
+            gameMode: any;
+            hubGoals: any;
+            pinnedShapes: any;
+            waypoints: any;
+            entities: import("shapez/game/entity").Entity[];
+            beltPaths: any[];
+        };
+        stats: {
+            failedMam: boolean;
+            trashedCount: number;
+            usedInverseRotater: boolean;
+        };
         lastUpdate: number;
     };
     export type SavegameMetadata = {
@@ -9710,7 +9721,7 @@ declare module "shapez/core/buffer_maintainer" {
         constructor(root: GameRoot);
         root: GameRoot;
         /** @type {Map<string, Map<string, CacheEntry>>} */
-        cache: any;
+        cache: Map<string, Map<string, CacheEntry>>;
         iterationIndex: number;
         lastIteration: number;
         /**
@@ -9782,8 +9793,8 @@ declare module "shapez/core/buffer_maintainer" {
 declare module "shapez/game/automatic_save" {
     export type enumSavePriority = number;
     export namespace enumSavePriority {
-        const regular: number;
-        const asap: number;
+        export const regular: number;
+        export const asap: number;
     }
     export class AutomaticSave {
         constructor(root: any);
@@ -10034,10 +10045,21 @@ declare module "shapez/game/logic" {
         /**
          * Checks if the given entity can be placed
          * @param {Entity} entity
-         * @param {Vector=} offset Optional, move the entity by the given offset first
+         * @param {Object} param0
+         * @param {boolean=} param0.allowReplaceBuildings
+         * @param {Vector=} param0.offset Optional, move the entity by the given offset first
          * @returns {boolean} true if the entity could be placed there
          */
-        checkCanPlaceEntity(entity: Entity, offset?: Vector | undefined): boolean;
+        checkCanPlaceEntity(
+            entity: Entity,
+            {
+                allowReplaceBuildings,
+                offset,
+            }: {
+                allowReplaceBuildings?: boolean | undefined;
+                offset?: Vector | undefined;
+            }
+        ): boolean;
         /**
          * Attempts to place the given building
          * @param {object} param0
@@ -10150,8 +10172,18 @@ declare module "shapez/game/logic" {
         fromDirection: enumDirection;
     }[];
     export type AcceptorsAndEjectorsAffectingTile = {
-        acceptors: AcceptorsAffectingTile;
-        ejectors: EjectorsAffectingTile;
+        acceptors: {
+            entity: Entity;
+            slot: import("shapez/game/components/item_acceptor").ItemAcceptorSlot;
+            toTile: Vector;
+            fromDirection: enumDirection;
+        }[];
+        ejectors: {
+            entity: Entity;
+            slot: import("shapez/game/components/item_ejector").ItemEjectorSlot;
+            fromTile: Vector;
+            toDirection: enumDirection;
+        }[];
     };
     import { GameRoot } from "shapez/game/root";
     import { Entity } from "shapez/game/entity";
@@ -10227,29 +10259,33 @@ declare module "shapez/game/map" {
         /**
          * Mapping of 'X|Y' to chunk
          * @type {Map<string, MapChunkView>} */
-        chunksById: any;
+        chunksById: Map<string, MapChunkView>;
         /**
          * Mapping of 'X|Y' to chunk aggregate
          * @type {Map<string, MapChunkAggregate>} */
-        aggregatesById: any;
+        aggregatesById: Map<string, MapChunkAggregate>;
         /**
          * Returns the given chunk by index
          * @param {number} chunkX
          * @param {number} chunkY
          */
-        getChunk(chunkX: number, chunkY: number, createIfNotExistent?: boolean): any;
+        getChunk(chunkX: number, chunkY: number, createIfNotExistent?: boolean): MapChunkView;
         /**
          * Returns the chunk aggregate containing a given chunk
          * @param {number} chunkX
          * @param {number} chunkY
          */
-        getAggregateForChunk(chunkX: number, chunkY: number, createIfNotExistent?: boolean): any;
+        getAggregateForChunk(
+            chunkX: number,
+            chunkY: number,
+            createIfNotExistent?: boolean
+        ): MapChunkAggregate;
         /**
          * Returns the given chunk aggregate by index
          * @param {number} aggX
          * @param {number} aggY
          */
-        getAggregate(aggX: number, aggY: number, createIfNotExistent?: boolean): any;
+        getAggregate(aggX: number, aggY: number, createIfNotExistent?: boolean): MapChunkAggregate;
         /**
          * Gets or creates a new chunk if not existent for the given tile
          * @param {number} tileX
@@ -10339,6 +10375,7 @@ declare module "shapez/game/map" {
     import { BasicSerializableObject } from "shapez/savegame/serialization";
     import { GameRoot } from "shapez/game/root";
     import { MapChunkView } from "shapez/game/map_chunk_view";
+    import { MapChunkAggregate } from "shapez/game/map_chunk_aggregate";
     import { Vector } from "shapez/core/vector";
     import { Entity } from "shapez/game/entity";
     import { BaseItem } from "shapez/game/base_item";
@@ -10639,22 +10676,21 @@ declare module "shapez/game/core" {
 }
 declare module "shapez/states/ingame" {
     export namespace GAME_LOADING_STATES {
-        const s3_createCore: string;
-        const s4_A_initEmptyGame: string;
-        const s4_B_resumeGame: string;
-        const s5_firstUpdate: string;
-        const s6_postLoadHook: string;
-        const s7_warmup: string;
-        const s10_gameRunning: string;
-        const leaving: string;
-        const destroyed: string;
-        const initFailed: string;
+        export const s3_createCore: string;
+        export const s4_A_initEmptyGame: string;
+        export const s4_B_resumeGame: string;
+        export const s5_firstUpdate: string;
+        export const s6_postLoadHook: string;
+        export const s7_warmup: string;
+        export const s10_gameRunning: string;
+        export const leaving: string;
+        export const destroyed: string;
+        export const initFailed: string;
     }
-    export namespace gameCreationAction {
-        const _new: string;
-        export { _new as new };
-        export const resume: string;
-    }
+    export const gameCreationAction: {
+        new: string;
+        resume: string;
+    };
     export class GameCreationPayload {
         /** @type {boolean|undefined} */
         fastEnter: boolean | undefined;
@@ -10668,7 +10704,7 @@ declare module "shapez/states/ingame" {
     export class InGameState extends GameState {
         /** @type {GameCreationPayload} */
         creationPayload: GameCreationPayload;
-        stage: string;
+        stage: any;
         /** @type {GameCore} */
         core: GameCore;
         /** @type {KeyActionMapper} */
@@ -10772,16 +10808,16 @@ declare module "shapez/states/ingame" {
 }
 declare module "shapez/mods/mod_signals" {
     export namespace MOD_SIGNALS {
-        const appBooted: Signal;
-        const modifyLevelDefinitions: any;
-        const modifyUpgrades: any;
-        const hudElementInitialized: any;
-        const hudElementFinalized: any;
-        const hudInitializer: any;
-        const gameInitialized: any;
-        const gameLoadingStageEntered: any;
-        const gameStarted: any;
-        const stateEntered: any;
+        export const appBooted: Signal;
+        export const modifyLevelDefinitions: any;
+        export const modifyUpgrades: any;
+        export const hudElementInitialized: any;
+        export const hudElementFinalized: any;
+        export const hudInitializer: any;
+        export const gameInitialized: any;
+        export const gameLoadingStageEntered: any;
+        export const gameStarted: any;
+        export const stateEntered: any;
     }
     import { Signal } from "shapez/core/signal";
 }
@@ -11070,9 +11106,9 @@ declare module "shapez/game/hud/parts/building_placer" {
         variantClickDetectors: Array<ClickDetector>;
         /**
          * Makes the lock indicator sprite for the given layer
-         * @param {Layer} layer
+         * @param {string} layer
          */
-        makeLockIndicatorSprite(layer: any): HTMLCanvasElement;
+        makeLockIndicatorSprite(layer: string): HTMLCanvasElement;
         /**
          * Rerenders the building info dialog
          */
@@ -11094,6 +11130,13 @@ declare module "shapez/game/hud/parts/building_placer" {
          * @param {DrawParameters} parameters
          */
         drawRegularPlacement(parameters: DrawParameters): void;
+        /**
+         * Checks if there are any entities in the way, returns true if there are
+         * @param {Vector} from
+         * @param {Vector} to
+         * @returns
+         */
+        checkForObstales(from: Vector, to: Vector): boolean;
         /**
          * @param {DrawParameters} parameters
          */
@@ -11197,14 +11240,18 @@ declare module "shapez/game/hud/parts/debug_info" {
          */
         cycleModes(): void;
     }
+    export type enumDebugOverlayMode = string;
+    /**
+     * Specifies which mode follows after which mode
+     */
+    export type enumDebugOverlayModeNext = string;
     import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
     import { TrackedState } from "shapez/core/tracked_state";
     import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    type enumDebugOverlayMode = string;
     namespace enumDebugOverlayMode {
-        const disabled: string;
-        const regular: string;
-        const detailed: string;
+        export const disabled: string;
+        export const regular: string;
+        export const detailed: string;
     }
     export {};
 }
@@ -11341,7 +11388,7 @@ declare module "shapez/game/hud/trailer_maker" {
         markers: any[];
         playbackMarkers: any[];
         currentPlaybackOrigin: Vector;
-        currentPlaybackZoom: number;
+        currentPlaybackZoom: any;
         update(): void;
     }
     import { GameRoot } from "shapez/game/root";
@@ -11810,9 +11857,23 @@ declare module "shapez/core/atlas_definitions" {
          * @param {SourceData} sourceData
          */
         constructor({ frames, meta }: SourceData);
-        meta: AtlasMeta;
+        meta: {
+            app: string;
+            version: string;
+            image: string;
+            format: string;
+            size: Size;
+            scale: string;
+            smartupdate: string;
+        };
         sourceData: {
-            [x: string]: SpriteDefinition;
+            [x: string]: {
+                frame: Position & Size;
+                rotated: boolean;
+                spriteSourceSize: Position & Size;
+                sourceSize: Size;
+                trimmed: boolean;
+            };
         };
         sourceFileName: string;
         getFullSourcePath(): string;
@@ -11860,7 +11921,7 @@ declare module "shapez/core/loader" {
     class LoaderImpl {
         app: import("shapez/application").Application;
         /** @type {Map<string, BaseSprite>} */
-        sprites: any;
+        sprites: Map<string, BaseSprite>;
         rawImages: any[];
         /**
          * @param {Application} app
@@ -11978,7 +12039,15 @@ declare module "shapez/mods/mod" {
         });
         app: Application;
         modLoader: ModLoader;
-        metadata: import("shapez/mods/modloader").ModMetadata;
+        metadata: {
+            name: string;
+            version: string;
+            author: string;
+            website: string;
+            description: string;
+            id: string;
+            settings: [];
+        };
         signals: {
             appBooted: import("shapez/core/signal").Signal;
             modifyLevelDefinitions: any;
@@ -12180,6 +12249,11 @@ declare module "shapez/mods/mod_interface" {
          */
         registerGameTheme({ id, name, theme }: { id: string; name: string; theme: any }): void;
         /**
+         * Registers a new state class, should be a GameState derived class
+         * @param {typeof GameState} stateClass
+         */
+        registerGameState(stateClass: any): void;
+        /**
          * @param {object} param0
          * @param {"regular"|"wires"} param0.toolbar
          * @param {"primary"|"secondary"} param0.location
@@ -12205,11 +12279,18 @@ declare module "shapez/mods/mod_interface" {
          * @param {beforePrams<O, P[M]>} override
          */
         replaceMethod<
-            C extends constructable,
+            C extends {
+                new (...args: any[]): any;
+                prototype: any;
+            },
             P extends C["prototype"],
             M extends keyof P,
-            O extends extendsPrams<P[M]>
-        >(classHandle: C, methodName: M, override: beforePrams<O, P[M]>): void;
+            O extends (args_0: any, ...args_1: any[]) => ReturnType<P[M]>
+        >(
+            classHandle: C,
+            methodName: M,
+            override: (args_0: P[M], args_1: Parameters<O>) => ReturnType<O>
+        ): void;
         /**
          * Runs before a method on a given class
          * @template {constructable} C  the class
@@ -12221,10 +12302,13 @@ declare module "shapez/mods/mod_interface" {
          * @param {O} executeBefore
          */
         runBeforeMethod<
-            C_1 extends constructable,
+            C_1 extends {
+                new (...args: any[]): any;
+                prototype: any;
+            },
             P_1 extends C_1["prototype"],
             M_1 extends keyof P_1,
-            O_1 extends extendsPrams<P_1[M_1]>
+            O_1 extends (args_0: any, ...args_1: any[]) => ReturnType<P_1[M_1]>
         >(classHandle: C_1, methodName: M_1, executeBefore: O_1): void;
         /**
          * Runs after a method on a given class
@@ -12237,10 +12321,13 @@ declare module "shapez/mods/mod_interface" {
          * @param {O} executeAfter
          */
         runAfterMethod<
-            C_2 extends constructable,
+            C_2 extends {
+                new (...args: any[]): any;
+                prototype: any;
+            },
             P_2 extends C_2["prototype"],
             M_2 extends keyof P_2,
-            O_2 extends extendsPrams<P_2[M_2]>
+            O_2 extends (args_0: any, ...args_1: any[]) => ReturnType<P_2[M_2]>
         >(classHandle: C_2, methodName: M_2, executeAfter: O_2): void;
         /**
          *
@@ -12250,13 +12337,10 @@ declare module "shapez/mods/mod_interface" {
         extendObject(prototype: any, extender: ({ $super, $old }: { $super: any; $old: any }) => any): void;
         /**
          *
-         * @param {typeof Object} classHandle
+         * @param {Class} classHandle
          * @param {({ $super, $old }) => any} extender
          */
-        extendClass(
-            classHandle: typeof Object,
-            extender: ({ $super, $old }: { $super: any; $old: any }) => any
-        ): void;
+        extendClass(classHandle: any, extender: ({ $super, $old }: { $super: any; $old: any }) => any): void;
         /**
          *
          * @param {string} id
@@ -12275,11 +12359,10 @@ declare module "shapez/mods/mod_interface" {
         args_0: P,
         args_1: Parameters<F>
     ) => ReturnType<F>;
-    export type afterPrams<F extends (...args: any[]) => any, P> = (
-        ...args: [...Parameters<F>, P]
-    ) => ReturnType<F>;
+    export type afterPrams<F extends (...args: any[]) => any, P> = (args_0: any, args_1: P) => ReturnType<F>;
     export type extendsPrams<F extends (...args: any[]) => any> = (
-        ...args: [...Parameters<F>, ...any[]]
+        args_0: any,
+        ...args_1: any[]
     ) => ReturnType<F>;
     import { ModLoader } from "shapez/mods/modloader";
     import { Component } from "shapez/game/component";
@@ -12368,13 +12451,13 @@ declare module "shapez/core/background_resources_loader" {
         soundsLoaded: any[];
         getNumAssetsLoaded(): number;
         getNumAssetsTotal(): number;
-        getPromiseForMainMenu(): any;
-        getPromiseForBareGame(): any;
+        getPromiseForMainMenu(): Promise<any>;
+        getPromiseForBareGame(): Promise<any>;
         startLoading(): void;
         internalStartLoadingEssentialsForMainMenu(): void;
         internalStartLoadingEssentialsForBareGame(): void;
         internalStartLoadingAdditionalGameAssets(): void;
-        internalPreloadCss(name: any): any;
+        internalPreloadCss(name: any): Promise<any>;
         /**
          * @param {Array<string>} sprites
          * @param {Array<string>} sounds
@@ -12406,7 +12489,7 @@ declare module "shapez/core/input_distributor" {
         /**
          * All keys which are currently down
          */
-        keysDown: any;
+        keysDown: Set<any>;
         /**
          * Attaches a new filter which can filter and reject events
          * @param {function(any): boolean} filter
@@ -12566,8 +12649,8 @@ declare module "shapez/platform/browser/sound" {
     import { SoundInterface } from "shapez/platform/sound";
     class SoundSpritesContainer {
         howl: any;
-        loadingPromise: any;
-        load(): any;
+        loadingPromise: Promise<any>;
+        load(): Promise<any>;
         play(volume: any, key: any): void;
         deinitialize(): void;
     }
@@ -12588,7 +12671,7 @@ declare module "shapez/platform/ad_providers/gamedistribution" {
         /**
          * The current timer which will timeout the resolve
          */
-        videoAdResolveTimer: number;
+        videoAdResolveTimer: NodeJS.Timeout;
         /**
          * When we showed the last video ad
          */
@@ -12699,7 +12782,7 @@ declare module "shapez/platform/browser/wrapper" {
             externalLinks: boolean;
             iogLink: boolean;
         };
-        detectStorageImplementation(): any;
+        detectStorageImplementation(): Promise<any>;
         /**
          * Detects if there is an adblocker installed
          * @returns {Promise<boolean>}
@@ -12853,10 +12936,10 @@ declare module "shapez/profile/setting_types" {
 declare module "shapez/profile/application_settings" {
     export type enumCategories = string;
     export namespace enumCategories {
-        const general: string;
-        const userInterface: string;
-        const performance: string;
-        const advanced: string;
+        export const general: string;
+        export const userInterface: string;
+        export const performance: string;
+        export const advanced: string;
     }
     export const uiScales: {
         id: string;
@@ -12880,7 +12963,7 @@ declare module "shapez/profile/application_settings" {
         settingHandles: BaseSetting[];
         initialize(): Promise<void>;
         save(): Promise<void>;
-        getSettingHandleById(id: any): any;
+        getSettingHandleById(id: any): BaseSetting;
         /**
          * @returns {SettingsStorage}
          */
@@ -12966,8 +13049,8 @@ declare module "shapez/profile/application_settings" {
 declare module "shapez/savegame/savegame_manager" {
     export type enumLocalSavegameStatus = string;
     export namespace enumLocalSavegameStatus {
-        const offline: string;
-        const synced: string;
+        export const offline: string;
+        export const synced: string;
     }
     export class SavegameManager extends ReadWriteProxy {
         constructor(app: any);
@@ -13006,11 +13089,11 @@ declare module "shapez/savegame/savegame_manager" {
          * Attempts to import a savegame
          * @param {object} data
          */
-        importSavegame(data: object): any;
+        importSavegame(data: object): Promise<void>;
         /**
          * Hook after the savegames got changed
          */
-        updateAfterSavegamesChanged(): Promise<any>;
+        updateAfterSavegamesChanged(): Promise<void>;
         /**
          * Sorts all savegames by their creation time descending
          * @returns {Promise<any>}
@@ -13020,14 +13103,20 @@ declare module "shapez/savegame/savegame_manager" {
          * Helper method to generate a new internal savegame id
          */
         generateInternalId(): any;
-        initialize(): Promise<any>;
+        initialize(): Promise<void>;
     }
     export type SavegamesData = {
         version: number;
         /**
          * @returns {SavegamesData}
          */
-        savegames: import("shapez/savegame/savegame_typedefs").SavegameMetadata[];
+        savegames: {
+            lastUpdate: number;
+            version: number;
+            internalId: string;
+            level: number;
+            name: string;
+        }[];
     };
     export type SavegameMetadata = {
         lastUpdate: number;
@@ -13133,7 +13222,13 @@ declare module "shapez/states/main_menu" {
         onChangelogClicked(): void;
         onRedditClicked(): void;
         onLanguageChooseClicked(): void;
-        get savedGames(): import("shapez/savegame/savegame_typedefs").SavegameMetadata[];
+        get savedGames(): {
+            lastUpdate: number;
+            version: number;
+            internalId: string;
+            level: number;
+            name: string;
+        }[];
         renderSavegames(): void;
         /**
          * @param {SavegameMetadata} game
@@ -13198,7 +13293,7 @@ declare module "shapez/states/preload" {
          *
          * @param {string} text
          */
-        setStatus(text: string): any;
+        setStatus(text: string): Promise<void>;
         currentStatus: string;
         showFailMessage(text: any): void;
         showResetConfirm(): void;
@@ -13258,7 +13353,7 @@ declare module "shapez/platform/game_analytics" {
          * Activates a DLC
          * @param {string} dlc
          */
-        activateDlc(dlc: string): any;
+        activateDlc(dlc: string): Promise<void>;
     }
     export type Application = import("shapez/application").Application;
 }
@@ -13321,7 +13416,7 @@ declare module "shapez/core/restriction_manager" {
         /**
          * Checks if there are any savegames from the 1.1.19 version
          */
-        onHasLegacySavegamesChanged(has119Savegames?: boolean): any;
+        onHasLegacySavegamesChanged(has119Savegames?: boolean): Promise<void>;
         /**
          * Returns if the app is currently running as the limited version
          * @returns {boolean}
@@ -13448,7 +13543,7 @@ declare module "shapez/platform/api" {
                 method?: ("GET" | "POST") | undefined;
                 body?: any | undefined;
             }
-        ): any;
+        ): Promise<any>;
         tryLogin(): Promise<boolean>;
         /**
          * @returns {Promise<{token: string}>}

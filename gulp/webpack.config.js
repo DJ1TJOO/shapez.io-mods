@@ -14,8 +14,8 @@ module.exports = ({
     injectThemes = true,
 }) => {
     return {
-        mode: "development",
-        devtool: "cheap-source-map",
+        mode: watch ? "development" : "production",
+        ...(watch ? { devtool: "hidden-source-map" } : {}),
         entry: {
             "mod.js": [path.resolve(__dirname, "../src/js/main.js")],
         },
@@ -28,7 +28,17 @@ module.exports = ({
         },
         plugins: [
             new StringReplacePlugin(),
+            ...(watch
+                ? [
+                      new webpack.SourceMapDevToolPlugin({
+                          filename: "[file].map",
+                          publicPath: "http://localhost:3010/",
+                      }),
+                  ]
+                : []),
             new webpack.DefinePlugin({
+                assert: "window.assert",
+                assertAlways: "window.assert",
                 MOD_METADATA: webpack.DefinePlugin.runtimeValue(
                     function () {
                         let info = {};
@@ -248,14 +258,13 @@ module.exports = ({
                                           },
                                       ]),
                                 {
-                                    pattern:
-                                        /import[ \n]*{([a-zA-Z0-9_$, \n]*)*}[ \n]*from[ \n]*[`|"|'](shapez\/[^]*?)[`|"|'];/gms,
+                                    pattern: /import {([^{}]*?)} from "shapez\/([^{}";]*?)";/gms,
                                     replacement: (match, variables, path) => {
                                         return `const {${variables}} = shapez;`;
                                     },
                                 },
                                 {
-                                    pattern: /extends[^]*?Mod[^]*?{[^]*?init[^]*?\([^]*?\)[^]*?{/gms,
+                                    pattern: /extends[^]*?Mod[^]*?{[^]*?init[\s]*?\([^]*?\)[\s]*?{/gms,
                                     replacement: match => {
                                         const css = `this.modInterface.registerCss(CSS_MAIN);`;
 
@@ -263,7 +272,7 @@ module.exports = ({
                                     },
                                 },
                                 {
-                                    pattern: /extends[^]*?Mod[^]*?{[^]*?init[^]*?\([^]*?\)[^]*?{/gms,
+                                    pattern: /extends[^]*?Mod[^]*?{[^]*?init[\s]*?\([^]*?\)[\s]*?{/gms,
                                     replacement: match => {
                                         const atlases = `const importAtlases = ATLASES;\nfor (const key in importAtlases) {\nconst atlas=importAtlases[key];\nthis.modInterface.registerAtlas(atlas.src, atlas.atlasData);\n}`;
 
@@ -271,7 +280,7 @@ module.exports = ({
                                     },
                                 },
                                 {
-                                    pattern: /extends[^]*?Mod[^]*?{[^]*?init[^]*?\([^]*?\)[^]*?{/gms,
+                                    pattern: /extends[^]*?Mod[^]*?{[^]*?init[\s]*?\([^]*?\)[\s]*?{/gms,
                                     replacement: match => {
                                         const translations = `const importTranslations = TRANSLATIONS;\nfor (const translationId in importTranslations) {\nconst translation = importTranslations[translationId];\nthis.modInterface.registerTranslations(translationId, translation);\n}`;
 
@@ -279,7 +288,7 @@ module.exports = ({
                                     },
                                 },
                                 {
-                                    pattern: /extends[^]*?Mod[^]*?{[^]*?init[^]*?\([^]*?\)[^]*?{/gms,
+                                    pattern: /extends[^]*?Mod[^]*?{[^]*?init[\s]*?\([^]*?\)[\s]*?{/gms,
                                     replacement: match => {
                                         const themes = `const importThemes = THEMES;\nfor (const themeId in importThemes) {\nconst themeMod = importThemes[themeId];\nif (shapez.THEMES[themeId]) {\nshapez.matchDataRecursive(shapez.THEMES[themeId], themeMod);\n} else {\nthis.modInterface.registerGameTheme({\nid: themeId,\nname: themeMod.name,\ntheme: themeMod,\n});\n}\n}`;
 
