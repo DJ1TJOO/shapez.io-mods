@@ -43,7 +43,7 @@ export class MultiplayerCommandsHandler {
 
 MultiplayerCommandsHandler.commands = {
     gamecode: (root, user, multiplayerPeer, cmd, args) => {
-        if (multiplayerPeer.host) {
+        if (multiplayerPeer.ingame.isHost()) {
             //Show uuid of room
             const dialog = new Dialog({
                 app: multiplayerPeer.ingameState.app,

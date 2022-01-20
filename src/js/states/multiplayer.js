@@ -22,6 +22,7 @@ import Peer from "simple-peer";
 import { MODS } from "shapez/mods/modloader";
 import { MultiplayerPacketTypes, FlagPacketFlags } from "../multiplayer/multiplayer_packets";
 import { MultiplayerConnection } from "./multiplayer_ingame";
+import { config } from "../multiplayer/multiplayer_peer_config";
 
 export class MultiplayerState extends GameState {
     constructor() {
@@ -260,6 +261,7 @@ export class MultiplayerState extends GameState {
             this.app.adProvider.showVideoAd().then(() => {
                 user.name = userInput.getValue().trim();
                 const host = hostInput.getValue().trim();
+                user.lastServer = host;
                 this.app.analytics.trackUiClick("resume_game_adcomplete");
                 const savegame = this.app.savegameMgr.getSavegameById(game.internalId);
                 savegame
@@ -321,6 +323,7 @@ export class MultiplayerState extends GameState {
         dialog.buttonSignals.ok.add(() => {
             user.name = userInput.getValue().trim();
             const host = hostInput.getValue().trim();
+            user.lastServer = host;
             const connectionId = connectIdInput.getValue().trim();
 
             this.loadingOverlay = new GameLoadingOverlay(this.app, this.getDivElement());
@@ -357,18 +360,6 @@ export class MultiplayerState extends GameState {
                     );
                 });
 
-                const config = {
-                    iceServers: [
-                        {
-                            urls: "stun:stun.1.google.com:19302",
-                        },
-                        {
-                            urls: "turn:numb.viagenie.ca",
-                            credential: "muazkh",
-                            username: "webrtc@live.com",
-                        },
-                    ],
-                };
                 const pc = new Peer({
                     initiator: false,
                     wrtc: wrtc,
@@ -445,7 +436,7 @@ export class MultiplayerState extends GameState {
                                 );
                         }
 
-                        const connection = new MultiplayerConnection(connectionId, pc, gameDataJson);
+                        const connection = new MultiplayerConnection(connectionId, pc, gameDataJson, host);
                         this.moveToState("InGameState", {
                             connection,
                         });

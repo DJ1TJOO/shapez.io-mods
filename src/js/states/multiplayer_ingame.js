@@ -7,9 +7,14 @@ import { MultiplayerSavegame } from "../multiplayer/multiplayer_savegame";
 const logger = createLogger("state/ingame");
 import Peer from "simple-peer";
 import { ModInterface } from "shapez/mods/mod_interface";
-import { GameCreationPayload, InGameState } from "shapez/states/ingame";
+import { GameCreationPayload, GAME_LOADING_STATES, InGameState } from "shapez/states/ingame";
 import { HUDSettingsMenu } from "shapez/game/hud/parts/settings_menu";
 import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
+import { wrtc } from "wrtc";
+import { config } from "../multiplayer/multiplayer_peer_config";
+import { io } from "socket.io-client";
+import { T } from "shapez/translations";
+import { Dialog } from "shapez/core/modal_dialog_elements";
 
 // Different sub-states
 const stages = {
@@ -35,7 +40,7 @@ export const gameCreationAction = {
 
 // Typehints
 export class MultiplayerConnection {
-    constructor(id, peer, gameData) {
+    constructor(id, peer, gameData, host) {
         /** @type {String} */
         this.id = id;
 
@@ -44,6 +49,10 @@ export class MultiplayerConnection {
 
         /** @type {object} */
         this.gameData = gameData;
+
+        /**
+         * @type {string}*/
+        this.host = host;
     }
 }
 
@@ -100,6 +109,75 @@ export function createMultiplayerGameState(modInterface) {
                 this.core = new GameCore(this.app);
 
                 if (this.isMultiplayer() && !this.isHost()) {
+                    // Reopen connection
+                    if (!this.creationPayload.connection.peer.writable) {
+                        console.log(this.creationPayload);
+                        const socket = io(this.creationPayload.connection.host, {
+                            transports: ["websocket"],
+                        });
+                        let socketId = undefined;
+                        let socketConnectionId = undefined;
+                        let peerId = undefined;
+
+                        socket.on("connect_error", () => {
+                            this.loadingOverlay.removeIfAttached();
+                            //Show error message of connection
+                            this.dialogs.showWarning(
+                                T.multiplayer.multiplayerGameConnectionError.title,
+                                T.multiplayer.multiplayerGameConnectionError.desc.replace(
+                                    "<host>",
+                                    this.creationPayload.connection.host
+                                )
+                            );
+                        });
+
+                        socket.on("connect", () => {
+                            console.log("Connected to the signalling server");
+                            socket.on("id", id => {
+                                socketId = id;
+                                console.log("Got id: " + id);
+                                socket.emit("joinRoom", this.creationPayload.connection.id, socketId);
+                            });
+                            socket.on("error", () => {
+                                this.loadingOverlay.removeIfAttached();
+                                this.dialogs.showWarning(
+                                    T.multiplayer.multiplayerGameError.title,
+                                    T.multiplayer.multiplayerGameError.desc + "<br><br>"
+                                );
+                            });
+
+                            this.creationPayload.connection.peer = new Peer({
+                                initiator: false,
+                                wrtc: wrtc,
+                                config: config,
+                            });
+                            socket.on("signal", signalData => {
+                                if (socketId !== signalData.receiverId) return;
+                                console.log("Received signal");
+                                console.log(signalData);
+
+                                peerId = signalData.peerId;
+                                socketConnectionId = signalData.senderId;
+                                this.creationPayload.connection.peer.signal(signalData.signal);
+                            });
+                            this.creationPayload.connection.peer.on("signal", signalData => {
+                                console.log("Send signal");
+                                console.log({
+                                    receiverId: socketConnectionId,
+                                    peerId: peerId,
+                                    signal: signalData,
+                                    senderId: socketId,
+                                });
+                                socket.emit("signal", {
+                                    receiverId: socketConnectionId,
+                                    peerId: peerId,
+                                    signal: signalData,
+                                    senderId: socketId,
+                                });
+                            });
+                        });
+                    }
+
                     const multiplayerSavegame = new MultiplayerSavegame(
                         this.app,
                         this.creationPayload.connection.gameData

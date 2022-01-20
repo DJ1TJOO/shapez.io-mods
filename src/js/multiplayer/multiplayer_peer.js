@@ -25,21 +25,7 @@ import Peer from "simple-peer";
 import io from "socket.io-client";
 import { enumNotificationType } from "shapez/game/hud/parts/notifications";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
-import { globalConfig } from "shapez/core/config";
-import { MapChunk } from "shapez/game/map_chunk";
-
-const config = {
-    iceServers: [
-        {
-            urls: "stun:stun.1.google.com:19302",
-        },
-        {
-            urls: "turn:numb.viagenie.ca",
-            credential: "muazkh",
-            username: "webrtc@live.com",
-        },
-    ],
-};
+import { config } from "./multiplayer_peer_config";
 
 export class MultiplayerPeer {
     /**
