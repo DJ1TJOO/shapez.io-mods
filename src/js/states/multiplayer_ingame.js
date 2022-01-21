@@ -14,7 +14,13 @@ import { wrtc } from "wrtc";
 import { config } from "../multiplayer/multiplayer_peer_config";
 import { io } from "socket.io-client";
 import { T } from "shapez/translations";
-import { setupHandleComponentsSignals } from "../multiplayer/multiplayer_packets";
+import {
+    FlagPacketFlags,
+    MultiplayerPacketTypes,
+    setupHandleComponentsSignals,
+} from "../multiplayer/multiplayer_packets";
+import { Dialog } from "shapez/core/modal_dialog_elements";
+import { MODS } from "shapez/mods/modloader";
 
 // Different sub-states
 const stages = {
@@ -103,7 +109,7 @@ export function createMultiplayerGameState(modInterface) {
         /**
          * @this {InMultiplayerGameState}
          */
-        function () {
+        async function () {
             if (this.switchStage(stages.s3_createCore)) {
                 logger.log("Creating new game core");
                 this.core = new GameCore(this.app);
@@ -111,69 +117,156 @@ export function createMultiplayerGameState(modInterface) {
                 if (this.isMultiplayer() && !this.isHost()) {
                     // Reopen connection
                     if (!this.creationPayload.connection.peer.writable) {
-                        // TODO: get current world
-                        const socket = io(this.creationPayload.connection.host, {
-                            transports: ["websocket"],
-                        });
-                        let socketId = undefined;
-                        let socketConnectionId = undefined;
-                        let peerId = undefined;
-
-                        socket.on("connect_error", () => {
-                            this.loadingOverlay.removeIfAttached();
-                            //Show error message of connection
-                            this.dialogs.showWarning(
-                                T.multiplayer.multiplayerGameConnectionError.title,
-                                T.multiplayer.multiplayerGameConnectionError.desc.replace(
-                                    "<host>",
-                                    this.creationPayload.connection.host
-                                )
-                            );
-                        });
-
-                        socket.on("connect", () => {
-                            console.log("Connected to the signalling server");
-                            socket.on("id", id => {
-                                socketId = id;
-                                console.log("Got id: " + id);
-                                socket.emit("joinRoom", this.creationPayload.connection.id, socketId);
+                        this.creationPayload.connection = await new Promise(resolve => {
+                            const socket = io(this.creationPayload.connection.host, {
+                                transports: ["websocket"],
                             });
-                            socket.on("error", () => {
+                            let socketId = undefined;
+                            let socketConnectionId = undefined;
+                            let peerId = undefined;
+
+                            socket.on("connect_error", () => {
                                 this.loadingOverlay.removeIfAttached();
+                                //Show error message of connection
                                 this.dialogs.showWarning(
-                                    T.multiplayer.multiplayerGameError.title,
-                                    T.multiplayer.multiplayerGameError.desc + "<br><br>"
+                                    T.multiplayer.multiplayerGameConnectionError.title,
+                                    T.multiplayer.multiplayerGameConnectionError.desc.replace(
+                                        "<host>",
+                                        this.creationPayload.connection.host
+                                    )
                                 );
                             });
 
-                            this.creationPayload.connection.peer = new Peer({
-                                initiator: false,
-                                wrtc: wrtc,
-                                config: config,
-                            });
-                            socket.on("signal", signalData => {
-                                if (socketId !== signalData.receiverId) return;
-                                console.log("Received signal");
-                                console.log(signalData);
+                            socket.on("connect", () => {
+                                console.log("Connected to the signalling server");
+                                socket.on("id", id => {
+                                    socketId = id;
+                                    console.log("Got id: " + id);
+                                    socket.emit("joinRoom", this.creationPayload.connection.id, socketId);
+                                });
+                                socket.on("error", error => {
+                                    this.loadingOverlay.removeIfAttached();
+                                    this.dialogs.showWarning(
+                                        T.multiplayer.multiplayerGameError.title,
+                                        T.multiplayer.multiplayerGameError.desc + "<br><br>"
+                                    );
+                                });
 
-                                peerId = signalData.peerId;
-                                socketConnectionId = signalData.senderId;
-                                this.creationPayload.connection.peer.signal(signalData.signal);
-                            });
-                            this.creationPayload.connection.peer.on("signal", signalData => {
-                                console.log("Send signal");
-                                console.log({
-                                    receiverId: socketConnectionId,
-                                    peerId: peerId,
-                                    signal: signalData,
-                                    senderId: socketId,
+                                this.creationPayload.connection.peer = new Peer({
+                                    initiator: false,
+                                    wrtc: wrtc,
+                                    config: config,
                                 });
-                                socket.emit("signal", {
-                                    receiverId: socketConnectionId,
-                                    peerId: peerId,
-                                    signal: signalData,
-                                    senderId: socketId,
+                                socket.on("signal", signalData => {
+                                    if (socketId !== signalData.receiverId) return;
+                                    console.log("Received signal");
+                                    console.log(signalData);
+
+                                    peerId = signalData.peerId;
+                                    socketConnectionId = signalData.senderId;
+                                    this.creationPayload.connection.peer.signal(signalData.signal);
                                 });
+                                this.creationPayload.connection.peer.on("signal", signalData => {
+                                    console.log("Send signal");
+                                    console.log({
+                                        receiverId: socketConnectionId,
+                                        peerId: peerId,
+                                        signal: signalData,
+                                        senderId: socketId,
+                                    });
+                                    socket.emit("signal", {
+                                        receiverId: socketConnectionId,
+                                        peerId: peerId,
+                                        signal: signalData,
+                                        senderId: socketId,
+                                    });
+                                });
+
+                                let gameDataState = -1;
+                                let gameData = "";
+
+                                const canceled = (title, description) => {
+                                    this.creationPayload.connection.peer.destroy();
+                                    this.loadingOverlay.removeIfAttached();
+
+                                    //Show error message of room
+                                    const dialog = new Dialog({
+                                        app: this.app,
+                                        title: title,
+                                        contentHTML: description,
+                                        buttons: ["ok:good"],
+                                    });
+                                    this.dialogs.internalShowDialog(dialog);
+
+                                    // @ts-ignore
+                                    dialog.buttonSignals.ok.add(() => {
+                                        this.moveToState("MainMenuState");
+                                        resolve(null);
+                                    });
+                                };
+
+                                const onMessage = data => {
+                                    const packet = JSON.parse(data);
+
+                                    //When data ends
+                                    if (
+                                        packet.type === MultiplayerPacketTypes.FLAG &&
+                                        packet.flag === FlagPacketFlags.ENDDATA
+                                    ) {
+                                        gameDataState = 1;
+                                        let gameDataJson = JSON.parse(gameData);
+                                        console.log(gameDataJson);
+
+                                        for (let i = 0; i < MODS.mods.length; i++) {
+                                            const mod = MODS.mods[i];
+                                            if (!gameDataJson.mods.includes(mod.metadata.id))
+                                                return canceled(
+                                                    T.multiplayer.notSameMods.title,
+                                                    T.multiplayer.notSameMods.desc
+                                                );
+                                        }
+                                        for (let i = 0; i < gameDataJson.mods.length; i++) {
+                                            const modId = gameDataJson.mods[i];
+                                            if (!MODS.mods.some(x => x.metadata.id === modId))
+                                                return canceled(
+                                                    T.multiplayer.notSameMods.title,
+                                                    T.multiplayer.notSameMods.desc
+                                                );
+                                        }
+
+                                        const connection = new MultiplayerConnection(
+                                            this.creationPayload.connection.peer,
+                                            this.creationPayload.connection.peer,
+                                            gameDataJson,
+                                            this.creationPayload.connection.host
+                                        );
+                                        resolve(connection);
+                                    }
+
+                                    //When data recieved
+                                    if (packet.type === MultiplayerPacketTypes.DATA && gameDataState === 0)
+                                        gameData = gameData + packet.data;
+
+                                    //When start data
+                                    if (
+                                        packet.type === MultiplayerPacketTypes.FLAG &&
+                                        packet.flag === FlagPacketFlags.STARTDATA
+                                    ) {
+                                        gameDataState = 0;
+                                    }
+                                };
+                                setTimeout(() => {
+                                    if (gameDataState === 1) return;
+                                    canceled(
+                                        T.multiplayer.multiplayerGameError.multiplayerGameConnectionError,
+                                        T.multiplayer.multiplayerGameError.multiplayerGameConnectionError.replace(
+                                            "<host>",
+                                            this.creationPayload.connection.host + ": Connection timed out"
+                                        )
+                                    );
+                                }, 1000 * 60);
+
+                                this.creationPayload.connection.peer.on("data", onMessage);
                             });
                         });
                     }
