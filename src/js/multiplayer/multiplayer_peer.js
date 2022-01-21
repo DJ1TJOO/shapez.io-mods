@@ -324,7 +324,7 @@ export class MultiplayerPeer {
     variantChangedHandler(peer) {
         const metaBuilding = this.ingameState.core.root.hud.parts.buildingPlacer.currentMetaBuilding.get();
         if (!metaBuilding) {
-            this.user.currentMetaBuilding = undefined;
+            this.user.currentMetaBuilding = null;
         } else {
             this.user.currentMetaBuilding = metaBuilding.getId();
         }
@@ -335,7 +335,7 @@ export class MultiplayerPeer {
 
         const mousePosition = this.ingameState.core.root.app.mousePosition;
         if (!mousePosition) {
-            this.user.mouseTile = undefined;
+            this.user.mouseTile = null;
         } else {
             this.user.worldPos = this.ingameState.core.root.camera.screenToWorld(mousePosition);
             this.user.mouseTile = this.user.worldPos.toTileSpace();
