@@ -7,6 +7,36 @@
     // background: #aaacb4 center center / cover !important;
     background: #bbc2cf center center / cover !important;
 
+    .gameLoadingOverlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        pointer-events: all;
+        display: flex;
+        background: $mainBgColor;
+        flex-direction: column;
+    }
+
+    .prefab_GameHint {
+        position: absolute;
+        @include S(bottom, 40px);
+        @include S(left, 20px);
+        @include S(right, 20px);
+        @include PlainText;
+        text-align: center;
+
+        color: #666;
+
+        @include DarkThemeOverride() {
+            color: lighten($darkModeGameBackground, 50);
+        }
+    }
+
     .topButtons {
         position: absolute;
         @include S(top, 20px);

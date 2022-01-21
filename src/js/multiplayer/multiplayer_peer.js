@@ -16,6 +16,8 @@ import {
     FlagPacket,
     FlagPacketFlags,
     MultiplayerPacketTypes,
+    handleComponents,
+    setupHandleComponents,
 } from "./multiplayer_packets";
 
 import { v4 } from "uuid";
@@ -26,6 +28,8 @@ import { enumNotificationType } from "shapez/game/hud/parts/notifications";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
 import { config } from "./multiplayer_peer_config";
 import { getMod } from "../getMod";
+import { Component } from "shapez/game/component";
+import { enumColors, enumColorToShortcode } from "shapez/game/colors";
 
 export class MultiplayerPeer {
     /**
@@ -40,10 +44,12 @@ export class MultiplayerPeer {
         this.multipalyerComponentRemove = [];
         this.multipalyerUnlockUpgrade = [];
         this.multiplayerConstantSignalChange = [];
+        this.multiplayerColorCodedChange = [];
 
         this.user = {
             _id: v4(),
             username: getMod().settings.user.name,
+            color: enumColors.uncolored,
         };
         this.users = [];
 
@@ -165,6 +171,7 @@ export class MultiplayerPeer {
         this.connections.push({ peer: peer, peerId: peerId });
     }
 
+    // TODO: make nicer
     /**
      * Handels events and send packets
      * @param {Peer.Instance} peer
@@ -190,18 +197,11 @@ export class MultiplayerPeer {
                     ])
                 );
 
-                if (entity.components.ConstantSignal) {
-                    const constantSignalComponent = entity.components.ConstantSignal;
-                    const constantSignalChange = this.ingameState.core.root.signals["constantSignalChange"];
+                handleComponents(entity, this.ingameState.core.root);
 
-                    let component = new Proxy(constantSignalComponent, {
-                        set: (target, key, value) => {
-                            target[key] = value;
-                            constantSignalChange.dispatch(entity, target);
-                            return true;
-                        },
-                    });
-                    entity.components.ConstantSignal = component;
+                // Add color @ColorCoded
+                if (entity.components.ColorCoded) {
+                    entity.components.ColorCoded.color = enumColorToShortcode[this.user.color];
                 }
             });
 
@@ -219,22 +219,7 @@ export class MultiplayerPeer {
                 );
             });
 
-            this.ingameState.core.root.signals["constantSignalChange"].add(
-                (entity, constantSignalComponent) => {
-                    const multiplayerId = this.multiplayerConstantSignalChange.findIndex(origin =>
-                        origin.equals(entity.components.StaticMapEntity.origin)
-                    );
-                    if (multiplayerId > -1)
-                        return this.multiplayerConstantSignalChange.splice(multiplayerId, 1);
-                    MultiplayerPacket.sendPacket(
-                        peer,
-                        new SignalPacket(SignalPacketSignals.entityComponentChanged, [
-                            types.tileVector.serialize(entity.components.StaticMapEntity.origin),
-                            constantSignalComponent,
-                        ])
-                    );
-                }
-            );
+            setupHandleComponents(this, peer);
 
             this.ingameState.core.root.signals.upgradePurchased.add(upgradeId => {
                 if (this.multipalyerUnlockUpgrade.includes(upgradeId))
@@ -289,11 +274,12 @@ export class MultiplayerPeer {
                     MultiplayerPacket.sendPacket(peer, dataPackets[i]);
                 }
                 MultiplayerPacket.sendPacket(peer, new FlagPacket(FlagPacketFlags.ENDDATA));
-            } else
+            } else {
                 MultiplayerPacket.sendPacket(
                     peer,
                     new TextPacket(TextPacketTypes.USER_JOINED, JSON.stringify(this.user))
                 );
+            }
         };
     }
 
@@ -314,6 +300,7 @@ export class MultiplayerPeer {
         }
     }
 
+    // TODO: make nicer
     //Handels incomming packets
     onMessage(peer, peerId = null) {
         return data => {
@@ -407,12 +394,20 @@ export class MultiplayerPeer {
                         this.ingameState.core.root.entityMgr,
                         packet.args[0]
                     );
+
                     const component = packet.args[1];
                     if (entity === null) return;
-                    this.multiplayerConstantSignalChange.push(entity.components.StaticMapEntity.origin);
+
+                    const id = component.constructor.getId();
+                    if (id === "ConstantSignal") {
+                        this.multiplayerConstantSignalChange.push(entity.components.StaticMapEntity.origin);
+                    } else if (id === "ColorCoded") {
+                        this.multiplayerColorCodedChange.push(entity.components.StaticMapEntity.origin);
+                    }
+
                     for (const key in component) {
                         if (!component.hasOwnProperty(key)) continue;
-                        entity.components[component.constructor.getId()][key] = component[key];
+                        entity.components[id][key] = component[key];
                     }
                 }
                 if (packet.signal === SignalPacketSignals.upgradePurchased) {
@@ -442,10 +437,46 @@ export class MultiplayerPeer {
                         );
                     }
 
+                    if (this.ingameState.isHost()) {
+                        this.connections.find(x => x.peerId === peerId).user = user;
+
+                        // Get colors
+                        const userColors = this.users.map(x => x.color);
+                        const colors = Object.values(enumColors);
+
+                        // Find unused color
+                        let color = null;
+                        for (let i = 0; i < colors.length; i++) {
+                            const currentColor = colors[i];
+                            if (this.user.color === currentColor || userColors.includes(currentColor)) {
+                                continue;
+                            }
+
+                            color = currentColor;
+                            break;
+                        }
+
+                        // All colors taken choose random
+                        if (color === null) {
+                            color = colors[Math.floor(Math.random() * colors.length)];
+                        }
+
+                        // Set color
+                        user.color = color;
+
+                        // Send user update
+                        for (let i = 0; i < this.connections.length; i++) {
+                            MultiplayerPacket.sendPacket(
+                                this.connections[i].peer,
+                                new TextPacket(TextPacketTypes.USER_UPDATE, JSON.stringify(user)),
+                                this.connections
+                            );
+                        }
+                    }
+
                     //Add user
                     this.users.push(user);
-                    if (this.ingameState.isHost())
-                        this.connections.find(x => x.peerId === peerId).user = user;
+
                     this.ingameState.core.root.hud.parts["notifications"].internalShowNotification(
                         T.multiplayer.user.joined.replaceAll("<username>", user.username),
                         enumNotificationType.success
@@ -478,15 +509,22 @@ export class MultiplayerPeer {
                     }
 
                     //Update user
-                    const index = this.users.findIndex(x => x._id === user._id);
-                    if (index >= 0) {
-                        for (const key in user) {
-                            this.users[index][key] = user[key];
+                    if (this.user._id === user._id) {
+                        this.user = user;
+                    } else {
+                        const index = this.users.findIndex(x => x._id === user._id);
+                        if (index >= 0) {
+                            for (const key in user) {
+                                this.users[index][key] = user[key];
+                            }
+                        } else {
+                            this.users.push(user);
                         }
-                    } else this.users.push(user);
+                    }
 
-                    if (this.ingameState.isHost())
+                    if (this.ingameState.isHost()) {
                         this.connections.find(x => x.peerId === peerId).user = user;
+                    }
                 } else if (packet.textType === TextPacketTypes.MESSAGE) {
                     this.ingameState.core.root.hud.parts["notifications"].internalShowNotification(
                         packet.text,

@@ -1,4 +1,5 @@
 import { Vector } from "shapez/core/vector";
+import { handleComponents } from "./multiplayer_packets";
 
 export class MultiplayerBuilder {
     constructor(ingameState, peer) {
@@ -63,19 +64,8 @@ export class MultiplayerBuilder {
             rotationVariant,
             variant,
         });
-        if (entity.components.ConstantSignal) {
-            const constantSignalComponent = entity.components.ConstantSignal;
-            const constantSignalChange = this.ingameState.core.root.signals["constantSignalChange"];
+        handleComponents(entity, this.ingameState.core.root);
 
-            let component = new Proxy(constantSignalComponent, {
-                set: (target, key, value) => {
-                    target[key] = value;
-                    constantSignalChange.dispatch(entity, target);
-                    return true;
-                },
-            });
-            entity.components.ConstantSignal = component;
-        }
         if (
             this.ingameState.core.root.logic.checkCanPlaceEntity(entity, {
                 allowReplaceBuildings: true,

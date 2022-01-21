@@ -1,6 +1,8 @@
 import { Dialog } from "shapez/core/modal_dialog_elements";
 import { enumNotificationType } from "shapez/game/hud/parts/notifications";
+import { GameRoot } from "shapez/game/root";
 import { T } from "shapez/translations";
+import { MultiplayerPeer } from "./multiplayer_peer";
 
 export class MultiplayerCommandsHandler {
     constructor(root) {
@@ -42,8 +44,15 @@ export class MultiplayerCommandsHandler {
 }
 
 MultiplayerCommandsHandler.commands = {
+    /**
+     * @param {GameRoot} root
+     * @param {Object} user
+     * @param {MultiplayerPeer} multiplayerPeer
+     * @param {string} cmd
+     * @param {Array<string>} args
+     */
     gamecode: (root, user, multiplayerPeer, cmd, args) => {
-        if (multiplayerPeer.ingame.isHost()) {
+        if (multiplayerPeer.ingameState.isHost()) {
             //Show uuid of room
             const dialog = new Dialog({
                 app: multiplayerPeer.ingameState.app,

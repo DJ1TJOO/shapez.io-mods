@@ -1,4 +1,5 @@
 import { globalConfig } from "shapez/core/config";
+import { DrawParameters } from "shapez/core/draw_parameters";
 import { drawRotatedSprite } from "shapez/core/draw_utils";
 import { gMetaBuildingRegistry } from "shapez/core/global_registries";
 import { Loader } from "shapez/core/loader";
@@ -10,14 +11,18 @@ import {
     Vector,
 } from "shapez/core/vector";
 import { getCodeFromBuildingData } from "shapez/game/building_codes";
+import { enumColors } from "shapez/game/colors";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
 import { Entity } from "shapez/game/entity";
 import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
 import { GameHUD } from "shapez/game/hud/hud";
+import { COLOR_ITEM_SINGLETONS } from "shapez/game/items/color_item";
+import { MetaBuilding } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
 import { Mod } from "shapez/mods/mod";
 import { MODS } from "shapez/mods/modloader";
 import { MultiplayerPacket, TextPacket, TextPacketTypes } from "./multiplayer_packets";
+import { getColorFilter } from "./utils";
 
 export class MultiplayerHUD extends BaseHUDPart {
     initialize() {
@@ -120,12 +125,21 @@ export class MultiplayerHUD extends BaseHUDPart {
                 user.currentVariant,
                 user.currentBaseRotation,
                 user.currentMouseTile,
-                user.currentWorldPos
+                user.currentWorldPos,
+                user.color
             );
         }
     }
 
-    drawRegularPlacementSetup(parameters, metaBuilding, variant, baseRotation, mouseTile, worldPos) {
+    drawRegularPlacementSetup(
+        parameters,
+        metaBuilding,
+        variant,
+        baseRotation,
+        mouseTile,
+        worldPos,
+        color = null
+    ) {
         const fakeEntity = new Entity(null);
         metaBuilding.setupEntityComponents(fakeEntity, null);
 
@@ -146,10 +160,21 @@ export class MultiplayerHUD extends BaseHUDPart {
             baseRotation,
             fakeEntity,
             mouseTile,
-            worldPos
+            worldPos,
+            color
         );
     }
 
+    /**
+     *
+     * @param {DrawParameters} parameters
+     * @param {MetaBuilding} metaBuilding
+     * @param {String} currentVariant
+     * @param {Number} currentBaseRotation
+     * @param {Entity} fakeEntity
+     * @param {Vector} mouseTile
+     * @param {Vector} worldPos
+     */
     drawRegularPlacement(
         parameters,
         metaBuilding,
@@ -157,7 +182,8 @@ export class MultiplayerHUD extends BaseHUDPart {
         currentBaseRotation,
         fakeEntity,
         mouseTile,
-        worldPos
+        worldPos,
+        color = null
     ) {
         // Compute best rotation variant
         const { rotation, rotationVariant, connectedEntities } =
@@ -166,7 +192,7 @@ export class MultiplayerHUD extends BaseHUDPart {
                 tile: mouseTile,
                 rotation: currentBaseRotation,
                 variant: currentVariant,
-                layer: metaBuilding.getLayer(this.ingameState.core.root, currentVariant),
+                layer: metaBuilding.getLayer(),
             });
 
         // Check if there are connected entities
@@ -201,7 +227,7 @@ export class MultiplayerHUD extends BaseHUDPart {
         }
 
         // Synchronize rotation and origin
-        fakeEntity.layer = metaBuilding.getLayer(this.ingameState.core.root, currentVariant);
+        fakeEntity.layer = metaBuilding.getLayer();
         const staticComp = fakeEntity.components.StaticMapEntity;
         staticComp.origin = mouseTile;
         staticComp.rotation = rotation;
@@ -226,6 +252,7 @@ export class MultiplayerHUD extends BaseHUDPart {
             parameters.context.fillStyle = "rgba(255, 0, 0, 0.2)";
         }
 
+        // @ts-ignore
         parameters.context.beginRoundedRect(
             entityBounds.x * globalConfig.tileSize - drawBorder,
             entityBounds.y * globalConfig.tileSize - drawBorder,
@@ -237,11 +264,21 @@ export class MultiplayerHUD extends BaseHUDPart {
         // parameters.context.fill();
         parameters.context.globalAlpha = 1;
 
+        if (color) {
+            parameters.context.filter = `brightness(0.8) sepia(100%) brightness(1) ${getColorFilter(
+                COLOR_ITEM_SINGLETONS[color]
+            )}`;
+        }
+
         // HACK to draw the entity sprite
-        const previewSprite = metaBuilding.getBlueprintSprite(rotationVariant, currentVariant);
+        const previewSprite = metaBuilding.getPreviewSprite(rotationVariant, currentVariant);
         staticComp.origin = worldPos.divideScalar(globalConfig.tileSize).subScalars(0.5, 0.5);
         staticComp.drawSpriteOnBoundsClipped(parameters, previewSprite);
         staticComp.origin = mouseTile;
+
+        if (color) {
+            parameters.context.filter = "none";
+        }
 
         // Draw ejectors
         if (canBuild) {

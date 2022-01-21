@@ -1,3 +1,4 @@
+import { gComponentRegistry } from "shapez/core/global_registries";
 import { makeDivElement, makeButton } from "shapez/core/utils";
 import { Mod } from "shapez/mods/mod";
 import { SerializerInternal } from "shapez/savegame/serializer_internal";
@@ -5,6 +6,7 @@ import { MainMenuState } from "shapez/states/main_menu";
 import { T } from "shapez/translations";
 import { createHud } from "./multiplayer/multiplayer_hud";
 import { multiplayerNotifications } from "./multiplayer/multiplayer_notifications";
+import { handleComponents, MultiplayerPacketSerializableObject } from "./multiplayer/multiplayer_packets";
 import { MultiplayerState } from "./states/multiplayer";
 import { createMultiplayerGameState, InMultiplayerGameState } from "./states/multiplayer_ingame";
 
@@ -53,22 +55,18 @@ class ModImpl extends Mod {
              * @this { SerializerInternal }
              */
             function (root, entity, data) {
-                for (const componentId in data) {
-                    if (componentId === "ConstantSignal") {
-                        const component = new Proxy(entity.components[componentId], {
-                            set: (target, key, value) => {
-                                target[key] = value;
-                                root.signals.constantSignalChange.dispatch(entity, target);
-                                return true;
-                            },
-                        });
-                        entity.components[componentId] = component;
-                    }
-                }
+                handleComponents(entity, root);
             }
         );
 
         this.signals.gameInitialized.add(createHud, this);
+        this.signals.gameInitialized.add(() => {
+            const coloredMod = this.modLoader.mods.some(x => x.metadata.id === "dengr1065:colorcoded");
+            if (coloredMod) {
+                const ColoredComponent = gComponentRegistry.findById("ColorCoded");
+                MultiplayerPacketSerializableObject[ColoredComponent.name] = ColoredComponent;
+            }
+        });
     }
 
     checkSettings() {
@@ -89,3 +87,4 @@ class ModImpl extends Mod {
         this.saveSettings();
     }
 }
+//gulp-reload!

@@ -14,7 +14,7 @@ import { wrtc } from "wrtc";
 import { config } from "../multiplayer/multiplayer_peer_config";
 import { io } from "socket.io-client";
 import { T } from "shapez/translations";
-import { Dialog } from "shapez/core/modal_dialog_elements";
+import { setupHandleComponentsSignals } from "../multiplayer/multiplayer_packets";
 
 // Different sub-states
 const stages = {
@@ -111,7 +111,7 @@ export function createMultiplayerGameState(modInterface) {
                 if (this.isMultiplayer() && !this.isHost()) {
                     // Reopen connection
                     if (!this.creationPayload.connection.peer.writable) {
-                        console.log(this.creationPayload);
+                        // TODO: get current world
                         const socket = io(this.creationPayload.connection.host, {
                             transports: ["websocket"],
                         });
@@ -220,7 +220,7 @@ export function createMultiplayerGameState(modInterface) {
          * @this {InMultiplayerGameState}
          */
         function () {
-            this.core.root.signals["constantSignalChange"] = new Signal();
+            setupHandleComponentsSignals(this.core.root);
         }
     );
 

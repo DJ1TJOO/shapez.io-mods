@@ -1,5 +1,6 @@
 import { createLogger } from "shapez/core/logging";
 import { compressX64, decompressX64 } from "shapez/core/lzstring";
+import { Signal } from "shapez/core/signal";
 import { Vector } from "shapez/core/vector";
 import { BaseItem } from "shapez/game/base_item";
 import { BeltPath } from "shapez/game/belt_path";
@@ -209,17 +210,76 @@ export class MultiplayerSerializerInternal {
             if (errorStatus) {
                 return errorStatus;
             }
-            if (componentId === "ConstantSignal") {
-                const component = new Proxy(entity.components[componentId], {
-                    set: (target, key, value) => {
-                        target[key] = value;
-                        root.signals.constantSignalChange.dispatch(entity, target);
-                        return true;
-                    },
-                });
-                entity.components[componentId] = component;
-            }
+
+            handleComponents(entity, root);
         }
+    }
+}
+
+export function setupHandleComponents(multiplayerPeer, peer) {
+    multiplayerPeer.ingameState.core.root.signals["constantSignalChange"].add(
+        (entity, constantSignalComponent) => {
+            const multiplayerId = multiplayerPeer.multiplayerConstantSignalChange.findIndex(origin =>
+                origin.equals(entity.components.StaticMapEntity.origin)
+            );
+            if (multiplayerId > -1)
+                return multiplayerPeer.multiplayerConstantSignalChange.splice(multiplayerId, 1);
+            MultiplayerPacket.sendPacket(
+                peer,
+                new SignalPacket(SignalPacketSignals.entityComponentChanged, [
+                    types.tileVector.serialize(entity.components.StaticMapEntity.origin),
+                    constantSignalComponent,
+                ])
+            );
+        }
+    );
+
+    multiplayerPeer.ingameState.core.root.signals["colorCodedChange"].add((entity, colorCodedComponent) => {
+        const multiplayerId = multiplayerPeer.multiplayerColorCodedChange.findIndex(origin =>
+            origin.equals(entity.components.StaticMapEntity.origin)
+        );
+        if (multiplayerId > -1) return multiplayerPeer.multiplayerColorCodedChange.splice(multiplayerId, 1);
+        MultiplayerPacket.sendPacket(
+            peer,
+            new SignalPacket(SignalPacketSignals.entityComponentChanged, [
+                types.tileVector.serialize(entity.components.StaticMapEntity.origin),
+                colorCodedComponent,
+            ])
+        );
+    });
+}
+
+export function setupHandleComponentsSignals(root) {
+    root.signals["constantSignalChange"] = new Signal();
+    root.signals["colorCodedChange"] = new Signal();
+}
+
+export function handleComponents(entity, root) {
+    if (entity.components.ConstantSignal) {
+        const constantSignalComponent = entity.components.ConstantSignal;
+        const constantSignalChange = root.signals["constantSignalChange"];
+
+        const component = new Proxy(constantSignalComponent, {
+            set: (target, key, value) => {
+                target[key] = value;
+                constantSignalChange.dispatch(entity, target);
+                return true;
+            },
+        });
+        entity.components.ConstantSignal = component;
+    }
+
+    if (entity.components.ColorCoded) {
+        const colorCodedComponent = entity.components.ColorCoded;
+
+        const component = new Proxy(colorCodedComponent, {
+            set: (target, key, value) => {
+                target[key] = value;
+                root.signals["colorCodedChange"].dispatch(entity, target);
+                return true;
+            },
+        });
+        entity.components.ColorCoded = component;
     }
 }
 

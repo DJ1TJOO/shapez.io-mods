@@ -1,0 +1,5 @@
+map:
+    resources:
+        yellow: "#fffebf"
+        cyan: "#bffffb"
+        purple: "#ffbfff"

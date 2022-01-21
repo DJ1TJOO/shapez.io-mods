@@ -82,11 +82,17 @@ export function multiplayerNotifications(modInterface) {
                 );
             }
 
+            const multiplayer = /** @type {import("../states/multiplayer_ingame").InMultiplayerGameState}*/ (
+                this.root.app.stateMgr.getCurrentState()
+            ).isMultiplayer();
+
             this.inputElement = makeDiv(
                 this.element,
                 "notificationInput",
                 [],
-                `<input type="text" class="notificationInput" placeholder="Message">`
+                multiplayer
+                    ? `<input type="text" class="notificationInput" placeholder="Message">`
+                    : `<div></div>`
             );
 
             this.inputElement.addEventListener("focusin", e => {
