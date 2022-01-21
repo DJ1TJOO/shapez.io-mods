@@ -1,12 +1,15 @@
 import { gComponentRegistry } from "shapez/core/global_registries";
 import { makeDivElement, makeButton } from "shapez/core/utils";
+import { GameRoot } from "shapez/game/root";
 import { Mod } from "shapez/mods/mod";
 import { SerializerInternal } from "shapez/savegame/serializer_internal";
 import { MainMenuState } from "shapez/states/main_menu";
 import { T } from "shapez/translations";
+import { MultiplayerCommandsHandler } from "./multiplayer/multiplayer_commands";
 import { createHud } from "./multiplayer/multiplayer_hud";
 import { multiplayerNotifications } from "./multiplayer/multiplayer_notifications";
 import { handleComponents, MultiplayerPacketSerializableObject } from "./multiplayer/multiplayer_packets";
+import { MultiplayerPeer } from "./multiplayer/multiplayer_peer";
 import { MultiplayerState } from "./states/multiplayer";
 import { createMultiplayerGameState, InMultiplayerGameState } from "./states/multiplayer_ingame";
 
@@ -67,6 +70,8 @@ class ModImpl extends Mod {
                 MultiplayerPacketSerializableObject[ColoredComponent.name] = ColoredComponent;
             }
         });
+
+        this.commands = MultiplayerCommandsHandler.getDefaultsCommands();
     }
 
     checkSettings() {
@@ -83,8 +88,19 @@ class ModImpl extends Mod {
                 lastServer: "",
             };
         }
+        if (!this.settings.prefix) {
+            this.settings.prefix = "/";
+        }
 
         this.saveSettings();
     }
+
+    /**
+     * Registers a new multiplayer command
+     * @param {string} cmd
+     * @param {(root: GameRoot, user: Object, multiplayerPeer: MultiplayerPeer, cmd: string, args: Array<string>) => boolean} handler
+     */
+    registerCommand(cmd, handler) {
+        this.commands[cmd] = handler;
+    }
 }
-//gulp-reload!

@@ -11,7 +11,8 @@
             "user": {
                 "name": "",
                 "lastServer": ""
-            }
+            },
+            "prefix": "/"
         }
     },
     "license": "GPL-3.0-only",

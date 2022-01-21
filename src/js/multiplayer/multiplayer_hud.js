@@ -11,7 +11,6 @@ import {
     Vector,
 } from "shapez/core/vector";
 import { getCodeFromBuildingData } from "shapez/game/building_codes";
-import { enumColors } from "shapez/game/colors";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
 import { Entity } from "shapez/game/entity";
 import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
@@ -102,8 +101,9 @@ export class MultiplayerHUD extends BaseHUDPart {
             !this.ingameState.peer ||
             !this.ingameState.peer.users ||
             !MODS.mods.find(x => x.metadata.id === "dj1tjoo_multiplayer").settings.showOtherPlayers
-        )
+        ) {
             return;
+        }
 
         for (let i = 0; i < this.ingameState.peer.users.length; i++) {
             const user = this.ingameState.peer.users[i];
@@ -114,8 +114,9 @@ export class MultiplayerHUD extends BaseHUDPart {
                 typeof user.currentMouseTile === "undefined" ||
                 typeof user.currentWorldPos === "undefined" ||
                 user.currentMetaBuilding === null
-            )
+            ) {
                 continue;
+            }
 
             const metaBuilding = gMetaBuildingRegistry.findById(user.currentMetaBuilding);
 

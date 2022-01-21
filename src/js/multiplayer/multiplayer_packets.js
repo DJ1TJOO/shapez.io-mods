@@ -1,4 +1,3 @@
-import { createLogger } from "shapez/core/logging";
 import { compressX64, decompressX64 } from "shapez/core/lzstring";
 import { Signal } from "shapez/core/signal";
 import { Vector } from "shapez/core/vector";
@@ -153,8 +152,6 @@ export const MultiplayerPacketSerializableObject = {
     [WiredPinsComponent.name]: WiredPinsComponent,
     [WireTunnelComponent.name]: WireTunnelComponent,
 };
-
-const logger = createLogger("multiplayer_serializer_internal");
 
 // Internal serializer methods
 export class MultiplayerSerializerInternal {

@@ -173,11 +173,12 @@ export function multiplayerNotifications(modInterface) {
                             T.multiplayer.commands.error.replaceAll("<cmd>", command.cmd),
                             enumNotificationType.error
                         );
-                } else
+                } else {
                     this.internalShowNotification(
                         T.multiplayer.commands.doesNotExist.replaceAll("<cmd>", command.cmd),
                         enumNotificationType.error
                     );
+                }
             } else {
                 const message = peer.user.username + ": " + value;
                 if (
