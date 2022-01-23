@@ -59,6 +59,7 @@ declare module "shapez/core/config" {
             25: string;
             26: string;
         };
+        export const modBrowser: string;
     }
     export const A_B_TESTING_LINK_TYPE: "steam_2_npr";
 
@@ -2505,9 +2506,10 @@ declare module "shapez/game/belt_path" {
     import { DrawParameters } from "shapez/core/draw_parameters";
 }
 declare module "shapez/game/components/item_acceptor" {
-    /** @typedef {{
+    /**
+     * @typedef {{
      * pos: Vector,
-     * directions: enumDirection[],
+     * direction: enumDirection,
      * filter?: ItemType
      * }} ItemAcceptorSlot */
     /**
@@ -2515,11 +2517,11 @@ declare module "shapez/game/components/item_acceptor" {
      * @typedef {{
      *  slot: ItemAcceptorSlot,
      *  index: number,
-     *  acceptedDirection: enumDirection
      * }} ItemAcceptorLocatedSlot */
-    /** @typedef {{
+    /**
+     * @typedef {{
      * pos: Vector,
-     * directions: enumDirection[],
+     * direction: enumDirection,
      * filter?: ItemType
      * }} ItemAcceptorSlotConfig */
     export class ItemAcceptorComponent extends Component {
@@ -2585,7 +2587,7 @@ declare module "shapez/game/components/item_acceptor" {
     }
     export type ItemAcceptorSlot = {
         pos: Vector;
-        directions: enumDirection[];
+        direction: enumDirection;
         filter?: any;
     };
     /**
@@ -2594,11 +2596,10 @@ declare module "shapez/game/components/item_acceptor" {
     export type ItemAcceptorLocatedSlot = {
         slot: ItemAcceptorSlot;
         index: number;
-        acceptedDirection: enumDirection;
     };
     export type ItemAcceptorSlotConfig = {
         pos: Vector;
-        directions: enumDirection[];
+        direction: enumDirection;
         filter?: any;
     };
     import { Component } from "shapez/game/component";
@@ -12128,6 +12129,7 @@ declare module "shapez/mods/mod" {
             website: string;
             description: string;
             id: string;
+            minimumGameVersion?: string;
             settings: [];
         };
         signals: {
@@ -12463,6 +12465,7 @@ declare module "shapez/mods/modloader" {
      *   website: string;
      *   description: string;
      *   id: string;
+     *   minimumGameVersion?: string;
      *   settings: []
      * }} ModMetadata
      */
@@ -12505,6 +12508,7 @@ declare module "shapez/mods/modloader" {
         website: string;
         description: string;
         id: string;
+        minimumGameVersion?: string;
         settings: [];
     };
     import { Application } from "shapez/application";
@@ -13734,6 +13738,7 @@ declare module "shapez/states/mods" {
     export class ModsState extends TextualGameState {
         showModTogglingComingSoon(): void;
         openModsFolder(): void;
+        openBrowseMods(): void;
         onSteamLinkClicked(): boolean;
     }
     import { TextualGameState } from "shapez/core/textual_game_state";
@@ -13871,27 +13876,7 @@ declare module "shapez/application" {
     import { AnalyticsInterface } from "shapez/platform/analytics";
     import { Vector } from "shapez/core/vector";
 }
-declare const CSS_MAIN: string;
-declare const ATLASES: {
-    hq: {
-        src: string;
-        atlasData: import("shapez/core/loader").AtlasDefinition;
-    };
-    mq: {
-        src: string;
-        atlasData: import("shapez/core/loader").AtlasDefinition;
-    };
-    lq: {
-        src: string;
-        atlasData: import("shapez/core/loader").AtlasDefinition;
-    };
-};
-declare const TRANSLATIONS: {
-    [x: string]: object;
-};
-declare const THEMES: {
-    [x: string]: object;
-};
+
 declare const shapez: any;
 declare function $shapez_registerMod(
     mod: typeof import("shapez/mods/mod").Mod,

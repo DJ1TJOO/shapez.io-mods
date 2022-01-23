@@ -1,24 +1,10 @@
 {
-    "name": "dj1tjoo_multiplayer",
-    "version": "0.1.6",
+    "name": "shapez-io-mods",
     "author": "DJ1TJOO",
-    "mod-info": {
-        "name": "Multiplayer",
-        "website": "https://github.com/dj1tjoo",
-        "description": "mod_descripiton",
-        "settings": {
-            "showOtherPlayers": true,
-            "user": {
-                "name": "",
-                "lastServer": ""
-            },
-            "prefix": "/"
-        }
-    },
+    "version": "1.0.0",
     "license": "GPL-3.0-only",
     "scripts": {
         "dev": "cd gulp && yarn gulp",
-        "devMod": "cd gulp && yarn gulp main.watch.mod",
         "devStandalone": "cd gulp && yarn gulp main.watch.standalone",
         "build": "cd gulp && yarn gulp main.build",
         "tslint": "cd src/js && yarn tsc",
