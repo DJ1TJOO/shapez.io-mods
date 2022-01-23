@@ -89,6 +89,6 @@
     }
     [data-icon="icons/notification_message.png"] {
         /* @load-async */
-        background-image: inline("icons/notification_message.png") !important;
+        background-image: url("../res/icons/notification_message.png") !important;
     }
 }
