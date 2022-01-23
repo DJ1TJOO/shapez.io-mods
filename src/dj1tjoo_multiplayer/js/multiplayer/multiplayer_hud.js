@@ -11,17 +11,16 @@ import {
     Vector,
 } from "shapez/core/vector";
 import { getCodeFromBuildingData } from "shapez/game/building_codes";
+import { enumColors, enumColorToShortcode } from "shapez/game/colors";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
 import { Entity } from "shapez/game/entity";
 import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
 import { GameHUD } from "shapez/game/hud/hud";
-import { COLOR_ITEM_SINGLETONS } from "shapez/game/items/color_item";
 import { MetaBuilding } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
 import { Mod } from "shapez/mods/mod";
-import { MODS } from "shapez/mods/modloader";
+import { getExternalMod, getMod } from "../getMod";
 import { MultiplayerPacket, TextPacket, TextPacketTypes } from "./multiplayer_packets";
-import { getColorFilter } from "./utils";
 
 export class MultiplayerHUD extends BaseHUDPart {
     initialize() {
@@ -31,6 +30,13 @@ export class MultiplayerHUD extends BaseHUDPart {
         // @ts-ignore
         this.ingameState = this.root.gameState;
         this.lastTimeUpdated = Date.now();
+        const colored = getExternalMod("dengr1065:colorcoded");
+        if (colored) {
+            // @ts-ignore
+            this.coloredComponent = new colored.component({});
+        } else {
+            this.coloredComponent = null;
+        }
     }
 
     lerp(start, end, time) {
@@ -100,7 +106,7 @@ export class MultiplayerHUD extends BaseHUDPart {
             !this.ingameState ||
             !this.ingameState.peer ||
             !this.ingameState.peer.users ||
-            !MODS.mods.find(x => x.metadata.id === "dj1tjoo_multiplayer").settings.showOtherPlayers
+            !getMod().settings.showOtherPlayers
         ) {
             return;
         }
@@ -139,7 +145,7 @@ export class MultiplayerHUD extends BaseHUDPart {
         baseRotation,
         mouseTile,
         worldPos,
-        color = null
+        color = enumColors.uncolored
     ) {
         const fakeEntity = new Entity(null);
         metaBuilding.setupEntityComponents(fakeEntity, null);
@@ -184,7 +190,7 @@ export class MultiplayerHUD extends BaseHUDPart {
         fakeEntity,
         mouseTile,
         worldPos,
-        color = null
+        color = enumColors.uncolored
     ) {
         // Compute best rotation variant
         const { rotation, rotationVariant, connectedEntities } =
@@ -265,21 +271,18 @@ export class MultiplayerHUD extends BaseHUDPart {
         // parameters.context.fill();
         parameters.context.globalAlpha = 1;
 
-        if (color) {
-            parameters.context.filter = `brightness(0.8) sepia(100%) brightness(1) ${getColorFilter(
-                COLOR_ITEM_SINGLETONS[color]
-            )}`;
-        }
-
         // HACK to draw the entity sprite
-        const previewSprite = metaBuilding.getPreviewSprite(rotationVariant, currentVariant);
-        staticComp.origin = worldPos.divideScalar(globalConfig.tileSize).subScalars(0.5, 0.5);
-        staticComp.drawSpriteOnBoundsClipped(parameters, previewSprite);
-        staticComp.origin = mouseTile;
-
-        if (color) {
-            parameters.context.filter = "none";
+        let sprite = metaBuilding.getSprite(rotationVariant, currentVariant);
+        if (!sprite) {
+            sprite = metaBuilding.getPreviewSprite(rotationVariant, currentVariant);
         }
+        if (this.coloredComponent) {
+            this.coloredComponent.color = enumColorToShortcode[color];
+            sprite = this.coloredComponent.getSprite(sprite);
+        }
+        staticComp.origin = worldPos.divideScalar(globalConfig.tileSize).subScalars(0.5, 0.5);
+        staticComp.drawSpriteOnBoundsClipped(parameters, sprite);
+        staticComp.origin = mouseTile;
 
         // Draw ejectors
         if (canBuild) {
