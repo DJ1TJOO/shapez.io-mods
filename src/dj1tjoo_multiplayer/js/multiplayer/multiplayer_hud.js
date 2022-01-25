@@ -3,6 +3,7 @@ import { DrawParameters } from "shapez/core/draw_parameters";
 import { drawRotatedSprite } from "shapez/core/draw_utils";
 import { gMetaBuildingRegistry } from "shapez/core/global_registries";
 import { Loader } from "shapez/core/loader";
+import { makeDiv } from "shapez/core/utils";
 import {
     enumDirection,
     enumDirectionToAngle,
@@ -15,10 +16,14 @@ import { enumColors, enumColorToShortcode } from "shapez/game/colors";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
 import { Entity } from "shapez/game/entity";
 import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
 import { GameHUD } from "shapez/game/hud/hud";
+import { HUDGameMenu } from "shapez/game/hud/parts/game_menu";
+import { enumNotificationType } from "shapez/game/hud/parts/notifications";
 import { MetaBuilding } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
 import { Mod } from "shapez/mods/mod";
+import { T } from "shapez/translations";
 import { getExternalMod, getMod } from "../getMod";
 import { MultiplayerPacket, TextPacket, TextPacketTypes } from "./multiplayer_packets";
 
@@ -457,12 +462,21 @@ export class MultiplayerHUD extends BaseHUDPart {
  * @param {GameRoot} root
  */
 export function createHud(root) {
-    const part = new MultiplayerHUD(root);
     // @ts-ignore
-    root.hud.parts.multiplayer = part;
-    this.signals.hudElementInitialized.dispatch(part);
-    part.initialize();
-    this.signals.hudElementFinalized.dispatch(part);
+    if (root.gameState.isMultiplayer()) {
+        const part = new MultiplayerHUD(root);
+        // @ts-ignore
+        root.hud.parts.multiplayer = part;
+        this.signals.hudElementInitialized.dispatch(part);
+        part.initialize();
+        this.signals.hudElementFinalized.dispatch(part);
+    }
+}
+
+/**
+ * @this {Mod}
+ */
+export function setupHud() {
     // Draw multiplayer hud
     this.modInterface.runAfterMethod(
         GameHUD,
@@ -472,7 +486,62 @@ export function createHud(root) {
          */
         function (parameters) {
             // @ts-ignore
-            this.root.hud.parts.multiplayer.draw(parameters);
+            if (this.root.hud.parts.multiplayer) {
+                // @ts-ignore
+                this.root.hud.parts.multiplayer.draw(parameters);
+            }
+        }
+    );
+
+    this.modInterface.runAfterMethod(
+        HUDGameMenu,
+        "createElements",
+        /**
+         * @this {HUDGameMenu}
+         * @param {HTMLElement} parent
+         */
+        function (parent) {
+            const buttons = [
+                {
+                    id: "multiplayer",
+                    label: "Multiplayer",
+                    // @ts-ignore
+                    handler: () => this.root.hud.parts.multiplayer.show(),
+                    // @ts-ignore
+                    visible: () => !!this.root.hud.parts.multiplayer,
+                },
+            ];
+            buttons.forEach(({ id, label, handler, keybinding, badge, notification, visible }) => {
+                const button = document.createElement("button");
+                button.classList.add(id);
+                this.element.appendChild(button);
+                this.trackClicks(button, handler);
+
+                if (keybinding) {
+                    const binding = this.root.keyMapper.getBinding(keybinding);
+                    binding.add(handler);
+                }
+
+                if (visible) {
+                    this.visibilityToUpdate.push({
+                        button,
+                        condition: visible,
+                        domAttach: new DynamicDomAttach(this.root, button),
+                    });
+                }
+
+                if (badge) {
+                    const badgeElement = makeDiv(button, null, ["badge"]);
+                    this.badgesToUpdate.push({
+                        badge,
+                        lastRenderAmount: 0,
+                        button,
+                        badgeElement,
+                        notification,
+                        condition: visible,
+                    });
+                }
+            });
         }
     );
 }

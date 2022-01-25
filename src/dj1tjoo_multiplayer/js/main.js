@@ -6,7 +6,7 @@ import { SerializerInternal } from "shapez/savegame/serializer_internal";
 import { MainMenuState } from "shapez/states/main_menu";
 import { T } from "shapez/translations";
 import { MultiplayerCommandsHandler } from "./multiplayer/multiplayer_commands";
-import { createHud } from "./multiplayer/multiplayer_hud";
+import { createHud, setupHud } from "./multiplayer/multiplayer_hud";
 import { multiplayerNotifications } from "./multiplayer/multiplayer_notifications";
 import { handleComponents, MultiplayerPacketSerializableObject } from "./multiplayer/multiplayer_packets";
 import { MultiplayerPeer } from "./multiplayer/multiplayer_peer";
@@ -72,6 +72,7 @@ class ModImpl extends Mod {
         });
 
         this.commands = MultiplayerCommandsHandler.getDefaultsCommands();
+        setupHud.apply(this);
     }
 
     checkSettings() {

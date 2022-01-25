@@ -1,0 +1,7 @@
+#ingame_HUD_GameMenu {
+    > button.multiplayer,
+    > .button.multiplayer {
+        background-image: url("../res/icons/multiplayer.png");
+        grid-column: 5;
+    }
+}
