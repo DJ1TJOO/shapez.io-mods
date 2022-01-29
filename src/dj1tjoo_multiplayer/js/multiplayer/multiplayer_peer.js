@@ -24,7 +24,6 @@ import { v4 } from "uuid";
 import io, { Socket } from "socket.io-client";
 import { enumNotificationType } from "shapez/game/hud/parts/notifications";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
-import { config } from "./multiplayer_peer_config";
 import { getMod } from "../getMod";
 import { enumColors, enumColorToShortcode } from "shapez/game/colors";
 

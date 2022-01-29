@@ -16,12 +16,9 @@ import { GameLoadingOverlay } from "shapez/game/game_loading_overlay";
 import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
 import { T } from "shapez/translations";
 import io from "socket.io-client";
-import wrtc from "wrtc";
-import Peer from "simple-peer";
 import { MODS } from "shapez/mods/modloader";
 import { MultiplayerPacketTypes, FlagPacketFlags } from "../multiplayer/multiplayer_packets";
 import { MultiplayerConnection } from "./multiplayer_ingame";
-import { config } from "../multiplayer/multiplayer_peer_config";
 import { getMod } from "../getMod";
 
 export class MultiplayerState extends GameState {

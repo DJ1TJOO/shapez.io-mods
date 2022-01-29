@@ -19,11 +19,9 @@ import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
 import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
 import { GameHUD } from "shapez/game/hud/hud";
 import { HUDGameMenu } from "shapez/game/hud/parts/game_menu";
-import { enumNotificationType } from "shapez/game/hud/parts/notifications";
 import { MetaBuilding } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
 import { Mod } from "shapez/mods/mod";
-import { T } from "shapez/translations";
 import { getExternalMod, getMod } from "../getMod";
 import { MultiplayerPacket, TextPacket, TextPacketTypes } from "./multiplayer_packets";
 

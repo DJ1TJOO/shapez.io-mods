@@ -4,13 +4,10 @@ import { MultiplayerPeer } from "../multiplayer/multiplayer_peer";
 import { MultiplayerSavegame } from "../multiplayer/multiplayer_savegame";
 
 const logger = createLogger("state/ingame");
-import Peer from "simple-peer";
 import { ModInterface } from "shapez/mods/mod_interface";
-import { GameCreationPayload, GAME_LOADING_STATES, InGameState } from "shapez/states/ingame";
+import { GameCreationPayload, InGameState } from "shapez/states/ingame";
 import { HUDSettingsMenu } from "shapez/game/hud/parts/settings_menu";
 import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
-import wrtc from "wrtc";
-import { config } from "../multiplayer/multiplayer_peer_config";
 import { io } from "socket.io-client";
 import { T } from "shapez/translations";
 import {
