@@ -15,8 +15,11 @@ import { io } from "socket.io-client";
 import { T } from "shapez/translations";
 import {
     FlagPacketFlags,
+    MultiplayerPacket,
     MultiplayerPacketTypes,
     setupHandleComponentsSignals,
+    TextPacket,
+    TextPacketTypes,
 } from "../multiplayer/multiplayer_packets";
 import { Dialog } from "shapez/core/modal_dialog_elements";
 import { MODS } from "shapez/mods/modloader";
@@ -45,12 +48,18 @@ export const gameCreationAction = {
 
 // Typehints
 export class MultiplayerConnection {
-    constructor(id, peer, gameData, host) {
+    /**
+     * @param {String} id
+     * @param {import("../multiplayer/multiplayer_peer").SocketInfo} socket
+     * @param {object} gameData
+     * @param {String} host
+     */
+    constructor(id, socket, gameData, host) {
         /** @type {String} */
         this.id = id;
 
-        /** @type {Peer.Instance} */
-        this.peer = peer;
+        /** @type {import("../multiplayer/multiplayer_peer").SocketInfo} */
+        this.socket = socket;
 
         /** @type {object} */
         this.gameData = gameData;
@@ -69,7 +78,7 @@ export class MultiplayerConnection {
  *
  * @typedef {InGameState & {
  *      creationPayload: MultiplayerGameCreationPayload,
- *      peer: MultiplayerPeer|undefined,
+ *      socket: MultiplayerPeer|undefined,
  *      isMultiplayer:() => boolean,
  *      isHost:() =>  boolean,
  * }} InMultiplayerGameState
@@ -115,14 +124,13 @@ export function createMultiplayerGameState(modInterface) {
 
                 if (this.isMultiplayer() && !this.isHost()) {
                     // Reopen connection
-                    if (!this.creationPayload.connection.peer.writable) {
+                    if (!this.creationPayload.connection.socket.socket.connected) {
                         this.creationPayload.connection = await new Promise(resolve => {
                             const socket = io(this.creationPayload.connection.host, {
                                 transports: ["websocket"],
                             });
                             let socketId = undefined;
-                            let socketConnectionId = undefined;
-                            let peerId = undefined;
+                            let hostSocketId = undefined;
 
                             socket.on("connect_error", () => {
                                 this.loadingOverlay.removeIfAttached();
@@ -141,9 +149,13 @@ export function createMultiplayerGameState(modInterface) {
                                 socket.on("id", id => {
                                     socketId = id;
                                     console.log("Got id: " + id);
-                                    socket.emit("joinRoom", this.creationPayload.connection.id, socketId);
+                                    socket.emit(
+                                        "joinRoom",
+                                        this.creationPayload.connection.socket.connectionId,
+                                        socketId
+                                    );
                                 });
-                                socket.on("error", error => {
+                                socket.on("error", () => {
                                     this.loadingOverlay.removeIfAttached();
                                     this.dialogs.showWarning(
                                         T.multiplayer.multiplayerGameError.title,
@@ -151,41 +163,18 @@ export function createMultiplayerGameState(modInterface) {
                                     );
                                 });
 
-                                this.creationPayload.connection.peer = new Peer({
-                                    initiator: false,
-                                    wrtc: wrtc,
-                                    config: config,
-                                });
                                 socket.on("signal", signalData => {
                                     if (socketId !== signalData.receiverId) return;
-                                    console.log("Received signal");
-                                    console.log(signalData);
 
-                                    peerId = signalData.peerId;
-                                    socketConnectionId = signalData.senderId;
-                                    this.creationPayload.connection.peer.signal(signalData.signal);
-                                });
-                                this.creationPayload.connection.peer.on("signal", signalData => {
-                                    console.log("Send signal");
-                                    console.log({
-                                        receiverId: socketConnectionId,
-                                        peerId: peerId,
-                                        signal: signalData,
-                                        senderId: socketId,
-                                    });
-                                    socket.emit("signal", {
-                                        receiverId: socketConnectionId,
-                                        peerId: peerId,
-                                        signal: signalData,
-                                        senderId: socketId,
-                                    });
+                                    hostSocketId = signalData.senderId;
+                                    onMessage(signalData.signal);
                                 });
 
                                 let gameDataState = -1;
                                 let gameData = "";
 
                                 const canceled = (title, description) => {
-                                    this.creationPayload.connection.peer.destroy();
+                                    socket.disconnect();
                                     this.loadingOverlay.removeIfAttached();
 
                                     //Show error message of room
@@ -234,8 +223,14 @@ export function createMultiplayerGameState(modInterface) {
                                         }
 
                                         const connection = new MultiplayerConnection(
-                                            this.creationPayload.connection.peer,
-                                            this.creationPayload.connection.peer,
+                                            this.creationPayload.connection.socket.connectionId,
+                                            {
+                                                socket,
+                                                connectionId:
+                                                    this.creationPayload.connection.socket.connectionId,
+                                                id: socketId,
+                                                hostSocketId,
+                                            },
                                             gameDataJson,
                                             this.creationPayload.connection.host
                                         );
@@ -264,8 +259,6 @@ export function createMultiplayerGameState(modInterface) {
                                         )
                                     );
                                 }, 1000 * 60);
-
-                                this.creationPayload.connection.peer.on("data", onMessage);
                             });
                         });
                     }
@@ -327,9 +320,9 @@ export function createMultiplayerGameState(modInterface) {
 
             //Connect
             if (this.isHost()) {
-                this.peer = new MultiplayerPeer(this);
+                this.socket = new MultiplayerPeer(this);
             } else {
-                this.peer = new MultiplayerPeer(this, this.creationPayload.connection.peer);
+                this.socket = new MultiplayerPeer(this, this.creationPayload.connection.socket);
             }
         }
     );
@@ -341,15 +334,22 @@ export function createMultiplayerGameState(modInterface) {
          * @this {InMultiplayerGameState}
          */
         function () {
-            if (this.isMultiplayer() && this.peer) {
-                //Disconnect peers
-                if (this.creationPayload.connection) {
-                    this.creationPayload.connection.peer.destroy();
+            if (this.isMultiplayer() && this.socket) {
+                //Disconnect
+                if (this.socket.socket.hostSocketId) {
+                    MultiplayerPacket.sendPacket(
+                        this.socket.socket,
+                        this.socket.socket.hostSocketId,
+                        new TextPacket(
+                            TextPacketTypes.USER_DISCONNECTED,
+                            JSON.stringify({ user: this.socket.user, socketId: this.socket.socket.id })
+                        )
+                    );
                 } else {
-                    for (let i = 0; i < this.peer.connections.length; i++) {
-                        this.peer.connections[i].peer.destroy();
-                    }
+                    this.socket.socket.socket.emit("destroyRoom", this.socket.socket.connectionId);
                 }
+
+                this.socket.socket.socket.disconnect();
             }
         }
     );

@@ -41,7 +41,6 @@ import { BaseGameSpeed } from "shapez/game/time/base_game_speed";
 import { PausedGameSpeed } from "shapez/game/time/paused_game_speed";
 import { RegularGameSpeed } from "shapez/game/time/regular_game_speed";
 import { BasicSerializableObject, types } from "shapez/savegame/serialization";
-import Peer from "simple-peer";
 
 /**
  * SerializedObject
@@ -213,7 +212,10 @@ export class MultiplayerSerializerInternal {
     }
 }
 
-export function setupHandleComponents(multiplayerPeer, peer) {
+/**
+ * @param {import('./multiplayer_peer').MultiplayerPeer} multiplayerPeer
+ */
+export function setupHandleComponents(multiplayerPeer, receiverId) {
     multiplayerPeer.ingameState.core.root.signals["constantSignalChange"].add(
         (entity, constantSignalComponent) => {
             const multiplayerId = multiplayerPeer.multiplayerConstantSignalChange.findIndex(origin =>
@@ -222,7 +224,8 @@ export function setupHandleComponents(multiplayerPeer, peer) {
             if (multiplayerId > -1)
                 return multiplayerPeer.multiplayerConstantSignalChange.splice(multiplayerId, 1);
             MultiplayerPacket.sendPacket(
-                peer,
+                multiplayerPeer.socket,
+                receiverId,
                 new SignalPacket(SignalPacketSignals.entityComponentChanged, [
                     types.tileVector.serialize(entity.components.StaticMapEntity.origin),
                     constantSignalComponent,
@@ -237,7 +240,8 @@ export function setupHandleComponents(multiplayerPeer, peer) {
         );
         if (multiplayerId > -1) return multiplayerPeer.multiplayerColorCodedChange.splice(multiplayerId, 1);
         MultiplayerPacket.sendPacket(
-            peer,
+            multiplayerPeer.socket,
+            receiverId,
             new SignalPacket(SignalPacketSignals.entityComponentChanged, [
                 types.tileVector.serialize(entity.components.StaticMapEntity.origin),
                 colorCodedComponent,
@@ -286,19 +290,23 @@ export class MultiplayerPacket {
     }
 
     /**
-     * Sends the packet over a peer via the datachannel
-     * @param {Peer.Instance} peer
+     * Sends the packet over a socket via the datachannel
+     * @param {import("./multiplayer_peer").SocketInfo} socket
      * @param {MultiplayerPacket} packet
      * @param {Array} packet
      */
-    static sendPacket(peer, packet, connections = undefined) {
+    static sendPacket(socket, receiverId, packet, connections = undefined) {
         this._packetsToSend.push(() => {
-            if (!peer.connected) return;
+            if (!socket.socket.connected) return;
             try {
-                peer.send(JSON.stringify(packet));
+                socket.socket.emit("signal", {
+                    receiverId: receiverId,
+                    signal: JSON.stringify(packet),
+                    senderId: socket.id,
+                });
             } catch (error) {
                 if (connections)
-                    connections.splice(connections.indexOf(connections.find(x => x.peer === peer)), 1);
+                    connections.splice(connections.indexOf(connections.find(x => x.socket === socket)), 1);
                 console.log(error);
             }
         });

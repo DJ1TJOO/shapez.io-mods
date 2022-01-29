@@ -231,7 +231,6 @@ export class MultiplayerState extends GameState {
      * @param {import("shapez/savegame/savegame_typedefs").SavegameMetadata} game
      */
     resumeGame(game) {
-        console.log(this.mod.settings);
         this.app.analytics.trackUiClick("resume_game");
         // Get information for host
         const userInput = new FormElementInput({
@@ -265,8 +264,6 @@ export class MultiplayerState extends GameState {
                 const host = hostInput.getValue().trim();
                 this.mod.settings.user.lastServer = host;
                 this.mod.saveSettings();
-                console.log(this.mod.settings);
-                console.log(getMod().settings);
                 this.app.analytics.trackUiClick("resume_game_adcomplete");
                 const savegame = this.app.savegameMgr.getSavegameById(game.internalId);
                 savegame
@@ -339,8 +336,7 @@ export class MultiplayerState extends GameState {
                 transports: ["websocket"],
             });
             let socketId = undefined;
-            let socketConnectionId = undefined;
-            let peerId = undefined;
+            let hostSocketId = undefined;
 
             socket.on("connect_error", () => {
                 this.loadingOverlay.removeIfAttached();
@@ -366,41 +362,18 @@ export class MultiplayerState extends GameState {
                     );
                 });
 
-                const pc = new Peer({
-                    initiator: false,
-                    wrtc: wrtc,
-                    config: config,
-                });
                 socket.on("signal", signalData => {
                     if (socketId !== signalData.receiverId) return;
-                    console.log("Received signal");
-                    console.log(signalData);
 
-                    peerId = signalData.peerId;
-                    socketConnectionId = signalData.senderId;
-                    pc.signal(signalData.signal);
-                });
-                pc.on("signal", signalData => {
-                    console.log("Send signal");
-                    console.log({
-                        receiverId: socketConnectionId,
-                        peerId: peerId,
-                        signal: signalData,
-                        senderId: socketId,
-                    });
-                    socket.emit("signal", {
-                        receiverId: socketConnectionId,
-                        peerId: peerId,
-                        signal: signalData,
-                        senderId: socketId,
-                    });
+                    hostSocketId = signalData.senderId;
+                    onMessage(signalData.signal);
                 });
 
                 let gameDataState = -1;
                 let gameData = "";
 
                 const canceled = (title, description) => {
-                    pc.destroy();
+                    socket.disconnect();
                     this.loadingOverlay.removeIfAttached();
 
                     //Show error message of room
@@ -442,7 +415,17 @@ export class MultiplayerState extends GameState {
                                 );
                         }
 
-                        const connection = new MultiplayerConnection(connectionId, pc, gameDataJson, host);
+                        const connection = new MultiplayerConnection(
+                            connectionId,
+                            {
+                                socket,
+                                connectionId,
+                                id: socketId,
+                                hostSocketId,
+                            },
+                            gameDataJson,
+                            host
+                        );
                         this.moveToState("InGameState", {
                             connection,
                         });
@@ -470,8 +453,6 @@ export class MultiplayerState extends GameState {
                         )
                     );
                 }, 1000 * 60);
-
-                pc.on("data", onMessage);
             });
         });
     }

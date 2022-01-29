@@ -49,10 +49,10 @@ export class MultiplayerHUD extends BaseHUDPart {
     }
 
     update() {
-        if (!this.ingameState || !this.ingameState.peer || !this.ingameState.peer.user) return;
+        if (!this.ingameState || !this.ingameState.socket || !this.ingameState.socket.user) return;
 
-        for (let i = 0; i < this.ingameState.peer.users.length; i++) {
-            const user = this.ingameState.peer.users[i];
+        for (let i = 0; i < this.ingameState.socket.users.length; i++) {
+            const user = this.ingameState.socket.users[i];
 
             if (typeof user.worldPos === "undefined") continue;
 
@@ -73,35 +73,37 @@ export class MultiplayerHUD extends BaseHUDPart {
         const metaBuilding = this.ingameState.core.root.hud.parts.buildingPlacer.currentMetaBuilding.get();
 
         if (!metaBuilding) {
-            this.ingameState.peer.user.currentMetaBuilding = undefined;
+            this.ingameState.socket.user.currentMetaBuilding = undefined;
         } else {
-            this.ingameState.peer.user.currentMetaBuilding = metaBuilding.getId();
+            this.ingameState.socket.user.currentMetaBuilding = metaBuilding.getId();
         }
 
-        this.ingameState.peer.user.currentVariant =
+        this.ingameState.socket.user.currentVariant =
             this.ingameState.core.root.hud.parts.buildingPlacer.currentVariant.get();
 
-        this.ingameState.peer.user.currentBaseRotation =
+        this.ingameState.socket.user.currentBaseRotation =
             this.ingameState.core.root.hud.parts.buildingPlacer.currentBaseRotation;
 
         const mousePosition = this.ingameState.core.root.app.mousePosition;
 
         if (mousePosition) {
-            this.ingameState.peer.user.worldPos =
+            this.ingameState.socket.user.worldPos =
                 this.ingameState.core.root.camera.screenToWorld(mousePosition);
         }
 
         if (this.ingameState.isHost()) {
-            for (let i = 0; i < this.ingameState.peer.connections.length; i++) {
+            for (let i = 0; i < this.ingameState.socket.connections.length; i++) {
                 MultiplayerPacket.sendPacket(
-                    this.ingameState.peer.connections[i].peer,
-                    new TextPacket(TextPacketTypes.USER_UPDATE, JSON.stringify(this.ingameState.peer.user))
+                    this.ingameState.socket.socket,
+                    this.ingameState.socket.connections[i].id,
+                    new TextPacket(TextPacketTypes.USER_UPDATE, JSON.stringify(this.ingameState.socket.user))
                 );
             }
-        } else if (this.ingameState.peer.peer) {
+        } else if (this.ingameState.socket.socket.hostSocketId) {
             MultiplayerPacket.sendPacket(
-                this.ingameState.peer.peer,
-                new TextPacket(TextPacketTypes.USER_UPDATE, JSON.stringify(this.ingameState.peer.user))
+                this.ingameState.socket.socket,
+                this.ingameState.socket.socket.hostSocketId,
+                new TextPacket(TextPacketTypes.USER_UPDATE, JSON.stringify(this.ingameState.socket.user))
             );
         }
     }
@@ -109,15 +111,15 @@ export class MultiplayerHUD extends BaseHUDPart {
     draw(parameters) {
         if (
             !this.ingameState ||
-            !this.ingameState.peer ||
-            !this.ingameState.peer.users ||
+            !this.ingameState.socket ||
+            !this.ingameState.socket.users ||
             !getMod().settings.showOtherPlayers
         ) {
             return;
         }
 
-        for (let i = 0; i < this.ingameState.peer.users.length; i++) {
-            const user = this.ingameState.peer.users[i];
+        for (let i = 0; i < this.ingameState.socket.users.length; i++) {
+            const user = this.ingameState.socket.users[i];
             if (
                 typeof user.currentMetaBuilding === "undefined" ||
                 typeof user.currentVariant === "undefined" ||

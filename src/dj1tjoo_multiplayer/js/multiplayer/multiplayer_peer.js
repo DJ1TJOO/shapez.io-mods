@@ -21,21 +21,28 @@ import {
 } from "./multiplayer_packets";
 
 import { v4 } from "uuid";
-import wrtc from "wrtc";
-import Peer from "simple-peer";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 import { enumNotificationType } from "shapez/game/hud/parts/notifications";
 import { StaticMapEntityComponent } from "shapez/game/components/static_map_entity";
 import { config } from "./multiplayer_peer_config";
 import { getMod } from "../getMod";
 import { enumColors, enumColorToShortcode } from "shapez/game/colors";
 
+/**
+ * @typedef {{
+ * socket: Socket,
+ * id: string,
+ * connectionId: string,
+ * hostSocketId?: string,
+ * }} SocketInfo
+ */
+
 export class MultiplayerPeer {
     /**
      * @param {import ("../states/multiplayer_ingame").InMultiplayerGameState} ingameState
-     * @param {Peer.Instance | null} peer
+     * @param {SocketInfo | null} socket
      */
-    constructor(ingameState, peer = null) {
+    constructor(ingameState, socket = null) {
         this.ingameState = ingameState;
         this.multiplayerPlace = [];
         this.multiplayerDestroy = [];
@@ -53,18 +60,24 @@ export class MultiplayerPeer {
         this.users = [];
 
         if (this.ingameState.isHost()) {
-            this.setupHost();
+            /**
+             * @type {Array<{
+             *  id: String,
+             *  user?: Object
+             * }>}
+             */
             this.connections = [];
+            this.setupHost();
         } else {
-            this.peer = peer;
-            this.setupClient(this.peer);
+            this.socket = socket;
+            this.setupClient();
         }
 
         this.builder = new MultiplayerBuilder(this.ingameState, this);
     }
 
     setupHost() {
-        this.connectionId = v4();
+        const connectionId = v4();
 
         const socket = io(this.ingameState.creationPayload.host, { transports: ["websocket"] });
         let socketId = undefined;
@@ -73,15 +86,47 @@ export class MultiplayerPeer {
             //Get socket id
             socket.on("id", id => {
                 socketId = id;
+
+                // Set socket
+                this.socket = {
+                    socket,
+                    id: socketId,
+                    connectionId: connectionId,
+                };
+
+                //Show uuid of room
+                const dialog = new Dialog({
+                    app: this.ingameState.app,
+                    title: T.multiplayer.shareCode,
+                    contentHTML: `
+            <a id="share-connection-${this.socket.connectionId}" onclick="function fallbackCopyTextToClipboard(o){var e=document.createElement('textarea');e.value=o,e.style.top='0',e.style.left='0',e.style.position='fixed',document.body.appendChild(e),e.focus(),e.select();try{document.execCommand('copy')}catch(o){console.error('Fallback: Oops, unable to copy',o)}document.body.removeChild(e)}event.preventDefault();let copyTextToClipboard=o=>{navigator.clipboard?navigator.clipboard.writeText(o).then(function(){},function(o){console.error('Async: Could not copy text: ',o)}):fallbackCopyTextToClipboard(o)};copyTextToClipboard('${this.socket.connectionId}');">${this.socket.connectionId}</a>
+                  `,
+                    buttons: ["ok:good"],
+                });
+                this.ingameState.core.root.hud.parts.dialogs.internalShowDialog(dialog);
             });
 
             //Create room on server
-            socket.emit("createRoom", this.connectionId);
+            socket.emit("createRoom", connectionId);
 
             //Create peer
-            socket.on("createPeer", async data => {
-                this.createPeer(socket, socketId, data);
+            socket.on("createPeer", async ({ receiverId }) => {
+                console.log("connected");
+
+                this.onOpen(receiverId);
+                this.connections.push({ id: receiverId });
             });
+
+            //Handle events
+            socket.on("signal", signalData => {
+                if (this.socket.id !== signalData.receiverId) return;
+
+                this.onMessage(signalData.senderId, signalData.signal);
+            });
+        });
+
+        socket.on("error", err => {
+            console.error(err);
         });
 
         socket.on("connect_error", () => {
@@ -90,167 +135,103 @@ export class MultiplayerPeer {
             });
         });
 
-        //Show uuid of room
-        const dialog = new Dialog({
-            app: this.ingameState.app,
-            title: T.multiplayer.shareCode,
-            contentHTML: `
-            <a id="share-connection-${this.connectionId}" onclick="function fallbackCopyTextToClipboard(o){var e=document.createElement('textarea');e.value=o,e.style.top='0',e.style.left='0',e.style.position='fixed',document.body.appendChild(e),e.focus(),e.select();try{document.execCommand('copy')}catch(o){console.error('Fallback: Oops, unable to copy',o)}document.body.removeChild(e)}event.preventDefault();let copyTextToClipboard=o=>{navigator.clipboard?navigator.clipboard.writeText(o).then(function(){},function(o){console.error('Async: Could not copy text: ',o)}):fallbackCopyTextToClipboard(o)};copyTextToClipboard('${this.connectionId}');">${this.connectionId}</a>
-                  `,
-            buttons: ["ok:good"],
+        socket.on("disconnect", () => {
+            console.log(socketId + " closed");
         });
-        this.ingameState.core.root.hud.parts.dialogs.internalShowDialog(dialog);
     }
 
-    setupClient(peer) {
-        //Peer aleady connected, only add events
-        this.onOpen(peer)();
-        peer.on("data", this.onMessage(peer));
-        peer.on("close", () => {
-            console.log(this.connectionId + " closed");
+    setupClient() {
+        // Socket aleady connected, only add events
+        this.onOpen(this.socket.hostSocketId);
+        this.socket.socket.on("signal", signalData => {
+            if (this.socket.id !== signalData.receiverId) return;
+
+            this.onMessage(signalData.senderId, signalData.signal);
+        });
+        this.socket.socket.on("disconnect", () => {
+            console.log(this.socket.connectionId + " closed");
             this.ingameState.stageLeavingGame();
             this.ingameState.moveToState("MainMenuState", {
                 loadError: "Host disconnected",
             });
         });
-        peer.on("error", err => {
+        this.socket.socket.on("error", err => {
             console.error(err);
         });
-    }
-
-    createPeer(socket, socketId, data) {
-        //Create peer
-        const peer = new Peer({ initiator: true, wrtc: wrtc, config: config });
-        const peerId = v4();
-
-        //Setup peer connection
-        peer.on("signal", signalData => {
-            socket.emit("signal", {
-                peerId: peerId,
-                signal: signalData,
-                senderId: socketId,
-                receiverId: data.receiverId,
-            });
-        });
-        socket.on("signal", signalData => {
-            if (socketId !== signalData.receiverId) return;
-            if (peerId !== signalData.peerId) return;
-
-            peer.signal(signalData.signal);
-        });
-
-        //Handle peer events
-        peer.on("connect", this.onOpen(peer));
-        peer.on("data", this.onMessage(peer, peerId));
-        peer.on("close", () => {
-            console.log(peerId + " closed");
-            const connection = this.connections.find(x => x.peerId === peerId);
-            if (!connection) return;
-
-            // Handle user disconnect
-            if (connection.user && this.ingameState && this.ingameState.core && this.ingameState.core.root) {
-                // Send disconnect packets
-                for (let i = 0; i < this.connections.length; i++) {
-                    if (this.connections[i].peerId === peerId) continue;
-                    MultiplayerPacket.sendPacket(
-                        this.connections[i].peer,
-                        new TextPacket(TextPacketTypes.USER_DISCONNECTED, JSON.stringify(connection.user)),
-                        this.connections
-                    );
-                }
-
-                // Send disconnect notification
-                this.ingameState.core.root.hud.parts["notifications"].internalShowNotification(
-                    T.multiplayer.user.disconnected.replaceAll("<username>", connection.user.username),
-                    enumNotificationType.success
-                );
-                this.users.splice(this.users.indexOf(connection.user), 1);
-            }
-            this.connections.splice(this.connections.indexOf(connection), 1);
-        });
-        peer.on("error", err => {
-            console.error(err);
-        });
-
-        this.connections.push({ peer: peer, peerId: peerId });
     }
 
     /**
      * Handels events and send packets
-     * @param {Peer.Instance} peer
-     * @returns
      */
-    onOpen(peer) {
-        return async event => {
-            setupHandleComponents(this, peer);
+    async onOpen(receiverId) {
+        setupHandleComponents(this, receiverId);
 
-            // Add singal handlers
-            this.ingameState.core.root.signals.entityAdded.add(this.entityAddedHandler.bind(this, peer));
+        // Add singal handlers
+        this.ingameState.core.root.signals.entityAdded.add(this.entityAddedHandler.bind(this, receiverId));
 
-            this.ingameState.core.root.signals.entityDestroyed.add(
-                this.entityDestroyedHandler.bind(this, peer)
+        this.ingameState.core.root.signals.entityDestroyed.add(
+            this.entityDestroyedHandler.bind(this, receiverId)
+        );
+
+        this.ingameState.core.root.signals.upgradePurchased.add(
+            this.upgradePurchasedHandler.bind(this, receiverId)
+        );
+
+        this.ingameState.core.root.hud.parts.buildingPlacer.signals.variantChanged.add(
+            this.variantChangedHandler.bind(this, receiverId)
+        );
+
+        // Send data to new client
+        if (this.ingameState.isHost()) {
+            await this.ingameState.doSave();
+            const dataPackets = DataPacket.createFromData(
+                {
+                    mods: MODS.mods.map(x => x.metadata.id),
+                    version: this.ingameState.savegame.getCurrentVersion(),
+                    dump: this.ingameState.savegame.getCurrentDump(),
+                    stats: this.ingameState.savegame.getStatistics(),
+                    lastUpdate: this.ingameState.savegame.getRealLastUpdate(),
+                },
+                600
             );
 
-            this.ingameState.core.root.signals.upgradePurchased.add(
-                this.upgradePurchasedHandler.bind(this, peer)
-            );
-
-            this.ingameState.core.root.hud.parts.buildingPlacer.signals.variantChanged.add(
-                this.variantChangedHandler.bind(this, peer)
-            );
-
-            // Send data to new client
-            if (this.ingameState.isHost()) {
-                await this.ingameState.doSave();
-                const dataPackets = DataPacket.createFromData(
-                    {
-                        mods: MODS.mods.map(x => x.metadata.id),
-                        version: this.ingameState.savegame.getCurrentVersion(),
-                        dump: this.ingameState.savegame.getCurrentDump(),
-                        stats: this.ingameState.savegame.getStatistics(),
-                        lastUpdate: this.ingameState.savegame.getRealLastUpdate(),
-                    },
-                    600
-                );
-
-                MultiplayerPacket.sendPacket(peer, new FlagPacket(FlagPacketFlags.STARTDATA));
-                for (let i = 0; i < dataPackets.length; i++) {
-                    MultiplayerPacket.sendPacket(peer, dataPackets[i]);
-                }
-                MultiplayerPacket.sendPacket(peer, new FlagPacket(FlagPacketFlags.ENDDATA));
-            } else {
-                // Send user joined to host
-                MultiplayerPacket.sendPacket(
-                    peer,
-                    new TextPacket(TextPacketTypes.USER_JOINED, JSON.stringify(this.user))
-                );
+            MultiplayerPacket.sendPacket(this.socket, receiverId, new FlagPacket(FlagPacketFlags.STARTDATA));
+            for (let i = 0; i < dataPackets.length; i++) {
+                MultiplayerPacket.sendPacket(this.socket, receiverId, dataPackets[i]);
             }
-        };
+            MultiplayerPacket.sendPacket(this.socket, receiverId, new FlagPacket(FlagPacketFlags.ENDDATA));
+        } else {
+            // Send user joined to host
+            MultiplayerPacket.sendPacket(
+                this.socket,
+                receiverId,
+                new TextPacket(TextPacketTypes.USER_JOINED, JSON.stringify(this.user))
+            );
+        }
     }
 
     //Handels incomming packets
-    onMessage(peer, peerId = null) {
-        return data => {
-            const packet = JSON.parse(data);
+    onMessage(senderId, data) {
+        const packet = JSON.parse(data);
 
-            // Send next or recieved packet
-            if (
-                packet.type === MultiplayerPacketTypes.FLAG &&
-                packet.flag === FlagPacketFlags.RECEIVED_PACKET
-            ) {
-                MultiplayerPacket.sendNextPacket();
-            } else {
-                MultiplayerPacket.sendPacket(peer, new FlagPacket(FlagPacketFlags.RECEIVED_PACKET));
-            }
+        // Send next or recieved packet
+        if (packet.type === MultiplayerPacketTypes.FLAG && packet.flag === FlagPacketFlags.RECEIVED_PACKET) {
+            MultiplayerPacket.sendNextPacket();
+        } else {
+            MultiplayerPacket.sendPacket(
+                this.socket,
+                senderId,
+                new FlagPacket(FlagPacketFlags.RECEIVED_PACKET)
+            );
+        }
 
-            // Handle signal packets
-            if (packet.type === MultiplayerPacketTypes.SIGNAL) {
-                this.signalPacketHandler(packet);
-            } else if (packet.type === MultiplayerPacketTypes.TEXT) {
-                // Handle text packets
-                this.textPacketHandler(packet, peerId);
-            }
-        };
+        // Handle signal packets
+        if (packet.type === MultiplayerPacketTypes.SIGNAL) {
+            this.signalPacketHandler(packet);
+        } else if (packet.type === MultiplayerPacketTypes.TEXT) {
+            // Handle text packets
+            this.textPacketHandler(packet, senderId);
+        }
     }
 
     resetTileTo(origin, entity) {
@@ -258,7 +239,8 @@ export class MultiplayerPeer {
 
         for (let i = 0; i < this.connections.length; i++) {
             MultiplayerPacket.sendPacket(
-                this.connections[i].peer,
+                this.socket,
+                this.connections[i].id,
                 new SignalPacket(SignalPacketSignals.setTile, [
                     types.tileVector.serialize(origin),
                     types.float.serialize(staticMapEntity.originalRotation),
@@ -270,7 +252,7 @@ export class MultiplayerPeer {
         }
     }
 
-    entityAddedHandler(peer, entity) {
+    entityAddedHandler(receiverId, entity) {
         const multiplayerId = this.multiplayerPlace.findIndex(origin =>
             origin.equals(entity.components.StaticMapEntity.origin)
         );
@@ -279,7 +261,8 @@ export class MultiplayerPeer {
         /** @type {StaticMapEntityComponent} */
         const staticMapEntity = entity.components.StaticMapEntity;
         MultiplayerPacket.sendPacket(
-            peer,
+            this.socket,
+            receiverId,
             new SignalPacket(SignalPacketSignals.entityAdded, [
                 types.tileVector.serialize(staticMapEntity.origin),
                 types.float.serialize(staticMapEntity.originalRotation),
@@ -296,32 +279,34 @@ export class MultiplayerPeer {
         }
     }
 
-    entityDestroyedHandler(peer, entity) {
+    entityDestroyedHandler(receiverId, entity) {
         const multiplayerId = this.multiplayerDestroy.findIndex(origin =>
             origin.equals(entity.components.StaticMapEntity.origin)
         );
         if (multiplayerId > -1) return this.multiplayerDestroy.splice(multiplayerId, 1);
 
         MultiplayerPacket.sendPacket(
-            peer,
+            this.socket,
+            receiverId,
             new SignalPacket(SignalPacketSignals.entityDestroyed, [
                 types.tileVector.serialize(entity.components.StaticMapEntity.origin),
             ])
         );
     }
 
-    upgradePurchasedHandler(peer, upgradeId) {
+    upgradePurchasedHandler(receiverId, upgradeId) {
         if (this.multipalyerUnlockUpgrade.includes(upgradeId)) {
             return this.multipalyerUnlockUpgrade.splice(this.multipalyerUnlockUpgrade.indexOf(upgradeId), 1);
         }
 
         MultiplayerPacket.sendPacket(
-            peer,
+            this.socket,
+            receiverId,
             new SignalPacket(SignalPacketSignals.upgradePurchased, [new StringSerializable(upgradeId)])
         );
     }
 
-    variantChangedHandler(peer) {
+    variantChangedHandler(receiverId) {
         const metaBuilding = this.ingameState.core.root.hud.parts.buildingPlacer.currentMetaBuilding.get();
         if (!metaBuilding) {
             this.user.currentMetaBuilding = null;
@@ -342,7 +327,8 @@ export class MultiplayerPeer {
         }
 
         MultiplayerPacket.sendPacket(
-            peer,
+            this.socket,
+            receiverId,
             new TextPacket(TextPacketTypes.USER_UPDATE, JSON.stringify(this.user))
         );
     }
@@ -354,7 +340,8 @@ export class MultiplayerPeer {
         if (this.ingameState.isHost()) {
             for (let i = 0; i < this.connections.length; i++) {
                 MultiplayerPacket.sendPacket(
-                    this.connections[i].peer,
+                    this.socket,
+                    this.connections[i].id,
                     new SignalPacket(packet.signal, packet.args),
                     this.connections
                 );
@@ -443,7 +430,7 @@ export class MultiplayerPeer {
         }
     }
 
-    textPacketHandler(packet, peerId) {
+    textPacketHandler(packet, socketId) {
         packet.text = TextPacket.decompress(packet.text);
         if (packet.textType === TextPacketTypes.USER_JOINED) {
             const user = JSON.parse(packet.text);
@@ -451,23 +438,25 @@ export class MultiplayerPeer {
             //Send to other clients
             if (this.ingameState.isHost()) {
                 for (let i = 0; i < this.connections.length; i++) {
-                    if (this.connections[i].peerId === peerId) continue;
+                    if (this.connections[i].id === socketId) continue;
                     MultiplayerPacket.sendPacket(
-                        this.connections[i].peer,
+                        this.socket,
+                        this.connections[i].id,
                         new TextPacket(TextPacketTypes.USER_JOINED, packet.text),
                         this.connections
                     );
                 }
 
                 MultiplayerPacket.sendPacket(
-                    this.connections.find(x => x.peerId === peerId).peer,
+                    this.socket,
+                    socketId,
                     new TextPacket(TextPacketTypes.HOST_USER, JSON.stringify(this.user)),
                     this.connections
                 );
             }
 
             if (this.ingameState.isHost()) {
-                this.connections.find(x => x.peerId === peerId).user = user;
+                this.connections.find(x => x.id === socketId).user = user;
 
                 // Get colors
                 const userColors = this.users.map(x => x.color);
@@ -496,7 +485,8 @@ export class MultiplayerPeer {
                 // Send user update
                 for (let i = 0; i < this.connections.length; i++) {
                     MultiplayerPacket.sendPacket(
-                        this.connections[i].peer,
+                        this.socket,
+                        this.connections[i].id,
                         new TextPacket(TextPacketTypes.USER_UPDATE, JSON.stringify(user)),
                         this.connections
                     );
@@ -511,12 +501,40 @@ export class MultiplayerPeer {
                 enumNotificationType.success
             );
         } else if (packet.textType === TextPacketTypes.USER_DISCONNECTED) {
-            const user = JSON.parse(packet.text);
+            const { user, socketId } = JSON.parse(packet.text);
             this.ingameState.core.root.hud.parts["notifications"].internalShowNotification(
                 T.multiplayer.user.disconnected.replaceAll("<username>", user.username),
                 enumNotificationType.success
             );
             this.users.splice(this.users.indexOf(user), 1);
+
+            if (this.ingameState.isHost()) {
+                const connection = this.connections.find(x => x.id === socketId);
+                if (!connection) return;
+
+                // Handle user disconnect
+                if (
+                    connection.user &&
+                    this.ingameState &&
+                    this.ingameState.core &&
+                    this.ingameState.core.root
+                ) {
+                    // Send disconnect packets
+                    for (let i = 0; i < this.connections.length; i++) {
+                        if (this.connections[i].id === socketId) continue;
+                        MultiplayerPacket.sendPacket(
+                            this.socket,
+                            this.connections[i].id,
+                            new TextPacket(
+                                TextPacketTypes.USER_DISCONNECTED,
+                                JSON.stringify(connection.user)
+                            ),
+                            this.connections
+                        );
+                    }
+                }
+                this.connections.splice(this.connections.indexOf(connection), 1);
+            }
         } else if (packet.textType === TextPacketTypes.HOST_USER) {
             const user = JSON.parse(packet.text);
 
@@ -528,9 +546,10 @@ export class MultiplayerPeer {
             //Send to other clients
             if (this.ingameState.isHost()) {
                 for (let i = 0; i < this.connections.length; i++) {
-                    if (this.connections[i].peerId === peerId) continue;
+                    if (this.connections[i].id === socketId) continue;
                     MultiplayerPacket.sendPacket(
-                        this.connections[i].peer,
+                        this.socket,
+                        this.connections[i].id,
                         new TextPacket(TextPacketTypes.USER_UPDATE, packet.text),
                         this.connections
                     );
@@ -552,7 +571,7 @@ export class MultiplayerPeer {
             }
 
             if (this.ingameState.isHost()) {
-                this.connections.find(x => x.peerId === peerId).user = user;
+                this.connections.find(x => x.id === socketId).user = user;
             }
         } else if (packet.textType === TextPacketTypes.MESSAGE) {
             this.ingameState.core.root.hud.parts["notifications"].internalShowNotification(

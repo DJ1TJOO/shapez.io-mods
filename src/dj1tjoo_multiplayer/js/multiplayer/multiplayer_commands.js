@@ -42,9 +42,9 @@ export class MultiplayerCommandsHandler {
         return this.commands[cmd](
             this.root,
             /** @type {import("../states/multiplayer_ingame").InMultiplayerGameState} */ (this.root.gameState)
-                .peer.user,
+                .socket.user,
             /** @type {import("../states/multiplayer_ingame").InMultiplayerGameState} */ (this.root.gameState)
-                .peer,
+                .socket,
             cmd,
             args
         );
@@ -66,7 +66,7 @@ export class MultiplayerCommandsHandler {
                         app: multiplayerPeer.ingameState.app,
                         title: T.multiplayer.shareCode,
                         contentHTML: `
-            <a id="share-connection-${multiplayerPeer.connectionId}" onclick="function fallbackCopyTextToClipboard(o){var e=document.createElement('textarea');e.value=o,e.style.top='0',e.style.left='0',e.style.position='fixed',document.body.appendChild(e),e.focus(),e.select();try{document.execCommand('copy')}catch(o){console.error('Fallback: Oops, unable to copy',o)}document.body.removeChild(e)}event.preventDefault();let copyTextToClipboard=o=>{navigator.clipboard?navigator.clipboard.writeText(o).then(function(){},function(o){console.error('Async: Could not copy text: ',o)}):fallbackCopyTextToClipboard(o)};copyTextToClipboard('${multiplayerPeer.connectionId}');">${multiplayerPeer.connectionId}</a>
+            <a id="share-connection-${multiplayerPeer.socket.connectionId}" onclick="function fallbackCopyTextToClipboard(o){var e=document.createElement('textarea');e.value=o,e.style.top='0',e.style.left='0',e.style.position='fixed',document.body.appendChild(e),e.focus(),e.select();try{document.execCommand('copy')}catch(o){console.error('Fallback: Oops, unable to copy',o)}document.body.removeChild(e)}event.preventDefault();let copyTextToClipboard=o=>{navigator.clipboard?navigator.clipboard.writeText(o).then(function(){},function(o){console.error('Async: Could not copy text: ',o)}):fallbackCopyTextToClipboard(o)};copyTextToClipboard('${multiplayerPeer.socket.connectionId}');">${multiplayerPeer.socket.connectionId}</a>
                   `,
                         buttons: ["ok:good"],
                     });

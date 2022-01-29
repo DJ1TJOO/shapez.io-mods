@@ -31,6 +31,18 @@ io.on("connection", function (socket) {
         socket.join(room);
     });
 
+    //destroyRoom function
+    socket.on("destroyRoom", roomId => {
+        const room = [...io.sockets.adapter.rooms.get(roomId)];
+        if (!room) {
+            return socket.emit("error", { error: 404, errorMessage: "Room not found" });
+        }
+
+        for (let i = 0; i < room.length; i++) {
+            io.sockets.sockets.get(room[i]).disconnect(true);
+        }
+    });
+
     //joinRoom function
     socket.on("joinRoom", (room, id) => {
         if ([...io.sockets.adapter.rooms.keys()].indexOf(room) >= 0) {
@@ -41,7 +53,6 @@ io.on("connection", function (socket) {
 
     socket.on("signal", data => {
         io.to(data.receiverId).emit("signal", {
-            peerId: data.peerId,
             senderId: data.senderId,
             receiverId: data.receiverId,
             signal: data.signal,
@@ -49,11 +60,11 @@ io.on("connection", function (socket) {
     });
 
     //close the connection
-    socket.on("close", function () {
+    socket.on("disconnect", function () {
         console.log("Disconnecting user");
     });
 });
 
-server.listen(8889, () => {
-    console.log(`go to ${secure ? "wss" : "ws"}://localhost:8889`);
+server.listen(8888, () => {
+    console.log(`go to ${secure ? "wss" : "ws"}://localhost:8888`);
 });

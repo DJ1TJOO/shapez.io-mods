@@ -141,7 +141,7 @@ export function multiplayerNotifications(modInterface) {
         sendMessage() {
             /** @type {MultiplayerPeer} */
             // @ts-ignore
-            const peer = this.root.gameState.peer;
+            const peer = this.root.gameState.socket;
             if (!peer) return;
 
             const value = /** @type {HTMLInputElement} */ (
@@ -162,6 +162,7 @@ export function multiplayerNotifications(modInterface) {
                     );
                 }
             } else {
+                if (value.length < 1) return;
                 const message = peer.user.username + ": " + value;
                 if (
                     /** @type {import("../states/multiplayer_ingame").InMultiplayerGameState} */ (
@@ -170,12 +171,17 @@ export function multiplayerNotifications(modInterface) {
                 ) {
                     for (let i = 0; i < peer.connections.length; i++) {
                         MultiplayerPacket.sendPacket(
-                            peer.connections[i].peer,
+                            peer.socket,
+                            peer.connections[i].id,
                             new TextPacket(TextPacketTypes.MESSAGE, message)
                         );
                     }
-                } else if (peer.peer) {
-                    MultiplayerPacket.sendPacket(peer.peer, new TextPacket(TextPacketTypes.MESSAGE, message));
+                } else if (peer.socket.hostSocketId) {
+                    MultiplayerPacket.sendPacket(
+                        peer.socket,
+                        peer.socket.hostSocketId,
+                        new TextPacket(TextPacketTypes.MESSAGE, message)
+                    );
                 }
                 // @ts-ignore
                 this.internalShowNotification(message, enumNotificationType.message);
