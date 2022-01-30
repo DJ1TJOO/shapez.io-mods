@@ -3,6 +3,7 @@ import { enumNotificationType } from "shapez/game/hud/parts/notifications";
 import { GameRoot } from "shapez/game/root";
 import { T } from "shapez/translations";
 import { getMod } from "../getMod";
+import { MultiplayerPacket, TextPacket, TextPacketTypes } from "./multiplayer_packets";
 import { MultiplayerPeer } from "./multiplayer_peer";
 
 export class MultiplayerCommandsHandler {
@@ -24,7 +25,16 @@ export class MultiplayerCommandsHandler {
 
     getCommandFromCommandString(str) {
         if (!this.isCommandString(str)) return null;
-        const args = str.split(" ");
+
+        const regex = new RegExp('"[^"]+"|[\\S]+', "g");
+        const args = [];
+        const matches = str.match(regex);
+        for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
+            if (!match) continue;
+            args.push(match.replace(/"/g, ""));
+        }
+
         const cmd = args.splice(0, 1)[0].substring(1);
         return { cmd, args };
     }
@@ -71,6 +81,58 @@ export class MultiplayerCommandsHandler {
                         buttons: ["ok:good"],
                     });
                     root.hud.parts.dialogs.internalShowDialog(dialog);
+                } else {
+                    root.hud.parts["notifications"].internalShowNotification(
+                        T.multiplayer.hostOnly,
+                        enumNotificationType.error
+                    );
+                }
+                return true;
+            },
+            /**
+             * @param {GameRoot} root
+             * @param {Object} user
+             * @param {MultiplayerPeer} multiplayerPeer
+             * @param {string} cmd
+             * @param {Array<string>} args
+             */
+            kick: (root, user, multiplayerPeer, cmd, args) => {
+                if (multiplayerPeer.ingameState.isHost()) {
+                    const currentUser = multiplayerPeer.users.find(x => x.username === args[0]);
+                    if (!currentUser) {
+                        return root.hud.parts["notifications"].internalShowNotification(
+                            T.multiplayer.user.notFound.replaceAll("<username>", args[0]),
+                            enumNotificationType.error
+                        );
+                    }
+
+                    const socketId = multiplayerPeer.connections.find(x => x.user._id === currentUser._id).id;
+                    if (!socketId) {
+                        return root.hud.parts["notifications"].internalShowNotification(
+                            T.multiplayer.user.notFound.replaceAll("<username>", args[0]),
+                            enumNotificationType.error
+                        );
+                    }
+
+                    root.hud.parts["notifications"].internalShowNotification(
+                        T.multiplayer.user.disconnected.replaceAll("<username>", currentUser.username),
+                        enumNotificationType.success
+                    );
+                    multiplayerPeer.users.splice(multiplayerPeer.users.indexOf(currentUser), 1);
+
+                    for (let i = 0; i < multiplayerPeer.connections.length; i++) {
+                        const connection = multiplayerPeer.connections[i];
+
+                        MultiplayerPacket.sendPacket(
+                            multiplayerPeer.socket,
+                            connection.id,
+                            new TextPacket(
+                                TextPacketTypes.USER_DISCONNECTED,
+                                JSON.stringify({ user: currentUser, socketId })
+                            )
+                        );
+                    }
+                    multiplayerPeer.socket.socket.emit("kick", socketId);
                 } else {
                     root.hud.parts["notifications"].internalShowNotification(
                         T.multiplayer.hostOnly,

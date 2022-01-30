@@ -346,6 +346,7 @@ export function createMultiplayerGameState(modInterface) {
                     this.socket.socket.socket.emit("destroyRoom", this.socket.socket.connectionId);
                 }
 
+                this.socket.leaving = true;
                 this.socket.socket.socket.disconnect();
             }
         }

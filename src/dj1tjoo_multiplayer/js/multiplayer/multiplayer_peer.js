@@ -51,6 +51,8 @@ export class MultiplayerPeer {
         this.multiplayerConstantSignalChange = [];
         this.multiplayerColorCodedChange = [];
 
+        this.leaving = false;
+
         this.user = {
             _id: v4(),
             username: getMod().settings.user.name,
@@ -150,9 +152,13 @@ export class MultiplayerPeer {
         this.socket.socket.on("disconnect", () => {
             console.log(this.socket.connectionId + " closed");
             this.ingameState.stageLeavingGame();
-            this.ingameState.moveToState("MainMenuState", {
-                loadError: "Host disconnected",
-            });
+            if (!this.leaving) {
+                this.ingameState.moveToState("MainMenuState", {
+                    loadError: "Host disconnected",
+                });
+            } else {
+                this.ingameState.moveToState("MainMenuState");
+            }
         });
         this.socket.socket.on("error", err => {
             console.error(err);

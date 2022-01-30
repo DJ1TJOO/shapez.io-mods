@@ -30,6 +30,7 @@ multiplayer:
     user:
         disconnected: <username> has disconnected
         joined: <username> has joined the game
+        notFound: The user '<username>' was not found
 
     username:
         title: Multiplayer Game

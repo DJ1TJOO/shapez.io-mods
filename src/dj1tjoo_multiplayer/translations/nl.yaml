@@ -32,6 +32,7 @@ multiplayer:
     user:
         disconnected: <username> heeft het spel verlaten
         joined: <username> heeft zich aangesloten
+        notFound: De gebruiker '<username>' was niet gevonden
 
     username:
         title: Multiplayer Spel
