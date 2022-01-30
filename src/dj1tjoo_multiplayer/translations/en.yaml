@@ -6,6 +6,9 @@ multiplayer:
         title: Multiplayer Game
         desc: Enter a multiplayer game server.
 
+    players: Players
+    kick: Kick
+
     joinMultiplayer:
         title: Multiplayer
         username: Username

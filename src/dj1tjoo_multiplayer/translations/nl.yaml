@@ -6,6 +6,9 @@ multiplayer:
         title: Multiplayer Spel
         desc: Voer een multiplayer spel server in.
 
+    players: Spelers
+    kick: Verwijderen
+
     joinMultiplayerGame:
         title: Multiplayer Spel
         desc: Voer de multiplayer spelcode in die je van de host hebt gekregen

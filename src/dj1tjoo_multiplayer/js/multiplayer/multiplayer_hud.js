@@ -2,8 +2,9 @@ import { globalConfig } from "shapez/core/config";
 import { DrawParameters } from "shapez/core/draw_parameters";
 import { drawRotatedSprite } from "shapez/core/draw_utils";
 import { gMetaBuildingRegistry } from "shapez/core/global_registries";
+import { InputReceiver } from "shapez/core/input_receiver";
 import { Loader } from "shapez/core/loader";
-import { makeDiv } from "shapez/core/utils";
+import { makeDiv, removeAllChildren } from "shapez/core/utils";
 import {
     enumDirection,
     enumDirectionToAngle,
@@ -19,13 +20,51 @@ import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
 import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
 import { GameHUD } from "shapez/game/hud/hud";
 import { HUDGameMenu } from "shapez/game/hud/parts/game_menu";
+import { enumNotificationType } from "shapez/game/hud/parts/notifications";
+import { COLOR_ITEM_SINGLETONS } from "shapez/game/items/color_item";
+import { KeyActionMapper, KEYMAPPINGS } from "shapez/game/key_action_mapper";
 import { MetaBuilding } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
 import { Mod } from "shapez/mods/mod";
+import { T } from "shapez/translations";
 import { getExternalMod, getMod } from "../getMod";
-import { MultiplayerPacket, TextPacket, TextPacketTypes } from "./multiplayer_packets";
+import {
+    MultiplayerPacket,
+    MultiplayerPacketTypes,
+    TextPacket,
+    TextPacketTypes,
+} from "./multiplayer_packets";
 
 export class MultiplayerHUD extends BaseHUDPart {
+    createElements(parent) {
+        this.background = makeDiv(parent, "ingame_HUD_Multiplayer", ["ingameDialog"]);
+
+        // DIALOG Inner / Wrapper
+        this.dialogInner = makeDiv(this.background, null, ["dialogInner"]);
+        this.title = makeDiv(this.dialogInner, null, ["title"], T.multiplayer.players);
+        this.closeButton = makeDiv(this.title, null, ["closeButton"]);
+        this.trackClicks(this.closeButton, this.close);
+
+        this.contentDiv = makeDiv(this.dialogInner, null, ["content"]);
+    }
+
+    isBlockingOverlay() {
+        return this.visible;
+    }
+
+    show() {
+        this.visible = true;
+        this.root.app.inputMgr.makeSureAttachedAndOnTop(this.inputReciever);
+        this.rerenderFull();
+        this.update();
+    }
+
+    close() {
+        this.visible = false;
+        this.root.app.inputMgr.makeSureDetached(this.inputReciever);
+        this.update();
+    }
+
     initialize() {
         /**
          * @type {import("../states/multiplayer_ingame").InMultiplayerGameState}
@@ -40,6 +79,100 @@ export class MultiplayerHUD extends BaseHUDPart {
         } else {
             this.coloredComponent = null;
         }
+
+        this.domAttach = new DynamicDomAttach(this.root, this.background, {
+            attachClass: "visible",
+        });
+
+        this.inputReciever = new InputReceiver("friends");
+        this.keyActionMapper = new KeyActionMapper(this.root, this.inputReciever);
+
+        this.keyActionMapper.getBinding(KEYMAPPINGS.general.back).add(this.close, this);
+        this.keyActionMapper.getBinding(KEYMAPPINGS.ingame.menuClose).add(this.close, this);
+
+        this.close();
+    }
+
+    rerenderFull() {
+        if (!this.ingameState || !this.ingameState.socket || !this.ingameState.socket.users) return;
+
+        removeAllChildren(this.contentDiv);
+
+        const user = this.ingameState.socket.user;
+
+        const element = document.createElement("div");
+
+        // Create color
+        const shapeCanvas = document.createElement("canvas");
+        shapeCanvas.width = 100;
+        shapeCanvas.height = 100;
+        COLOR_ITEM_SINGLETONS[user.color].drawFullSizeOnCanvas(shapeCanvas.getContext("2d"), 100);
+        shapeCanvas.classList.add("icon");
+        element.appendChild(shapeCanvas);
+
+        const name = document.createElement("span");
+        name.classList.add("counter");
+        name.innerHTML = user.username;
+        element.appendChild(name);
+
+        this.contentDiv.appendChild(element);
+
+        for (let i = 0; i < this.ingameState.socket.users.length; i++) {
+            const currentUser = this.ingameState.socket.users[i];
+
+            const element = document.createElement("div");
+
+            // Create color
+            const shapeCanvas = document.createElement("canvas");
+            shapeCanvas.width = 100;
+            shapeCanvas.height = 100;
+            COLOR_ITEM_SINGLETONS[currentUser.color].drawFullSizeOnCanvas(shapeCanvas.getContext("2d"), 100);
+            shapeCanvas.classList.add("icon");
+            element.appendChild(shapeCanvas);
+
+            const name = document.createElement("span");
+            name.classList.add("counter");
+            name.innerHTML = currentUser.username;
+            element.appendChild(name);
+
+            if (this.ingameState.isHost()) {
+                const kickButton = document.createElement("button");
+                kickButton.classList.add("kick", "styledButton");
+                kickButton.innerText = T.multiplayer.kick;
+                element.appendChild(kickButton);
+
+                const socketId = this.ingameState.socket.connections.find(
+                    x => x.user._id === currentUser._id
+                ).id;
+
+                this.trackClicks(kickButton, () => {
+                    this.ingameState.core.root.hud.parts["notifications"].internalShowNotification(
+                        T.multiplayer.user.disconnected.replaceAll("<username>", currentUser.username),
+                        enumNotificationType.success
+                    );
+                    this.ingameState.socket.users.splice(
+                        this.ingameState.socket.users.indexOf(currentUser),
+                        1
+                    );
+
+                    for (let i = 0; i < this.ingameState.socket.connections.length; i++) {
+                        const connection = this.ingameState.socket.connections[i];
+
+                        MultiplayerPacket.sendPacket(
+                            this.ingameState.socket.socket,
+                            connection.id,
+                            new TextPacket(
+                                TextPacketTypes.USER_DISCONNECTED,
+                                JSON.stringify({ user: currentUser, socketId })
+                            )
+                        );
+                    }
+                    this.ingameState.socket.socket.socket.emit("kick", socketId);
+                });
+            }
+
+            this.contentDiv.appendChild(element);
+        }
     }
 
     lerp(start, end, time) {
@@ -47,6 +180,8 @@ export class MultiplayerHUD extends BaseHUDPart {
     }
 
     update() {
+        this.domAttach.update(this.visible);
+
         if (!this.ingameState || !this.ingameState.socket || !this.ingameState.socket.user) return;
 
         for (let i = 0; i < this.ingameState.socket.users.length; i++) {
@@ -68,6 +203,11 @@ export class MultiplayerHUD extends BaseHUDPart {
 
         if (Date.now() - this.lastTimeUpdated < 0.5 * 1000) return;
         this.lastTimeUpdated = Date.now();
+
+        if (this.visible) {
+            this.rerenderFull();
+        }
+
         const metaBuilding = this.ingameState.core.root.hud.parts.buildingPlacer.currentMetaBuilding.get();
 
         if (!metaBuilding) {
@@ -467,7 +607,12 @@ export function createHud(root) {
         const part = new MultiplayerHUD(root);
         // @ts-ignore
         root.hud.parts.multiplayer = part;
+
+        const frag = document.createDocumentFragment();
         this.signals.hudElementInitialized.dispatch(part);
+        part.createElements(frag);
+        document.body.appendChild(frag);
+
         part.initialize();
         this.signals.hudElementFinalized.dispatch(part);
     }
