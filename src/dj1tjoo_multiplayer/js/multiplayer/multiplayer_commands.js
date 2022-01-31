@@ -14,15 +14,34 @@ export class MultiplayerCommandsHandler {
         this.commands = getMod().commands;
     }
 
-    isCommandString(str) {
+    /**
+     * @returns {String}
+     */
+    getPrefix() {
         const settings = getMod().settings;
-        return str.startsWith(settings.prefix);
+        return settings.prefix;
     }
 
+    /**
+     * @param {String} str command string
+     * @returns {Boolean}
+     */
+    isCommandString(str) {
+        return str.startsWith(this.getPrefix());
+    }
+
+    /**
+     * @param {String} cmd command
+     * @returns {Boolean}
+     */
     isCommand(cmd) {
         return !!this.commands[cmd];
     }
 
+    /**
+     * @param {String} str command string
+     * @returns {{cmd: String, args: Array<String>}}
+     */
     getCommandFromCommandString(str) {
         if (!this.isCommandString(str)) return null;
 
@@ -35,16 +54,25 @@ export class MultiplayerCommandsHandler {
             args.push(match.replace(/"/g, ""));
         }
 
-        const cmd = args.splice(0, 1)[0].substring(1);
+        const cmd = args.splice(0, 1)[0].substring(this.getPrefix().length);
         return { cmd, args };
     }
 
+    /**
+     * @param {String} str command string
+     * @returns {Boolean}
+     */
     executeCommandFromCommandString(str) {
         const command = this.getCommandFromCommandString(str);
         if (!command || !this.isCommand(command.cmd)) return false;
         return this.executeCommand(command.cmd, command.args);
     }
 
+    /**
+     * @param {String} cmd
+     * @param {Array<String>} args
+     * @returns {Boolean}
+     */
     executeCommand(cmd, args) {
         // @ts-ignore
         cmd = cmd.toLowerCase();
