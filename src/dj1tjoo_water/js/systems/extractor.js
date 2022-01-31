@@ -1,9 +1,9 @@
 import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
-import { PumpComponent } from "../components/pump";
+import { ExtractorComponent } from "../components/extractor";
 
-export class PumpSystem extends GameSystemWithFilter {
+export class ExtractorSystem extends GameSystemWithFilter {
     constructor(root) {
-        super(root, [PumpComponent]);
+        super(root, [ExtractorComponent]);
     }
 
     update() {
@@ -11,13 +11,12 @@ export class PumpSystem extends GameSystemWithFilter {
         for (let i = 0; i < this.allEntities.length; ++i) {
             const entity = this.allEntities[i];
             // @ts-ignore
-            const pumpComp = entity.components.Pump;
+            const extractorComp = entity.components.Extractor;
             // @ts-ignore
             const pinsComp = entity.components.PipedPins;
 
             if (pinsComp) {
-                pinsComp.slots[0].pressure = pumpComp.pressure;
-                pinsComp.slots[0].fluid = pumpComp.fluid;
+                pinsComp.slots[0].pressure = extractorComp.pressure;
             }
         }
     }

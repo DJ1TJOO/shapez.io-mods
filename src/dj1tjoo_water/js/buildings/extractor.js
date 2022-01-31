@@ -1,29 +1,40 @@
 import { Vector, enumDirection } from "shapez/core/vector";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
+import { ExtractorComponent } from "../components/extractor";
 import { enumPinSlotType, PipedPinsComponent } from "../components/pipe_pins";
-import { PumpComponent } from "../components/pump";
-import { OIL_SINGLETONS } from "../fluids/oil";
-import { WATER_SINGLETON } from "../fluids/water";
 
-export class MetaPumpBuilding extends ModMetaBuilding {
+export class MetaExtractorBuilding extends ModMetaBuilding {
     constructor() {
-        super("pump");
+        super("extractor");
     }
 
     getSilhouetteColor() {
-        return "#000000"; //"#b37dcd";
+        return "#b37dcd";
+    }
+
+    isPlaceableToFluids() {
+        return true;
     }
 
     isPlaceableToGround() {
         return false;
     }
 
+    /**
+     * @param {import("shapez/savegame/savegame_serializer").GameRoot} root
+     * @param {string} variant
+     * @returns {number}
+     */
+    getPumpSpeed(root, variant) {
+        return 5; //globalConfig.pumpSpeedLPerSecond * HubGoals.upgradeImprovements.fluids;
+    }
+
     static getAllVariantCombinations() {
         return [
             {
                 variant: defaultBuildingVariant,
-                name: "Pump",
+                name: "Extractor",
                 description: "",
             },
         ];
@@ -40,15 +51,12 @@ export class MetaPumpBuilding extends ModMetaBuilding {
                     {
                         pos: new Vector(0, 0),
                         direction: enumDirection.top,
-                        type: enumPinSlotType.logicalEjector,
+                        type: enumPinSlotType.logicalAcceptor,
                     },
                 ],
             })
         );
 
-        const fluids = [WATER_SINGLETON, ...Object.values(OIL_SINGLETONS), null];
-        const fluid = fluids[Math.floor(Math.random() * fluids.length)];
-
-        entity.addComponent(new PumpComponent({ pressure: 10, fluid: fluid }));
+        entity.addComponent(new ExtractorComponent({ pressure: 20 }));
     }
 }

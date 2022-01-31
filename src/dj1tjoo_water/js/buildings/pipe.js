@@ -4,7 +4,14 @@ import { enumDirection, Vector, enumAngleToDirection } from "shapez/core/vector"
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { SOUNDS } from "shapez/platform/sound";
-import { enumPipeVariant, PipeComponent } from "../components/pipe";
+import { enumPipeType, enumPipeVariant, PipeComponent } from "../components/pipe";
+
+export const arrayPipeRotationVariantToType = [
+    enumPipeType.forward,
+    enumPipeType.turn,
+    enumPipeType.split,
+    enumPipeType.cross,
+];
 
 /** @enum {string} */
 export const pipeVariants = {
@@ -19,9 +26,10 @@ const enumPipeVariantToVariant = {
 export const arrayPipeVariantToRotation = [enumDirection.top, enumDirection.left, enumDirection.right];
 
 export const pipeOverlayMatrices = {
-    [enumDirection.top]: generateMatrixRotations([0, 1, 0, 0, 1, 0, 0, 1, 0]),
-    [enumDirection.left]: generateMatrixRotations([0, 0, 0, 1, 1, 0, 0, 1, 0]),
-    [enumDirection.right]: generateMatrixRotations([0, 0, 0, 0, 1, 1, 0, 1, 0]),
+    [enumPipeType.forward]: generateMatrixRotations([0, 1, 0, 0, 1, 0, 0, 1, 0]),
+    [enumPipeType.split]: generateMatrixRotations([0, 0, 0, 1, 1, 1, 0, 1, 0]),
+    [enumPipeType.turn]: generateMatrixRotations([0, 0, 0, 0, 1, 1, 0, 1, 0]),
+    [enumPipeType.cross]: generateMatrixRotations([0, 1, 0, 1, 1, 1, 0, 1, 0]),
 };
 
 export class MetaPipeBuilding extends ModMetaBuilding {
@@ -35,6 +43,10 @@ export class MetaPipeBuilding extends ModMetaBuilding {
 
     getSilhouetteColor() {
         return "#61ef6f";
+    }
+
+    getDimensions() {
+        return new Vector(1, 1);
     }
 
     getStayInPlacementMode() {
@@ -79,7 +91,6 @@ export class MetaPipeBuilding extends ModMetaBuilding {
 
     getAvailableVariants(root) {
         let variants = [defaultBuildingVariant, enumPipeVariant.industrial];
-        // variants.push(enumPipeVariant.industrial);
         return variants;
     }
 
@@ -104,6 +115,12 @@ export class MetaPipeBuilding extends ModMetaBuilding {
                 rotationVariant: 2,
             },
             {
+                variant: defaultBuildingVariant,
+                name: "Pipe",
+                description: "",
+                rotationVariant: 3,
+            },
+            {
                 variant: enumPipeVariant.industrial,
                 name: "Industrial Pipe",
                 description: "",
@@ -120,6 +137,12 @@ export class MetaPipeBuilding extends ModMetaBuilding {
                 name: "Industrial Pipe",
                 description: "",
                 rotationVariant: 2,
+            },
+            {
+                variant: enumPipeVariant.industrial,
+                name: "Industrial Pipe",
+                description: "",
+                rotationVariant: 3,
             },
         ];
     }
@@ -139,9 +162,9 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      */
     updateVariants(entity, rotationVariant, variant) {
         // @ts-ignore
-        entity.components.Pipe.variant = variant;
+        entity.components.Pipe.type = arrayPipeRotationVariantToType[rotationVariant];
         // @ts-ignore
-        entity.components.Pipe.direction = arrayPipeVariantToRotation[rotationVariant];
+        entity.components.Pipe.variant = enumPipeVariantToVariant[variant];
     }
 
     /**
@@ -153,7 +176,7 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      */
     getSpecialOverlayRenderMatrix(rotation, rotationVariant, variant, entity) {
         // @ts-ignore
-        return pipeOverlayMatrices[entity.components.Pipe.direction][rotation];
+        return pipeOverlayMatrices[entity.components.Pipe.type][rotation];
     }
 
     /**
@@ -164,18 +187,21 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      */
     getPreviewSprite(rotationVariant, variant) {
         const pipeVariant = enumPipeVariantToVariant[variant];
-        switch (arrayPipeVariantToRotation[rotationVariant]) {
-            case enumDirection.top: {
-                return Loader.getSprite("sprites/pipes/" + pipeVariant + "_top.png");
+        switch (arrayPipeRotationVariantToType[rotationVariant]) {
+            case enumPipeType.forward: {
+                return Loader.getSprite("sprites/pipes/" + pipeVariant + "_forward.png");
             }
-            case enumDirection.left: {
-                return Loader.getSprite("sprites/pipes/" + pipeVariant + "_left.png");
+            case enumPipeType.turn: {
+                return Loader.getSprite("sprites/pipes/" + pipeVariant + "_turn.png");
             }
-            case enumDirection.right: {
-                return Loader.getSprite("sprites/pipes/" + pipeVariant + "_right.png");
+            case enumPipeType.split: {
+                return Loader.getSprite("sprites/pipes/" + pipeVariant + "_split.png");
+            }
+            case enumPipeType.cross: {
+                return Loader.getSprite("sprites/pipes/" + pipeVariant + "_cross.png");
             }
             default: {
-                assertAlways(false, "Invalid belt rotation variant");
+                assertAlways(false, "Invalid pipe rotation variant");
             }
         }
     }
@@ -191,99 +217,122 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      * @param {Vector} param0.tile
      * @param {number} param0.rotation
      * @param {string} param0.variant
-     * @param {Layer} param0.layer
-     * @return {{ rotation: number, rotationVariant: number, connectedEntities?: Array<import("shapez/savegame/savegame_typedefs").Entity> }}
+     * @param {string} param0.layer
+     * @return {{ rotation: number, rotationVariant: number, connectedEntities?: Array<import("shapez/savegame/savegame_serializer").Entity> }}
      */
     computeOptimalDirectionAndRotationVariantAtTile({ root, tile, rotation, variant, layer }) {
-        const topDirection = enumAngleToDirection[rotation];
-        const rightDirection = enumAngleToDirection[(rotation + 90) % 360];
-        const bottomDirection = enumAngleToDirection[(rotation + 180) % 360];
-        const leftDirection = enumAngleToDirection[(rotation + 270) % 360];
+        const pipeVariant = enumPipeVariantToVariant[variant];
+        const connections = {
+            // @ts-ignore
+            top: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.top }),
+            // @ts-ignore
+            right: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.right }),
+            // @ts-ignore
+            bottom: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.bottom }),
+            // @ts-ignore
+            left: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.left }),
+        };
 
-        // @ts-ignore
-        const { ejectors, acceptors } = root.logic.getEjectorsAndAcceptorsAtTileForPipes(tile, variant);
+        let flag = 0;
+        flag |= connections.top ? 0x1000 : 0;
+        flag |= connections.right ? 0x100 : 0;
+        flag |= connections.bottom ? 0x10 : 0;
+        flag |= connections.left ? 0x1 : 0;
 
-        let hasBottomEjector = false;
-        let hasRightEjector = false;
-        let hasLeftEjector = false;
+        let targetType = enumPipeType.forward;
 
-        let hasTopAcceptor = false;
-        let hasLeftAcceptor = false;
-        let hasRightAcceptor = false;
+        // First, reset rotation
+        rotation = 0;
 
-        // Check all ejectors
-        for (let i = 0; i < ejectors.length; ++i) {
-            const ejector = ejectors[i];
+        switch (flag) {
+            case 0x0000:
+                // Nothing
+                break;
 
-            if (ejector.toDirection === topDirection) {
-                hasBottomEjector = true;
-            } else if (ejector.toDirection === leftDirection) {
-                hasRightEjector = true;
-            } else if (ejector.toDirection === rightDirection) {
-                hasLeftEjector = true;
-            }
-        }
+            case 0x0001:
+                // Left
+                rotation += 90;
+                break;
 
-        // Check all acceptors
-        for (let i = 0; i < acceptors.length; ++i) {
-            const acceptor = acceptors[i];
-            if (acceptor.fromDirection === bottomDirection) {
-                hasTopAcceptor = true;
-            } else if (acceptor.fromDirection === rightDirection) {
-                hasLeftAcceptor = true;
-            } else if (acceptor.fromDirection === leftDirection) {
-                hasRightAcceptor = true;
-            }
-        }
+            case 0x0010:
+                // Bottom
+                // END
+                break;
 
-        // Soo .. if there is any ejector below us we always prioritize
-        // this ejector
-        if (!hasBottomEjector) {
-            // When something ejects to us from the left and nothing from the right,
-            // do a curve from the left to the top
+            case 0x0011:
+                // Bottom | Left
+                targetType = enumPipeType.turn;
+                rotation += 90;
+                break;
 
-            if (hasRightEjector && !hasLeftEjector) {
-                return {
-                    rotation: (rotation + 270) % 360,
-                    rotationVariant: 2,
-                };
-            }
+            case 0x0100:
+                // Right
+                rotation += 90;
+                break;
 
-            // When something ejects to us from the right and nothing from the left,
-            // do a curve from the right to the top
-            if (hasLeftEjector && !hasRightEjector) {
-                return {
-                    rotation: (rotation + 90) % 360,
-                    rotationVariant: 1,
-                };
-            }
-        }
+            case 0x0101:
+                // Right | Left
+                rotation += 90;
+                break;
 
-        // When there is a top acceptor, ignore sides
-        // NOTICE: This makes the belt prefer side turns *way* too much!
-        if (!hasTopAcceptor) {
-            // When there is an acceptor to the right but no acceptor to the left,
-            // do a turn to the right
-            if (hasRightAcceptor && !hasLeftAcceptor) {
-                return {
-                    rotation,
-                    rotationVariant: 2,
-                };
-            }
+            case 0x0110:
+                // Right | Bottom
+                targetType = enumPipeType.turn;
+                break;
 
-            // When there is an acceptor to the left but no acceptor to the right,
-            // do a turn to the left
-            if (hasLeftAcceptor && !hasRightAcceptor) {
-                return {
-                    rotation,
-                    rotationVariant: 1,
-                };
-            }
+            case 0x0111:
+                // Right | Bottom | Left
+                targetType = enumPipeType.split;
+                break;
+
+            case 0x1000:
+                // Top
+                break;
+
+            case 0x1001:
+                // Top | Left
+                targetType = enumPipeType.turn;
+                rotation += 180;
+                break;
+
+            case 0x1010:
+                // Top | Bottom
+                break;
+
+            case 0x1011:
+                // Top | Bottom | Left
+                targetType = enumPipeType.split;
+                rotation += 90;
+                break;
+
+            case 0x1100:
+                // Top | Right
+                targetType = enumPipeType.turn;
+                rotation -= 90;
+                break;
+
+            case 0x1101:
+                // Top | Right | Left
+                targetType = enumPipeType.split;
+                rotation += 180;
+                break;
+
+            case 0x1110:
+                // Top | Right | Bottom
+                targetType = enumPipeType.split;
+                rotation -= 90;
+                break;
+
+            case 0x1111:
+                // Top | Right | Bottom | Left
+                targetType = enumPipeType.cross;
+                break;
         }
 
         return {
-            rotation,
-            rotationVariant: 0,
+            // Clamp rotation
+            rotation: (rotation + 360 * 10) % 360,
+            rotationVariant: arrayPipeRotationVariantToType.indexOf(targetType),
         };
     }
 }

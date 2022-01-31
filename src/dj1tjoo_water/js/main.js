@@ -1,18 +1,18 @@
-import { Vector, enumDirectionToVector } from "shapez/core/vector";
+import { Vector, enumDirectionToVector, enumDirection, enumInvertedDirections } from "shapez/core/vector";
 import { GameLogic } from "shapez/game/logic";
 import { Mod } from "shapez/mods/mod";
+import { MetaExtractorBuilding } from "./buildings/extractor";
 import { MetaPipeBuilding } from "./buildings/pipe";
 import { MetaPumpBuilding } from "./buildings/pump";
-import { FluidAcceptorComponent } from "./components/fluid_acceptor";
-import { FluidEjectorComponent } from "./components/fluid_ejector";
-import { PipeComponent } from "./components/pipe";
+import { ExtractorComponent } from "./components/extractor";
+import { enumPipeVariant, PipeComponent } from "./components/pipe";
+import { PipedPinsComponent } from "./components/pipe_pins";
 import { PumpComponent } from "./components/pump";
-import { FluidAcceptorSystem } from "./systems/fluid_acceptor";
-import { FluidEjectorSystem } from "./systems/fluid_ejector";
+import { ExtractorSystem } from "./systems/extractor";
 import { PipeSystem } from "./systems/pipe";
+import { PipedPinsSystem } from "./systems/pipe_pins";
 import { PumpSystem } from "./systems/pump";
 
-// @ts-ignore
 class ModImpl extends Mod {
     init() {
         this.checkSettings();
@@ -33,126 +33,133 @@ class ModImpl extends Mod {
             location: "primary",
             metaClass: MetaPumpBuilding,
         });
-
-        this.modInterface.registerComponent(FluidAcceptorComponent);
-        this.modInterface.registerComponent(FluidEjectorComponent);
-        this.modInterface.registerComponent(PumpComponent);
-        this.modInterface.registerComponent(PipeComponent);
-
-        this.modInterface.registerGameSystem({
-            id: "fluidAcceptor",
-            systemClass: FluidAcceptorSystem,
-            before: "pipe",
-            drawHooks: ["foregroundDynamicAfter"],
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaExtractorBuilding,
         });
+        this.modInterface.addNewBuildingToToolbar({
+            toolbar: "regular",
+            location: "primary",
+            metaClass: MetaExtractorBuilding,
+        });
+
+        // this.modInterface.registerComponent(FluidAcceptorComponent);
+        // this.modInterface.registerComponent(FluidEjectorComponent);
+        // this.modInterface.registerComponent(PumpComponent);
+        this.modInterface.registerComponent(PipeComponent);
+        this.modInterface.registerComponent(PipedPinsComponent);
+        this.modInterface.registerComponent(PumpComponent);
+        this.modInterface.registerComponent(ExtractorComponent);
+
+        // this.modInterface.registerGameSystem({
+        //     id: "fluidAcceptor",
+        //     systemClass: FluidAcceptorSystem,
+        //     before: "pipe",
+        //     drawHooks: ["foregroundDynamicAfter"],
+        // });
 
         this.modInterface.registerGameSystem({
             id: "pipe",
+            before: "pipedPins",
             systemClass: PipeSystem,
-            before: "pump",
-            drawHooks: ["backgroundLayerAfter"],
-        });
-
-        this.modInterface.registerGameSystem({
-            id: "pump",
-            systemClass: PumpSystem,
-            before: "fluidEjector",
             drawHooks: ["staticAfter"],
         });
 
         this.modInterface.registerGameSystem({
-            id: "fluidEjector",
-            systemClass: FluidEjectorSystem,
-            before: "constantProducer",
-            drawHooks: ["foregroundDynamicAfter"],
+            id: "pipedPins",
+            before: "itemProcessorOverlays",
+            systemClass: PipedPinsSystem,
+            drawHooks: ["staticAfter"],
         });
+
+        this.modInterface.registerGameSystem({
+            id: "pump",
+            before: "end",
+            systemClass: PumpSystem,
+        });
+        this.modInterface.registerGameSystem({
+            id: "extractor",
+            before: "end",
+            systemClass: ExtractorSystem,
+        });
+        // this.modInterface.registerGameSystem({
+        //     id: "pump",
+        //     systemClass: PumpSystem,
+        //     before: "fluidEjector",
+        //     drawHooks: ["staticAfter"],
+        // });
+
+        // this.modInterface.registerGameSystem({
+        //     id: "fluidEjector",
+        //     systemClass: FluidEjectorSystem,
+        //     before: "constantProducer",
+        //     drawHooks: ["foregroundDynamicAfter"],
+        // });
 
         this.modInterface.extendClass(GameLogic, () => ({
             /**
-             * Returns the acceptors and ejectors which affect the current tile
-             * @param {Vector} tile
-             * @param {string} variant
-             * @this {GameLogic}
-             * @returns {import("shapez/game/logic").AcceptorsAndEjectorsAffectingTile}
+             *
+             * Computes the flag for a given tile
+             * @param {object} param0
+             * @param {enumPipeVariant} param0.pipeVariant
+             * @param {Vector} param0.tile The tile to check at
+             * @param {enumDirection} param0.edge The edge to check for
              */
-            getEjectorsAndAcceptorsAtTileForPipes(tile, variant) {
-                /** @type {import("shapez/game/logic").EjectorsAffectingTile} */
-                let ejectors = [];
-                /** @type {import("shapez/game/logic").AcceptorsAffectingTile} */
-                let acceptors = [];
+            computePipeEdgeStatus({ pipeVariant, tile, edge }) {
+                const offset = enumDirectionToVector[edge];
+                const targetTile = tile.add(offset);
 
-                // Well .. please ignore this code! :D
-                for (let dx = -1; dx <= 1; ++dx) {
-                    for (let dy = -1; dy <= 1; ++dy) {
-                        if (Math.abs(dx) + Math.abs(dy) !== 1) {
+                // Search for relevant pins
+                const pinEntities = this.root.map.getLayersContentsMultipleXY(targetTile.x, targetTile.y);
+
+                // Go over all entities which could have a pin
+                for (let i = 0; i < pinEntities.length; ++i) {
+                    const pinEntity = pinEntities[i];
+                    const pinComp = pinEntity.components.PipedPins;
+                    const staticComp = pinEntity.components.StaticMapEntity;
+
+                    // Skip those who don't have pins
+                    if (!pinComp) {
+                        continue;
+                    }
+
+                    // Go over all pins
+                    const pins = pinComp.slots;
+                    for (let k = 0; k < pinComp.slots.length; ++k) {
+                        const pinSlot = pins[k];
+                        const pinLocation = staticComp.localTileToWorld(pinSlot.pos);
+                        const pinDirection = staticComp.localDirectionToWorld(pinSlot.direction);
+
+                        // Check if the pin has the right location
+                        if (!pinLocation.equals(targetTile)) {
                             continue;
                         }
 
-                        const entity = this.root.map.getLayerContentXY(tile.x + dx, tile.y + dy, "regular");
-                        if (entity) {
-                            let ejectorSlots = [];
-                            let acceptorSlots = [];
-
-                            const staticComp = entity.components.StaticMapEntity;
-                            // @ts-ignore
-                            const fluidEjector = entity.components.FluidEjector;
-                            // @ts-ignore
-                            const fluidAcceptor = entity.components.FluidAcceptor;
-                            // @ts-ignore
-                            const pipeComp = entity.components.Pipe;
-
-                            if (fluidEjector) {
-                                ejectorSlots = fluidEjector.slots.slice();
-                            }
-
-                            if (fluidAcceptor) {
-                                acceptorSlots = fluidAcceptor.slots.slice();
-                            }
-
-                            if (pipeComp && pipeComp.variant === variant) {
-                                const fakeEjectorSlot = pipeComp.getFakeEjectorSlot();
-                                const fakeAcceptorSlot = pipeComp.getFakeAcceptorSlot();
-                                ejectorSlots.push(fakeEjectorSlot);
-                                acceptorSlots.push(fakeAcceptorSlot);
-                            }
-
-                            for (let ejectorSlot = 0; ejectorSlot < ejectorSlots.length; ++ejectorSlot) {
-                                const slot = ejectorSlots[ejectorSlot];
-                                const wsTile = staticComp.localTileToWorld(slot.pos);
-                                const wsDirection = staticComp.localDirectionToWorld(slot.direction);
-                                const targetTile = wsTile.add(enumDirectionToVector[wsDirection]);
-                                if (targetTile.equals(tile)) {
-                                    ejectors.push({
-                                        entity,
-                                        slot,
-                                        fromTile: wsTile,
-                                        toDirection: wsDirection,
-                                    });
-                                }
-                            }
-
-                            for (let acceptorSlot = 0; acceptorSlot < acceptorSlots.length; ++acceptorSlot) {
-                                const slot = acceptorSlots[acceptorSlot];
-                                const wsTile = staticComp.localTileToWorld(slot.pos);
-                                for (let k = 0; k < slot.directions.length; ++k) {
-                                    const direction = slot.directions[k];
-                                    const wsDirection = staticComp.localDirectionToWorld(direction);
-
-                                    const sourceTile = wsTile.add(enumDirectionToVector[wsDirection]);
-                                    if (sourceTile.equals(tile)) {
-                                        acceptors.push({
-                                            entity,
-                                            slot,
-                                            toTile: wsTile,
-                                            fromDirection: wsDirection,
-                                        });
-                                    }
-                                }
-                            }
+                        // Check if the pin has the right direction
+                        if (pinDirection !== enumInvertedDirections[edge]) {
+                            continue;
                         }
+
+                        // Found a pin!
+                        return true;
                     }
                 }
-                return { ejectors, acceptors };
+
+                // Now check if there's a connectable entity on the pipes layer
+                const targetEntity = this.root.map.getTileContent(targetTile, "regular");
+                if (!targetEntity) {
+                    return false;
+                }
+
+                const targetStaticComp = targetEntity.components.StaticMapEntity;
+
+                // Check if its a pipe
+                const pipesComp = targetEntity.components.Pipe;
+                if (!pipesComp) {
+                    return false;
+                }
+
+                // It's connected if its the same variant
+                return pipesComp.variant === pipeVariant;
             },
         }));
     }
