@@ -103,6 +103,7 @@ class ModImpl extends Mod {
              * @param {enumPipeVariant} param0.pipeVariant
              * @param {Vector} param0.tile The tile to check at
              * @param {enumDirection} param0.edge The edge to check for
+             * @this {GameLogic}
              */
             computePipeEdgeStatus({ pipeVariant, tile, edge }) {
                 const offset = enumDirectionToVector[edge];
@@ -114,7 +115,8 @@ class ModImpl extends Mod {
                 // Go over all entities which could have a pin
                 for (let i = 0; i < pinEntities.length; ++i) {
                     const pinEntity = pinEntities[i];
-                    const pinComp = pinEntity.components.PipedPins;
+                    // @ts-ignore
+                    const pinComp = /** @type {PipedPinsComponent} */ (pinEntity.components.PipedPins);
                     const staticComp = pinEntity.components.StaticMapEntity;
 
                     // Skip those who don't have pins
@@ -128,6 +130,11 @@ class ModImpl extends Mod {
                         const pinSlot = pins[k];
                         const pinLocation = staticComp.localTileToWorld(pinSlot.pos);
                         const pinDirection = staticComp.localDirectionToWorld(pinSlot.direction);
+
+                        // Check if the pin has a network
+                        if (!pinSlot.linkedNetwork) {
+                            continue;
+                        }
 
                         // Check if the pin has the right location
                         if (!pinLocation.equals(targetTile)) {
@@ -153,6 +160,7 @@ class ModImpl extends Mod {
                 const targetStaticComp = targetEntity.components.StaticMapEntity;
 
                 // Check if its a pipe
+                // @ts-ignore
                 const pipesComp = targetEntity.components.Pipe;
                 if (!pipesComp) {
                     return false;

@@ -23,8 +23,9 @@ export class PipeComponent extends Component {
      * @param {object} param0
      * @param {enumPipeType=} param0.type
      * @param {enumPipeVariant=} param0.variant
+     * @param {number=} param0.pressureFriction
      */
-    constructor({ type = enumPipeType.forward, variant = enumPipeVariant.pipe }) {
+    constructor({ type = enumPipeType.forward, variant = enumPipeVariant.pipe, pressureFriction = 0.2 }) {
         super();
         this.type = type;
 
@@ -39,10 +40,16 @@ export class PipeComponent extends Component {
          */
         this.linkedNetwork = null;
 
-        this.distance = -1;
+        this.pressureFriction = pressureFriction;
+
+        this.distance = [];
     }
 
     get localPressure() {
-        return this.linkedNetwork.currentPressure - this.distance * this.linkedNetwork.pipeCosts;
+        let costs = 0;
+        for (let j = 0; j < this.distance.length; j++) {
+            costs += this.distance[j];
+        }
+        return this.linkedNetwork.currentPressure - costs;
     }
 }

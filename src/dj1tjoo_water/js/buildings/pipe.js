@@ -152,7 +152,7 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      * @param {import("shapez/savegame/savegame_typedefs").Entity} entity
      */
     setupEntityComponents(entity) {
-        entity.addComponent(new PipeComponent({}));
+        entity.addComponent(new PipeComponent({ pressureFriction: 0.04 }));
     }
 
     /**

@@ -3,6 +3,7 @@ import { BUILD_OPTIONS } from "shapez/core/globals";
 import { gMetaBuildingRegistry } from "shapez/core/global_registries";
 import { Loader } from "shapez/core/loader";
 import { createLogger } from "shapez/core/logging";
+import { Rectangle } from "shapez/core/rectangle";
 import { StaleAreaDetector } from "shapez/core/stale_area_detector";
 import { round1Digit, round2Digits } from "shapez/core/utils";
 import {
@@ -62,12 +63,6 @@ export class PipeNetwork {
          * @type {BaseFluid}
          */
         this.currentFluid = null;
-
-        /**
-         * The cost of pressure per pipe of this network
-         * @type {Number}
-         */
-        this.pipeCosts = 0.2;
 
         /**
          * Whether this network has a value conflict, that is, more than one
@@ -197,6 +192,15 @@ export class PipeSystem extends GameSystem {
                 }
             }
         }
+
+        // Update all sprites around pins
+        for (let i = 0; i < pinEntities.length; ++i) {
+            const entity = pinEntities[i];
+
+            this.updateSurroundingPipePlacement(
+                entity.components.StaticMapEntity.getTileSpaceBounds().expandedInAllDirections(1)
+            );
+        }
     }
 
     /**
@@ -219,7 +223,7 @@ export class PipeSystem extends GameSystem {
             {
                 entity: initialEntity,
                 slot,
-                distance: 0,
+                distance: [],
             },
         ];
 
@@ -233,7 +237,7 @@ export class PipeSystem extends GameSystem {
         while (entitiesToVisit.length > 0) {
             const nextData = entitiesToVisit.shift();
             const nextEntity = nextData.entity;
-            let distance = nextData.distance;
+            const distance = [...nextData.distance];
 
             // @ts-ignore
             const pipeComp = nextEntity.components.Pipe;
@@ -266,7 +270,7 @@ export class PipeSystem extends GameSystem {
                         VERBOSE_WIRES && logger.log("  Visited new pipe:", staticComp.origin.toString());
                         pipeComp.linkedNetwork = currentNetwork;
 
-                        distance++;
+                        distance.push(pipeComp.pressureFriction);
                         pipeComp.distance = distance;
 
                         currentNetwork.pipes.push(nextEntity);
@@ -309,6 +313,10 @@ export class PipeSystem extends GameSystem {
 
                     // Add to the right list
                     if (slot.type === enumPinSlotType.logicalEjector) {
+                        // Only one logicalEjector
+                        if (currentNetwork.providers.length > 0) {
+                            continue;
+                        }
                         currentNetwork.providers.push({ entity: nextEntity, slot });
                     } else if (slot.type === enumPinSlotType.logicalAcceptor) {
                         currentNetwork.receivers.push({ entity: nextEntity, slot });
@@ -368,10 +376,10 @@ export class PipeSystem extends GameSystem {
      * @param {Array<enumDirection>} directions
      * @param {PipeNetwork} network
      * @param {enumPipeVariant=} variantMask Only accept connections to this mask
-     * @param {number=} distance
+     * @param {Array<number>=} distance
      * @returns {Array<any>}
      */
-    findSurroundingPipeTargets(initialTile, directions, network, variantMask = null, distance = 0) {
+    findSurroundingPipeTargets(initialTile, directions, network, variantMask = null, distance = []) {
         let result = [];
 
         VERBOSE_WIRES &&
@@ -451,7 +459,7 @@ export class PipeSystem extends GameSystem {
                             result.push({
                                 entity,
                                 slot,
-                                distance: 0,
+                                distance: [],
                             });
                         }
                     }
@@ -546,7 +554,13 @@ export class PipeSystem extends GameSystem {
                 network.currentPressure = 0;
                 network.currentFluid = null;
             } else {
-                network.currentPressure = pressure - network.pipes.length * network.pipeCosts;
+                let costs = 0;
+                for (let j = 0; j < network.pipes.length; j++) {
+                    //@ts-ignore
+                    const pipe = /** @type {PipeComponent} */ (network.pipes[j].components.Pipe);
+                    costs += pipe.pressureFriction;
+                }
+                network.currentPressure = pressure - costs;
                 network.currentFluid = fluid;
             }
         }
@@ -608,7 +622,7 @@ export class PipeSystem extends GameSystem {
                     staticComp.drawSpriteOnBoundsClipped(parameters, sprite, 0);
 
                     // DEBUG Rendering
-                    if (BUILD_OPTIONS.IS_DEV) {
+                    if (!BUILD_OPTIONS.IS_DEV) {
                         parameters.context.globalAlpha = 1;
                         parameters.context.fillStyle = "red";
                         parameters.context.font = "5px Tahoma";
@@ -638,7 +652,7 @@ export class PipeSystem extends GameSystem {
                 }
 
                 // DEBUG Rendering
-                if (BUILD_OPTIONS.IS_DEV) {
+                if (!BUILD_OPTIONS.IS_DEV) {
                     if (entity) {
                         const staticComp = entity.components.StaticMapEntity;
                         // @ts-ignore
@@ -654,11 +668,11 @@ export class PipeSystem extends GameSystem {
                             //     (staticComp.origin.y + 0.2) * globalConfig.tileSize
                             // );
 
-                            parameters.context.fillText(
-                                "Pr:" + round1Digit(pipeComp.linkedNetwork.currentPressure),
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.2) * globalConfig.tileSize
-                            );
+                            // parameters.context.fillText(
+                            //     "Pr:" + round1Digit(pipeComp.linkedNetwork.currentPressure),
+                            //     (staticComp.origin.x + 0.5) * globalConfig.tileSize,
+                            //     (staticComp.origin.y + 0.2) * globalConfig.tileSize
+                            // );
 
                             parameters.context.fillText(
                                 "LPr:" + round1Digit(pipeComp.localPressure),
@@ -667,7 +681,7 @@ export class PipeSystem extends GameSystem {
                             );
 
                             parameters.context.fillText(
-                                "D:" + pipeComp.distance,
+                                "D:" + pipeComp.distance.length,
                                 (staticComp.origin.x + 0) * globalConfig.tileSize,
                                 (staticComp.origin.y + 0.8) * globalConfig.tileSize
                             );
