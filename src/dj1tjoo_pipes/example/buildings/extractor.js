@@ -2,7 +2,8 @@ import { Vector, enumDirection } from "shapez/core/vector";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { ExtractorComponent } from "../components/extractor";
-import { enumPinSlotType, PipedPinsComponent } from "../components/pipe_pins";
+
+const { enumPinSlotType, PipedPinsComponent } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
 
 export class MetaExtractorBuilding extends ModMetaBuilding {
     constructor() {
@@ -11,23 +12,6 @@ export class MetaExtractorBuilding extends ModMetaBuilding {
 
     getSilhouetteColor() {
         return "#b37dcd";
-    }
-
-    isPlaceableToFluids() {
-        return true;
-    }
-
-    isPlaceableToGround() {
-        return false;
-    }
-
-    /**
-     * @param {import("shapez/savegame/savegame_serializer").GameRoot} root
-     * @param {string} variant
-     * @returns {number}
-     */
-    getPumpSpeed(root, variant) {
-        return 5; //globalConfig.pumpSpeedLPerSecond * HubGoals.upgradeImprovements.fluids;
     }
 
     static getAllVariantCombinations() {

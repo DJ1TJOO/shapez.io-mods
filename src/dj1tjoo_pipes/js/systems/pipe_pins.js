@@ -4,13 +4,6 @@ import { Vector } from "shapez/core/vector";
 import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
 import { PipedPinsComponent, enumPinSlotType } from "../components/pipe_pins";
 
-/** @type {Object<ItemType, number>} */
-const enumTypeToSize = {
-    boolean: 9,
-    shape: 9,
-    color: 14,
-};
-
 export class PipedPinsSystem extends GameSystemWithFilter {
     constructor(root) {
         super(root, [PipedPinsComponent]);

@@ -24,10 +24,9 @@ export const arrayPipeRotationVariantToType = [
     enumPipeType.cross,
 ];
 
+const renderPipesInfo = false;
+
 const logger = createLogger("pipes");
-//@TODO: rendering fluids
-//@TODO: fix pins rendering and rename?
-//@TODO: check if default pipes and pump need to be disabled
 let networkUidCounter = 0;
 
 const VERBOSE_WIRES = BUILD_OPTIONS.IS_DEV && false;
@@ -523,8 +522,7 @@ export class PipeSystem extends GameSystem {
                     const staticComp = entity.components.StaticMapEntity;
 
                     // DEBUG Rendering
-                    // @TODO: only on dev
-                    if (!BUILD_OPTIONS.IS_DEV) {
+                    if (BUILD_OPTIONS.IS_DEV && renderPipesInfo) {
                         parameters.context.globalAlpha = 1;
                         parameters.context.fillStyle = "red";
                         parameters.context.font = "5px Tahoma";
@@ -554,7 +552,7 @@ export class PipeSystem extends GameSystem {
                 }
 
                 // DEBUG Rendering
-                if (BUILD_OPTIONS.IS_DEV) {
+                if (BUILD_OPTIONS.IS_DEV && renderPipesInfo) {
                     if (entity) {
                         const staticComp = entity.components.StaticMapEntity;
                         // @ts-ignore

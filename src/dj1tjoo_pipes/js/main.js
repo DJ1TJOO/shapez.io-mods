@@ -1,16 +1,16 @@
 import { Vector, enumDirectionToVector, enumDirection, enumInvertedDirections } from "shapez/core/vector";
 import { GameLogic } from "shapez/game/logic";
 import { Mod } from "shapez/mods/mod";
-import { MetaExtractorBuilding } from "./buildings/extractor";
+import { BaseFluid, gFluidRegistry } from "./base_fluid";
 import { MetaPipeBuilding } from "./buildings/pipe";
 import { MetaPumpBuilding } from "./buildings/pump";
 import { DefaultPipeRendererComponent } from "./components/default_pipe_renderer";
-import { ExtractorComponent } from "./components/extractor";
 import { enumPipeType, enumPipeVariant, PipeComponent } from "./components/pipe";
 import { PipedPinsComponent } from "./components/pipe_pins";
 import { PumpComponent } from "./components/pump";
+import { WATER_SINGLETON } from "./fluids/water";
+import { getMod } from "./getMod";
 import { DefaultPipeRendererSystem } from "./systems/default_pipe_renderer";
-import { ExtractorSystem } from "./systems/extractor";
 import { arrayPipeRotationVariantToType, PipeSystem } from "./systems/pipe";
 import { PipedPinsSystem } from "./systems/pipe_pins";
 import { PumpSystem } from "./systems/pump";
@@ -22,35 +22,30 @@ class ModImpl extends Mod {
         this.modInterface.registerNewBuilding({
             metaClass: MetaPipeBuilding,
         });
-        this.modInterface.addNewBuildingToToolbar({
-            toolbar: "regular",
-            location: "primary",
-            metaClass: MetaPipeBuilding,
-        });
+
         this.modInterface.registerNewBuilding({
             metaClass: MetaPumpBuilding,
         });
-        this.modInterface.addNewBuildingToToolbar({
-            toolbar: "regular",
-            location: "primary",
-            metaClass: MetaPumpBuilding,
+
+        this.modLoader.signals.hudElementInitialized.add(element => {
+            if (element.constructor.name === "HUDBuildingsToolbar") {
+                if (this.settings.defaultPump) element.primaryBuildings.push(MetaPumpBuilding);
+                if (this.settings.defaultPipes) element.primaryBuildings.push(MetaPipeBuilding);
+            }
         });
-        this.modInterface.registerNewBuilding({
-            metaClass: MetaExtractorBuilding,
-        });
-        this.modInterface.addNewBuildingToToolbar({
-            toolbar: "regular",
-            location: "primary",
-            metaClass: MetaExtractorBuilding,
+
+        // Make the item spawn on the map
+        this.modInterface.runAfterMethod(shapez.MapChunk, "generatePatches", function ({ rng }) {
+            // Generate a simple patch
+            if (rng.next() < 0.05 && getMod().settings.defaultWater) {
+                this.internalGeneratePatch(rng, 3, WATER_SINGLETON);
+            }
         });
 
         this.modInterface.registerComponent(PipeComponent);
         this.modInterface.registerComponent(PipedPinsComponent);
-
-        // Tester components
-        this.modInterface.registerComponent(PumpComponent);
-        this.modInterface.registerComponent(ExtractorComponent);
         this.modInterface.registerComponent(DefaultPipeRendererComponent);
+        this.modInterface.registerComponent(PumpComponent);
 
         this.modInterface.registerGameSystem({
             id: "pipe",
@@ -64,23 +59,16 @@ class ModImpl extends Mod {
             before: "end",
             systemClass: PipedPinsSystem,
         });
-
-        // Tester systems
-        this.modInterface.registerGameSystem({
-            id: "pump",
-            before: "end",
-            systemClass: PumpSystem,
-        });
-        this.modInterface.registerGameSystem({
-            id: "extractor",
-            before: "end",
-            systemClass: ExtractorSystem,
-        });
         this.modInterface.registerGameSystem({
             id: "defaultPipeRenderer",
             before: "end",
             systemClass: DefaultPipeRendererSystem,
             drawHooks: ["staticBefore"],
+        });
+        this.modInterface.registerGameSystem({
+            id: "pump",
+            before: "end",
+            systemClass: PumpSystem,
         });
 
         this.modInterface.extendClass(GameLogic, () => ({
@@ -166,7 +154,46 @@ class ModImpl extends Mod {
             this.settings = {};
         }
 
+        if (!this.settings.defaultPipes) {
+            this.settings.defaultPipes = true;
+        }
+        if (!this.settings.defaultPump) {
+            this.settings.defaultPump = true;
+        }
+        if (!this.settings.defaultWater) {
+            this.settings.defaultWater = true;
+        }
+
         this.saveSettings();
+    }
+
+    // Exports
+    // components
+    get PipedPinsComponent() {
+        return PipedPinsComponent;
+    }
+    get PipeComponent() {
+        return PipeComponent;
+    }
+
+    get arrayPipeRotationVariantToType() {
+        return arrayPipeRotationVariantToType;
+    }
+
+    // fluids
+    get BaseFluid() {
+        return BaseFluid;
+    }
+
+    get gFluidRegistry() {
+        return gFluidRegistry;
+    }
+
+    /**
+     * @param {typeof BaseFluid} fluid
+     */
+    registerFluid(fluid) {
+        gFluidRegistry.register(fluid);
     }
 
     /**

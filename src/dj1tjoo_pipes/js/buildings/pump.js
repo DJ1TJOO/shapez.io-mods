@@ -1,9 +1,9 @@
 import { Vector, enumDirection } from "shapez/core/vector";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
+import { BaseFluid } from "../base_fluid";
 import { enumPinSlotType, PipedPinsComponent } from "../components/pipe_pins";
 import { PumpComponent } from "../components/pump";
-import { OIL_SINGLETONS } from "../fluids/oil";
 import { WATER_SINGLETON } from "../fluids/water";
 
 export class MetaPumpBuilding extends ModMetaBuilding {
@@ -46,8 +46,22 @@ export class MetaPumpBuilding extends ModMetaBuilding {
             })
         );
 
-        const fluids = [WATER_SINGLETON, ...Object.values(OIL_SINGLETONS), null];
-        const fluid = fluids[Math.floor(Math.random() * fluids.length)];
+        // @ts-ignore
+        let fluid = null;
+
+        if (entity.root) {
+            // @ts-ignore
+            const layerFluid = /** @type {BaseFluid} */ (
+                entity.root.map.getLowerLayerContentXY(
+                    entity.components.StaticMapEntity.origin.x,
+                    entity.components.StaticMapEntity.origin.y
+                )
+            );
+
+            if (layerFluid && layerFluid.getItemType() === "fluid") {
+                fluid = layerFluid;
+            }
+        }
 
         entity.addComponent(new PumpComponent({ pressure: 50, fluid: fluid }));
     }

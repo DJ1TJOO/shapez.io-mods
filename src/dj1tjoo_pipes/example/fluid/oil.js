@@ -1,11 +1,13 @@
+import { MODS } from "shapez/mods/modloader";
 import { types } from "shapez/savegame/serialization";
-import { BaseFluid, gFluidRegistry } from "../base_fluid";
 
 export const enumOilTypes = {
     oil: "oil",
     red: "red",
 };
 
+// @ts-ignore
+const { BaseFluid, gFluidRegistry } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
 export class OilFluid extends BaseFluid {
     static getId() {
         return "oil_fluid";
@@ -50,6 +52,33 @@ export class OilFluid extends BaseFluid {
 
     static resolver(data) {
         return OIL_SINGLETONS[data];
+    }
+
+    /**
+     * Draws the item to a canvas
+     * @param {CanvasRenderingContext2D} context
+     * @param {number} size
+     */
+    drawFullSizeOnCanvas(context, size) {
+        if (!this.cachedSprite) {
+            this.cachedSprite = Loader.getSprite("sprites/fluids/oil-" + this.type + ".png");
+        }
+        this.cachedSprite.drawCentered(context, size / 2, size / 2, size);
+    }
+
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {number} diameter
+     * @param {import("shapez/core/draw_utils").DrawParameters} parameters
+     */
+    // @ts-ignore
+    drawItemCenteredClipped(x, y, parameters, diameter = globalConfig.defaultItemDiameter) {
+        const realDiameter = diameter * 0.6;
+        if (!this.cachedSprite) {
+            this.cachedSprite = Loader.getSprite("sprites/fluids/oil-" + this.type + ".png");
+        }
+        this.cachedSprite.drawCachedCentered(parameters, x, y, realDiameter);
     }
 
     getBackgroundColorAsResource() {
