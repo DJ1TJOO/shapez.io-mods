@@ -1,10 +1,12 @@
+import { generateMatrixRotations } from "shapez/core/utils";
 import { Vector, enumDirection } from "shapez/core/vector";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { BaseFluid } from "../base_fluid";
 import { enumPinSlotType, PipedPinsComponent } from "../components/pipe_pins";
 import { PumpComponent } from "../components/pump";
-import { WATER_SINGLETON } from "../fluids/water";
+
+const overlayMatrix = generateMatrixRotations([1, 0, 1, 0, 1, 0, 1, 0, 1]);
 
 export class MetaPumpBuilding extends ModMetaBuilding {
     constructor() {
@@ -12,11 +14,7 @@ export class MetaPumpBuilding extends ModMetaBuilding {
     }
 
     getSilhouetteColor() {
-        return "#000000"; //"#b37dcd";
-    }
-
-    isPlaceableToGround() {
-        return false;
+        return "#B2B4BB";
     }
 
     static getAllVariantCombinations() {
@@ -27,6 +25,10 @@ export class MetaPumpBuilding extends ModMetaBuilding {
                 description: "",
             },
         ];
+    }
+
+    getSpecialOverlayRenderMatrix(rotation, rotationVariant, variant) {
+        return overlayMatrix[rotation];
     }
 
     /**

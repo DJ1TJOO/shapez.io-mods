@@ -40,7 +40,7 @@ export class MetaPipeBuilding extends ModMetaBuilding {
     }
 
     getSilhouetteColor() {
-        return "#61ef6f";
+        return "#9799A3";
     }
 
     getDimensions() {
