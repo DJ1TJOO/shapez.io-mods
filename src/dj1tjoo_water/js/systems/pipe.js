@@ -32,8 +32,8 @@ export class PipeNetwork {
     constructor() {
         /**
          * Who contributes to this network
-         * @type {Array<{ entity: import("shapez/savegame/savegame_typedefs").Entity, slot: import("../components/pipe_pins").PipePinSlot }>} */
-        this.providers = [];
+         * @type {{ entity: import("shapez/savegame/savegame_typedefs").Entity, slot: import("../components/pipe_pins").PipePinSlot }} */
+        this.provider = null;
 
         /**
          * Who takes values from this network
@@ -65,13 +65,6 @@ export class PipeNetwork {
         this.currentFluid = null;
 
         /**
-         * Whether this network has a value conflict, that is, more than one
-         * sender has sent a value
-         * @type {boolean}
-         */
-        this.valueConflict = false;
-
-        /**
          * Unique network identifier
          * @type {number}
          */
@@ -83,7 +76,7 @@ export class PipeNetwork {
      * @returns {boolean}
      */
     hasValue() {
-        return !!this.currentPressure && !this.valueConflict;
+        return !!this.currentPressure && !!this.currentFluid;
     }
 }
 
@@ -96,7 +89,7 @@ export class PipeSystem extends GameSystem {
          */
         this.pipeSprites = {};
 
-        const variants = ["conflict", ...Object.keys(enumPipeVariant)];
+        const variants = Object.keys(enumPipeVariant);
         for (let i = 0; i < variants.length; ++i) {
             const pipeVariant = variants[i];
             const sprites = {};
@@ -314,10 +307,10 @@ export class PipeSystem extends GameSystem {
                     // Add to the right list
                     if (slot.type === enumPinSlotType.logicalEjector) {
                         // Only one logicalEjector
-                        if (currentNetwork.providers.length > 0) {
+                        if (currentNetwork.provider !== null) {
                             continue;
                         }
-                        currentNetwork.providers.push({ entity: nextEntity, slot });
+                        currentNetwork.provider = { entity: nextEntity, slot };
                     } else if (slot.type === enumPinSlotType.logicalAcceptor) {
                         currentNetwork.receivers.push({ entity: nextEntity, slot });
                     } else {
@@ -352,7 +345,7 @@ export class PipeSystem extends GameSystem {
         }
 
         if (
-            currentNetwork.providers.length > 0 &&
+            currentNetwork.provider !== null &&
             (currentNetwork.pipes.length > 0 || currentNetwork.receivers.length > 0)
         ) {
             this.networks.push(currentNetwork);
@@ -489,44 +482,10 @@ export class PipeSystem extends GameSystem {
         for (let i = 0; i < this.networks.length; ++i) {
             const network = this.networks[i];
 
-            // Reset conflicts
-            network.valueConflict = false;
-
-            // Aggregate values of all senders
-            const senders = network.providers;
-            let pressure = 0;
-            let fluid = null;
-            for (let k = 0; k < senders.length; ++k) {
-                const senderSlot = senders[k];
-                const slotPressure = senderSlot.slot.pressure;
-                const slotFluid = senderSlot.slot.fluid;
-
-                // The first sender can just put in his value
-                if (pressure === 0 && fluid === null) {
-                    fluid = slotFluid;
-                    pressure = slotPressure;
-                    continue;
-                }
-
-                // If the slot is empty itself, just skip it
-                if (typeof slotPressure !== "number") {
-                    continue;
-                }
-
-                // If there is already an value, compare if it matches ->
-                // otherwise there is a conflict
-                pressure += slotPressure;
-
-                if (fluid === null && slotFluid !== null) {
-                    fluid = slotFluid;
-                }
-
-                // There is a conflict, this means the value will be null anyways
-                if (slotFluid !== null && fluid !== slotFluid) {
-                    network.valueConflict = true;
-                    break;
-                }
-            }
+            // Aggregate values of sender
+            const sender = network.provider;
+            let pressure = sender.slot.pressure;
+            const fluid = sender.slot.fluid;
 
             // Remove pressure from network
             for (let j = 0; j < network.receivers.length; j++) {
@@ -544,25 +503,18 @@ export class PipeSystem extends GameSystem {
                     continue;
                 }
 
-                // If there is already an value, compare if it matches ->
-                // otherwise there is a conflict
                 pressure -= slotPressure;
             }
 
             // Assign value
-            if (network.valueConflict) {
-                network.currentPressure = 0;
-                network.currentFluid = null;
-            } else {
-                let costs = 0;
-                for (let j = 0; j < network.pipes.length; j++) {
-                    //@ts-ignore
-                    const pipe = /** @type {PipeComponent} */ (network.pipes[j].components.Pipe);
-                    costs += pipe.pressureFriction;
-                }
-                network.currentPressure = pressure - costs;
-                network.currentFluid = fluid;
+            let costs = 0;
+            for (let j = 0; j < network.pipes.length; j++) {
+                //@ts-ignore
+                const pipe = /** @type {PipeComponent} */ (network.pipes[j].components.Pipe);
+                costs += pipe.pressureFriction;
             }
+            network.currentPressure = pressure - costs;
+            network.currentFluid = fluid;
         }
     }
 
@@ -581,14 +533,6 @@ export class PipeSystem extends GameSystem {
         }
 
         const network = pipeComp.linkedNetwork;
-        if (network.valueConflict) {
-            // There is a conflict
-            return {
-                spriteSet: this.pipeSprites.conflict,
-                opacity: 1,
-            };
-        }
-
         return {
             spriteSet: this.pipeSprites[pipeComp.variant],
             opacity: network.currentPressure > 0 ? (pipeComp.localPressure > 0 ? 1 : 0.9) : 0.5,
@@ -652,7 +596,7 @@ export class PipeSystem extends GameSystem {
                 }
 
                 // DEBUG Rendering
-                if (!BUILD_OPTIONS.IS_DEV) {
+                if (BUILD_OPTIONS.IS_DEV) {
                     if (entity) {
                         const staticComp = entity.components.StaticMapEntity;
                         // @ts-ignore

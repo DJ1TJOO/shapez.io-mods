@@ -49,6 +49,6 @@ export class MetaPumpBuilding extends ModMetaBuilding {
         const fluids = [WATER_SINGLETON, ...Object.values(OIL_SINGLETONS), null];
         const fluid = fluids[Math.floor(Math.random() * fluids.length)];
 
-        entity.addComponent(new PumpComponent({ pressure: 10, fluid: fluid }));
+        entity.addComponent(new PumpComponent({ pressure: 50, fluid: fluid }));
     }
 }

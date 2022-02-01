@@ -23,6 +23,11 @@ const enumPipeVariantToVariant = {
     [pipeVariants.industrial]: enumPipeVariant.industrial,
 };
 
+const enumPipeVariantToPressureFriction = {
+    [defaultBuildingVariant]: 0.04,
+    [pipeVariants.industrial]: 0.02,
+};
+
 export const arrayPipeVariantToRotation = [enumDirection.top, enumDirection.left, enumDirection.right];
 
 export const pipeOverlayMatrices = {
@@ -152,7 +157,7 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      * @param {import("shapez/savegame/savegame_typedefs").Entity} entity
      */
     setupEntityComponents(entity) {
-        entity.addComponent(new PipeComponent({ pressureFriction: 0.04 }));
+        entity.addComponent(new PipeComponent({}));
     }
 
     /**
@@ -165,6 +170,8 @@ export class MetaPipeBuilding extends ModMetaBuilding {
         entity.components.Pipe.type = arrayPipeRotationVariantToType[rotationVariant];
         // @ts-ignore
         entity.components.Pipe.variant = enumPipeVariantToVariant[variant];
+        // @ts-ignore
+        entity.components.Pipe.pressureFriction = enumPipeVariantToPressureFriction[variant];
     }
 
     /**
