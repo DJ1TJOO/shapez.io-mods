@@ -29,6 +29,10 @@ export class WaterFluid extends BaseFluid {
     static resolver() {
         return WATER_SINGLETON;
     }
+
+    getBackgroundColorAsResource() {
+        return "#2389DA";
+    }
 }
 
 gFluidRegistry.register(WaterFluid);

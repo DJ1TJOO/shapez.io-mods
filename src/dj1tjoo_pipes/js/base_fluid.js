@@ -1,8 +1,4 @@
 import { Factory } from "shapez/core/factory";
-import { gItemRegistry } from "shapez/core/global_registries";
-import { BooleanItem, BOOL_TRUE_SINGLETON, BOOL_FALSE_SINGLETON } from "shapez/game/items/boolean_item";
-import { ColorItem, COLOR_ITEM_SINGLETONS } from "shapez/game/items/color_item";
-import { ShapeItem } from "shapez/game/items/shape_item";
 import { GameRoot } from "shapez/game/root";
 import { BasicSerializableObject, types } from "shapez/savegame/serialization";
 

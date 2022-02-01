@@ -1,11 +1,7 @@
-import { globalConfig } from "shapez/core/config";
-import { drawRotatedSprite } from "shapez/core/draw_utils";
-import { BUILD_OPTIONS } from "shapez/core/globals";
 import { Loader } from "shapez/core/loader";
 import { STOP_PROPAGATION } from "shapez/core/signal";
-import { Vector, enumDirectionToAngle } from "shapez/core/vector";
+import { Vector } from "shapez/core/vector";
 import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
-import { MapChunkView } from "shapez/game/map_chunk_view";
 import { PipedPinsComponent, enumPinSlotType } from "../components/pipe_pins";
 
 /** @type {Object<ItemType, number>} */
@@ -78,48 +74,6 @@ export class PipedPinsSystem extends GameSystemWithFilter {
                 }
             }
         }
-
-        // Check for collisions on the pipes layer
-        if (this.checkEntityPinsCollide(entity, offset)) {
-            return STOP_PROPAGATION;
-        }
-    }
-
-    /**
-     * Checks if the pins of the given entity collide on the pipes layer
-     * @param {import("shapez/savegame/savegame_typedefs").Entity} entity
-     * @param {Vector=} offset Optional, move the entity by the given offset first
-     * @returns {boolean} True if the pins collide
-     */
-    checkEntityPinsCollide(entity, offset) {
-        // @ts-ignore
-        const pinsComp = entity.components.PipedPins;
-        if (!pinsComp) {
-            return false;
-        }
-
-        // Go over all slots
-        for (let slotIndex = 0; slotIndex < pinsComp.slots.length; ++slotIndex) {
-            const slot = pinsComp.slots[slotIndex];
-
-            // Figure out which tile this slot is on
-            const worldPos = entity.components.StaticMapEntity.localTileToWorld(slot.pos);
-            if (offset) {
-                worldPos.x += offset.x;
-                worldPos.y += offset.y;
-            }
-
-            // Check if there is any entity on that tile (Piped pins are always on the pipes layer)
-            const collidingEntity = this.root.map.getLayerContentXY(worldPos.x, worldPos.y, "pipes");
-
-            // If there's an entity, and it can't get removed -> That's a collision
-            if (collidingEntity) {
-                if (!collidingEntity.components.StaticMapEntity.getMetaBuilding().getIsReplaceable()) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -146,91 +100,6 @@ export class PipedPinsSystem extends GameSystemWithFilter {
                 );
                 if (!this.root.logic.tryDeleteBuilding(collidingEntity)) {
                     assertAlways(false, "Tried to replace non-repleaceable entity for pins #2");
-                }
-            }
-        }
-    }
-
-    /**
-     * Draws a given entity
-     * @param {import("shapez/core/draw_utils").DrawParameters} parameters
-     * @param {MapChunkView} chunk
-     */
-    drawChunk(parameters, chunk) {
-        const contents = chunk.containedEntities;
-
-        for (let i = 0; i < contents.length; ++i) {
-            const entity = contents[i];
-            // @ts-ignore
-            const pinsComp = entity.components.PipedPins;
-            if (!pinsComp) {
-                continue;
-            }
-
-            const staticComp = entity.components.StaticMapEntity;
-            const slots = pinsComp.slots;
-
-            for (let j = 0; j < slots.length; ++j) {
-                const slot = slots[j];
-                const tile = staticComp.localTileToWorld(slot.pos);
-
-                if (!chunk.tileSpaceRectangle.containsPoint(tile.x, tile.y)) {
-                    // Doesn't belong to this chunk
-                    continue;
-                }
-                const worldPos = tile.toWorldSpaceCenterOfTile();
-
-                // Culling
-                if (
-                    !parameters.visibleRect.containsCircle(worldPos.x, worldPos.y, globalConfig.halfTileSize)
-                ) {
-                    continue;
-                }
-
-                // @ts-ignore
-                const effectiveRotation = Math.radians(
-                    staticComp.rotation + enumDirectionToAngle[slot.direction]
-                );
-
-                if (staticComp.getMetaBuilding().getRenderPins()) {
-                    drawRotatedSprite({
-                        parameters,
-                        sprite: this.pinSprites[slot.type],
-                        x: worldPos.x,
-                        y: worldPos.y,
-                        angle: effectiveRotation,
-                        size: globalConfig.tileSize + 2,
-                        offsetX: 0,
-                        offsetY: 0,
-                    });
-                }
-
-                // Draw contained item to visualize whats emitted
-                const value = slot.value;
-                if (value) {
-                    const offset = new Vector(0, -9.1).rotated(effectiveRotation);
-
-                    value.drawItemCenteredClipped(
-                        worldPos.x + offset.x,
-                        worldPos.y + offset.y,
-                        parameters,
-                        enumTypeToSize[value.getItemType()]
-                    );
-                }
-
-                // Debug view
-                if (BUILD_OPTIONS.IS_DEV) {
-                    const offset = new Vector(0, -10).rotated(effectiveRotation);
-                    const network = slot.linkedNetwork;
-                    parameters.context.fillStyle = "blue";
-                    parameters.context.font = "5px Tahoma";
-                    parameters.context.textAlign = "center";
-                    parameters.context.fillText(
-                        network ? "P" + network.uid : "???",
-                        (tile.x + 0.5) * globalConfig.tileSize + offset.x,
-                        (tile.y + 0.5) * globalConfig.tileSize + offset.y
-                    );
-                    parameters.context.textAlign = "left";
                 }
             }
         }

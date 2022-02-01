@@ -4,12 +4,14 @@ import { Mod } from "shapez/mods/mod";
 import { MetaExtractorBuilding } from "./buildings/extractor";
 import { MetaPipeBuilding } from "./buildings/pipe";
 import { MetaPumpBuilding } from "./buildings/pump";
+import { DefaultPipeRendererComponent } from "./components/default_pipe_renderer";
 import { ExtractorComponent } from "./components/extractor";
-import { enumPipeVariant, PipeComponent } from "./components/pipe";
+import { enumPipeType, enumPipeVariant, PipeComponent } from "./components/pipe";
 import { PipedPinsComponent } from "./components/pipe_pins";
 import { PumpComponent } from "./components/pump";
+import { DefaultPipeRendererSystem } from "./systems/default_pipe_renderer";
 import { ExtractorSystem } from "./systems/extractor";
-import { PipeSystem } from "./systems/pipe";
+import { arrayPipeRotationVariantToType, PipeSystem } from "./systems/pipe";
 import { PipedPinsSystem } from "./systems/pipe_pins";
 import { PumpSystem } from "./systems/pump";
 
@@ -42,20 +44,13 @@ class ModImpl extends Mod {
             metaClass: MetaExtractorBuilding,
         });
 
-        // this.modInterface.registerComponent(FluidAcceptorComponent);
-        // this.modInterface.registerComponent(FluidEjectorComponent);
-        // this.modInterface.registerComponent(PumpComponent);
         this.modInterface.registerComponent(PipeComponent);
         this.modInterface.registerComponent(PipedPinsComponent);
+
+        // Tester components
         this.modInterface.registerComponent(PumpComponent);
         this.modInterface.registerComponent(ExtractorComponent);
-
-        // this.modInterface.registerGameSystem({
-        //     id: "fluidAcceptor",
-        //     systemClass: FluidAcceptorSystem,
-        //     before: "pipe",
-        //     drawHooks: ["foregroundDynamicAfter"],
-        // });
+        this.modInterface.registerComponent(DefaultPipeRendererComponent);
 
         this.modInterface.registerGameSystem({
             id: "pipe",
@@ -66,11 +61,11 @@ class ModImpl extends Mod {
 
         this.modInterface.registerGameSystem({
             id: "pipedPins",
-            before: "itemProcessorOverlays",
+            before: "end",
             systemClass: PipedPinsSystem,
-            drawHooks: ["staticAfter"],
         });
 
+        // Tester systems
         this.modInterface.registerGameSystem({
             id: "pump",
             before: "end",
@@ -81,19 +76,12 @@ class ModImpl extends Mod {
             before: "end",
             systemClass: ExtractorSystem,
         });
-        // this.modInterface.registerGameSystem({
-        //     id: "pump",
-        //     systemClass: PumpSystem,
-        //     before: "fluidEjector",
-        //     drawHooks: ["staticAfter"],
-        // });
-
-        // this.modInterface.registerGameSystem({
-        //     id: "fluidEjector",
-        //     systemClass: FluidEjectorSystem,
-        //     before: "constantProducer",
-        //     drawHooks: ["foregroundDynamicAfter"],
-        // });
+        this.modInterface.registerGameSystem({
+            id: "defaultPipeRenderer",
+            before: "end",
+            systemClass: DefaultPipeRendererSystem,
+            drawHooks: ["staticBefore"],
+        });
 
         this.modInterface.extendClass(GameLogic, () => ({
             /**
@@ -179,5 +167,129 @@ class ModImpl extends Mod {
         }
 
         this.saveSettings();
+    }
+
+    /**
+     * Should compute the optimal rotation variant on the given tile
+     * @param {object} param0
+     * @param {import("shapez/savegame/savegame_serializer").GameRoot} param0.root
+     * @param {Vector} param0.tile
+     * @param {number} param0.rotation
+     * @param {string} param0.pipeVariant
+     * @return {{ rotation: number, rotationVariant: number, connectedEntities?: Array<import("shapez/savegame/savegame_serializer").Entity> }}
+     */
+    computeOptimalDirectionAndRotationVariantAtTile({ root, tile, pipeVariant, rotation }) {
+        const connections = {
+            // @ts-ignore
+            top: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.top }),
+            // @ts-ignore
+            right: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.right }),
+            // @ts-ignore
+            bottom: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.bottom }),
+            // @ts-ignore
+            left: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.left }),
+        };
+
+        let flag = 0;
+        flag |= connections.top ? 0x1000 : 0;
+        flag |= connections.right ? 0x100 : 0;
+        flag |= connections.bottom ? 0x10 : 0;
+        flag |= connections.left ? 0x1 : 0;
+
+        let targetType = enumPipeType.forward;
+
+        // First, reset rotation
+        rotation = 0;
+
+        switch (flag) {
+            case 0x0000:
+                // Nothing
+                break;
+
+            case 0x0001:
+                // Left
+                rotation += 90;
+                break;
+
+            case 0x0010:
+                // Bottom
+                // END
+                break;
+
+            case 0x0011:
+                // Bottom | Left
+                targetType = enumPipeType.turn;
+                rotation += 90;
+                break;
+
+            case 0x0100:
+                // Right
+                rotation += 90;
+                break;
+
+            case 0x0101:
+                // Right | Left
+                rotation += 90;
+                break;
+
+            case 0x0110:
+                // Right | Bottom
+                targetType = enumPipeType.turn;
+                break;
+
+            case 0x0111:
+                // Right | Bottom | Left
+                targetType = enumPipeType.split;
+                break;
+
+            case 0x1000:
+                // Top
+                break;
+
+            case 0x1001:
+                // Top | Left
+                targetType = enumPipeType.turn;
+                rotation += 180;
+                break;
+
+            case 0x1010:
+                // Top | Bottom
+                break;
+
+            case 0x1011:
+                // Top | Bottom | Left
+                targetType = enumPipeType.split;
+                rotation += 90;
+                break;
+
+            case 0x1100:
+                // Top | Right
+                targetType = enumPipeType.turn;
+                rotation -= 90;
+                break;
+
+            case 0x1101:
+                // Top | Right | Left
+                targetType = enumPipeType.split;
+                rotation += 180;
+                break;
+
+            case 0x1110:
+                // Top | Right | Bottom
+                targetType = enumPipeType.split;
+                rotation -= 90;
+                break;
+
+            case 0x1111:
+                // Top | Right | Bottom | Left
+                targetType = enumPipeType.cross;
+                break;
+        }
+
+        return {
+            // Clamp rotation
+            rotation: (rotation + 360 * 10) % 360,
+            rotationVariant: arrayPipeRotationVariantToType.indexOf(targetType),
+        };
     }
 }

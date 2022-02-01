@@ -1,11 +1,8 @@
 import { globalConfig } from "shapez/core/config";
 import { BUILD_OPTIONS } from "shapez/core/globals";
-import { gMetaBuildingRegistry } from "shapez/core/global_registries";
-import { Loader } from "shapez/core/loader";
 import { createLogger } from "shapez/core/logging";
-import { Rectangle } from "shapez/core/rectangle";
 import { StaleAreaDetector } from "shapez/core/stale_area_detector";
-import { round1Digit, round2Digits } from "shapez/core/utils";
+import { round1Digit } from "shapez/core/utils";
 import {
     arrayAllDirections,
     Vector,
@@ -13,17 +10,24 @@ import {
     enumDirectionToVector,
     enumInvertedDirections,
 } from "shapez/core/vector";
-import { getCodeFromBuildingData } from "shapez/game/building_codes";
-import { Entity } from "shapez/game/entity";
+import { gBuildingVariants, getCodeFromBuildingData } from "shapez/game/building_codes";
 import { GameSystem } from "shapez/game/game_system";
 import { MapChunkView } from "shapez/game/map_chunk_view";
 import { BaseFluid } from "../base_fluid";
-import { arrayPipeRotationVariantToType, MetaPipeBuilding } from "../buildings/pipe";
 import { enumPipeVariant, enumPipeType, PipeComponent } from "../components/pipe";
 import { PipedPinsComponent, enumPinSlotType } from "../components/pipe_pins";
 
-const logger = createLogger("pipes");
+export const arrayPipeRotationVariantToType = [
+    enumPipeType.forward,
+    enumPipeType.turn,
+    enumPipeType.split,
+    enumPipeType.cross,
+];
 
+const logger = createLogger("pipes");
+//@TODO: rendering fluids
+//@TODO: fix pins rendering and rename?
+//@TODO: check if default pipes and pump need to be disabled
 let networkUidCounter = 0;
 
 const VERBOSE_WIRES = BUILD_OPTIONS.IS_DEV && false;
@@ -83,23 +87,6 @@ export class PipeNetwork {
 export class PipeSystem extends GameSystem {
     constructor(root) {
         super(root);
-
-        /**
-         * @type {Object<enumPipeVariant, Object<enumPipeType, import("shapez/core/draw_utils").AtlasSprite>>}
-         */
-        this.pipeSprites = {};
-
-        const variants = Object.keys(enumPipeVariant);
-        for (let i = 0; i < variants.length; ++i) {
-            const pipeVariant = variants[i];
-            const sprites = {};
-            for (const pipeType in enumPipeType) {
-                sprites[pipeType] = Loader.getSprite(
-                    "sprites/pipes/" + pipeVariant + "_" + pipeType + ".png"
-                );
-            }
-            this.pipeSprites[pipeVariant] = sprites;
-        }
 
         this.root.signals.entityDestroyed.add(this.queuePlacementUpdate, this);
         this.root.signals.entityAdded.add(this.queuePlacementUpdate, this);
@@ -519,27 +506,6 @@ export class PipeSystem extends GameSystem {
     }
 
     /**
-     * Returns the given tileset and opacity
-     * @param {PipeComponent} pipeComp
-     * @returns {{ spriteSet: Object<enumPipeType, import("../../core/draw_utils").AtlasSprite>, opacity: number}}
-     */
-    getSpriteSetAndOpacityForPipe(pipeComp) {
-        if (!pipeComp.linkedNetwork) {
-            // There is no network, it's empty
-            return {
-                spriteSet: this.pipeSprites[pipeComp.variant],
-                opacity: 0.5,
-            };
-        }
-
-        const network = pipeComp.linkedNetwork;
-        return {
-            spriteSet: this.pipeSprites[pipeComp.variant],
-            opacity: network.currentPressure > 0 ? (pipeComp.localPressure > 0 ? 1 : 0.9) : 0.5,
-        };
-    }
-
-    /**
      * Draws a given chunk
      * @param {import("shapez/core/draw_utils").DrawParameters} parameters
      * @param {MapChunkView} chunk
@@ -554,18 +520,10 @@ export class PipeSystem extends GameSystem {
                 if (entity && entity.components.Pipe) {
                     // @ts-ignore
                     const pipeComp = entity.components.Pipe;
-                    const pipeType = pipeComp.type;
-
-                    const { opacity, spriteSet } = this.getSpriteSetAndOpacityForPipe(pipeComp);
-
-                    const sprite = spriteSet[pipeType];
-
-                    assert(sprite, "Unknown pipe type: " + pipeType);
                     const staticComp = entity.components.StaticMapEntity;
-                    parameters.context.globalAlpha = opacity;
-                    staticComp.drawSpriteOnBoundsClipped(parameters, sprite, 0);
 
                     // DEBUG Rendering
+                    // @TODO: only on dev
                     if (!BUILD_OPTIONS.IS_DEV) {
                         parameters.context.globalAlpha = 1;
                         parameters.context.fillStyle = "red";
@@ -676,8 +634,6 @@ export class PipeSystem extends GameSystem {
      * @param {import("shapez/core/draw_parameters").Rectangle} affectedArea
      */
     updateSurroundingPipePlacement(affectedArea) {
-        const metaPipe = gMetaBuildingRegistry.findByClass(MetaPipeBuilding);
-
         for (let x = affectedArea.x; x < affectedArea.right(); ++x) {
             for (let y = affectedArea.y; y < affectedArea.bottom(); ++y) {
                 const targetEntities = this.root.map.getLayersContentsMultipleXY(x, y);
@@ -687,6 +643,8 @@ export class PipeSystem extends GameSystem {
                     // @ts-ignore
                     const targetPipeComp = targetEntity.components.Pipe;
                     const targetStaticComp = targetEntity.components.StaticMapEntity;
+
+                    const metaPipe = gBuildingVariants[targetStaticComp.code].metaInstance;
 
                     if (!targetPipeComp) {
                         // Not a pipe

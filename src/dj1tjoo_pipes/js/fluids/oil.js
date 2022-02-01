@@ -51,6 +51,10 @@ export class OilFluid extends BaseFluid {
     static resolver(data) {
         return OIL_SINGLETONS[data];
     }
+
+    getBackgroundColorAsResource() {
+        return "#DFD855";
+    }
 }
 
 gFluidRegistry.register(OilFluid);
