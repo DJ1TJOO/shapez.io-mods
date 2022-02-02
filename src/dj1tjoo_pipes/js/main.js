@@ -1,7 +1,7 @@
 import { Vector, enumDirectionToVector, enumDirection, enumInvertedDirections } from "shapez/core/vector";
 import { GameLogic } from "shapez/game/logic";
 import { Mod } from "shapez/mods/mod";
-import { BaseFluid, gFluidRegistry } from "./base_fluid";
+import { BaseFluid, gFluidRegistry, typeFluidSingleton } from "./base_fluid";
 import { MetaPipeBuilding } from "./buildings/pipe";
 import { MetaPumpBuilding } from "./buildings/pump";
 import { DefaultPipeRendererComponent } from "./components/default_pipe_renderer";
@@ -190,6 +190,10 @@ class ModImpl extends Mod {
 
     get gFluidRegistry() {
         return gFluidRegistry;
+    }
+
+    get typeFluidSingleton() {
+        return typeFluidSingleton;
     }
 
     /**
