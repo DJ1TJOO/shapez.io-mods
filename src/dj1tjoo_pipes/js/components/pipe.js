@@ -1,4 +1,5 @@
 import { Component } from "shapez/game/component";
+import { defaultBuildingVariant } from "shapez/game/meta_building";
 
 /** @enum {string} */
 export const enumPipeType = {
@@ -6,12 +7,6 @@ export const enumPipeType = {
     turn: "turn",
     split: "split",
     cross: "cross",
-};
-
-/** @enum {string} */
-export const enumPipeVariant = {
-    pipe: "pipe",
-    industrial: "industrial",
 };
 
 export class PipeComponent extends Component {
@@ -22,16 +17,16 @@ export class PipeComponent extends Component {
     /**
      * @param {object} param0
      * @param {enumPipeType=} param0.type
-     * @param {enumPipeVariant=} param0.variant
+     * @param {string=} param0.variant
      * @param {number=} param0.pressureFriction
      */
-    constructor({ type = enumPipeType.forward, variant = enumPipeVariant.pipe, pressureFriction = 0.2 }) {
+    constructor({ type = enumPipeType.forward, variant = defaultBuildingVariant, pressureFriction = 0.2 }) {
         super();
         this.type = type;
 
         /**
          * The variant of the pipe, different variants do not connect
-         * @type {enumPipeVariant}
+         * @type {string}
          */
         this.variant = variant;
 

@@ -16,6 +16,11 @@ class ModImpl extends Mod {
             before: "end",
             systemClass: ExtractorSystem,
         });
+        this.modInterface.addNewBuildingToToolbar({
+            toolbar: "regular",
+            location: "primary",
+            metaClass: MetaExtractorBuilding,
+        });
     }
 
     checkSettings() {

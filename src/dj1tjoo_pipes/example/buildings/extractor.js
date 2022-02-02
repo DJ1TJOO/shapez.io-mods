@@ -3,8 +3,6 @@ import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { ExtractorComponent } from "../components/extractor";
 
-const { enumPinSlotType, PipedPinsComponent } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
-
 export class MetaExtractorBuilding extends ModMetaBuilding {
     constructor() {
         super("extractor");
@@ -29,6 +27,10 @@ export class MetaExtractorBuilding extends ModMetaBuilding {
      * @param {import("shapez/savegame/savegame_typedefs").Entity} entity
      */
     setupEntityComponents(entity) {
+        // @ts-ignore
+        const { enumPinSlotType, PipedPinsComponent } = MODS.mods.find(
+            x => x.metadata.id === "dj1tjoo_pipes"
+        );
         entity.addComponent(
             new PipedPinsComponent({
                 slots: [

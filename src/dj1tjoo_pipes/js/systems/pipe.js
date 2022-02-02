@@ -14,7 +14,7 @@ import { gBuildingVariants, getCodeFromBuildingData } from "shapez/game/building
 import { GameSystem } from "shapez/game/game_system";
 import { MapChunkView } from "shapez/game/map_chunk_view";
 import { BaseFluid } from "../base_fluid";
-import { enumPipeVariant, enumPipeType, PipeComponent } from "../components/pipe";
+import { enumPipeType, PipeComponent } from "../components/pipe";
 import { PipedPinsComponent, enumPinSlotType } from "../components/pipe_pins";
 
 export const arrayPipeRotationVariantToType = [
@@ -24,7 +24,7 @@ export const arrayPipeRotationVariantToType = [
     enumPipeType.cross,
 ];
 
-const renderPipesInfo = false;
+const renderPipesInfo = BUILD_OPTIONS.IS_DEV && false;
 
 const logger = createLogger("pipes");
 let networkUidCounter = 0;
@@ -209,7 +209,7 @@ export class PipeSystem extends GameSystem {
         /**
          * Once we occur a pipe, we store its variant so we don't connect to
          * mismatching ones
-         * @type {enumPipeVariant}
+         * @type {string}
          */
         let variantMask = null;
 
@@ -354,7 +354,7 @@ export class PipeSystem extends GameSystem {
      * @param {Vector} initialTile
      * @param {Array<enumDirection>} directions
      * @param {PipeNetwork} network
-     * @param {enumPipeVariant=} variantMask Only accept connections to this mask
+     * @param {string=} variantMask Only accept connections to this mask
      * @param {Array<number>=} distance
      * @returns {Array<any>}
      */
@@ -493,13 +493,7 @@ export class PipeSystem extends GameSystem {
             }
 
             // Assign value
-            let costs = 0;
-            for (let j = 0; j < network.pipes.length; j++) {
-                //@ts-ignore
-                const pipe = /** @type {PipeComponent} */ (network.pipes[j].components.Pipe);
-                costs += pipe.pressureFriction;
-            }
-            network.currentPressure = pressure - costs;
+            network.currentPressure = pressure;
             network.currentFluid = fluid;
         }
     }

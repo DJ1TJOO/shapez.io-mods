@@ -5,8 +5,14 @@ import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { MODS } from "shapez/mods/modloader";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { SOUNDS } from "shapez/platform/sound";
-import { enumPipeType, enumPipeVariant, PipeComponent } from "../components/pipe";
+import { enumPipeType, PipeComponent } from "../components/pipe";
 import { arrayPipeRotationVariantToType } from "../systems/pipe";
+
+/** @enum {string} */
+export const enumPipeVariant = {
+    pipe: "pipe",
+    industrial: "industrial",
+};
 
 /** @enum {string} */
 export const pipeVariants = {
@@ -19,8 +25,8 @@ export const enumPipeVariantToVariant = {
 };
 
 const enumPipeVariantToPressureFriction = {
-    [defaultBuildingVariant]: 0.04,
-    [pipeVariants.industrial]: 0.02,
+    [defaultBuildingVariant]: 2,
+    [pipeVariants.industrial]: 1,
 };
 
 export const pipeOverlayMatrices = {

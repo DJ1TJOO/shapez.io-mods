@@ -5,8 +5,8 @@ import { BaseFluid, gFluidRegistry } from "./base_fluid";
 import { MetaPipeBuilding } from "./buildings/pipe";
 import { MetaPumpBuilding } from "./buildings/pump";
 import { DefaultPipeRendererComponent } from "./components/default_pipe_renderer";
-import { enumPipeType, enumPipeVariant, PipeComponent } from "./components/pipe";
-import { PipedPinsComponent } from "./components/pipe_pins";
+import { enumPipeType, PipeComponent } from "./components/pipe";
+import { enumPinSlotType, PipedPinsComponent } from "./components/pipe_pins";
 import { PumpComponent } from "./components/pump";
 import { WATER_SINGLETON } from "./fluids/water";
 import { getMod } from "./getMod";
@@ -61,7 +61,7 @@ class ModImpl extends Mod {
         });
         this.modInterface.registerGameSystem({
             id: "defaultPipeRenderer",
-            before: "end",
+            before: "staticMapEntities",
             systemClass: DefaultPipeRendererSystem,
             drawHooks: ["staticBefore"],
         });
@@ -76,7 +76,7 @@ class ModImpl extends Mod {
              *
              * Computes the flag for a given tile
              * @param {object} param0
-             * @param {enumPipeVariant} param0.pipeVariant
+             * @param {string} param0.pipeVariant
              * @param {Vector} param0.tile The tile to check at
              * @param {enumDirection} param0.edge The edge to check for
              * @this {GameLogic}
@@ -178,6 +178,9 @@ class ModImpl extends Mod {
 
     get arrayPipeRotationVariantToType() {
         return arrayPipeRotationVariantToType;
+    }
+    get enumPinSlotType() {
+        return enumPinSlotType;
     }
 
     // fluids

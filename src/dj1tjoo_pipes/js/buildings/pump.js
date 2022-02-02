@@ -65,6 +65,6 @@ export class MetaPumpBuilding extends ModMetaBuilding {
             }
         }
 
-        entity.addComponent(new PumpComponent({ pressure: 50, fluid: fluid }));
+        entity.addComponent(new PumpComponent({ pressure: 100, fluid: fluid }));
     }
 }

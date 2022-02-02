@@ -2,8 +2,8 @@ import { globalConfig } from "shapez/core/config";
 import { Loader } from "shapez/core/loader";
 import { GameSystem } from "shapez/game/game_system";
 import { MapChunkView } from "shapez/game/map_chunk_view";
-import { enumPipeVariantToVariant } from "../buildings/pipe";
-import { enumPipeVariant, enumPipeType, PipeComponent } from "../components/pipe";
+import { enumPipeVariant, enumPipeVariantToVariant } from "../buildings/pipe";
+import { enumPipeType, PipeComponent } from "../components/pipe";
 import { PipeNetwork } from "./pipe";
 
 export class DefaultPipeRendererSystem extends GameSystem {
@@ -78,7 +78,8 @@ export class DefaultPipeRendererSystem extends GameSystem {
                     /** @type {PipeNetwork} */
                     const network = pipeComp.linkedNetwork;
 
-                    if (network && network.currentFluid) {
+                    if (network && network.currentFluid && pipeComp.localPressure > 0) {
+                        // @ts-ignore
                         parameters.context.fillStyle = network.currentFluid.getBackgroundColorAsResource();
 
                         const size =
