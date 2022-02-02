@@ -3,6 +3,7 @@ import { MetaCustomPipeBuilding } from "./buildings/custom_pipe";
 import { MetaExtractorBuilding } from "./buildings/extractor";
 import { CustomPipeRendererComponent } from "./components/custom_pipe_renderer";
 import { ExtractorComponent } from "./components/extractor";
+import { registerOil } from "./fluid/oil";
 import { CustomPipeRendererSystem } from "./systems/custom_pipe_renderer";
 import { ExtractorSystem } from "./systems/extractor";
 
@@ -42,6 +43,8 @@ class ModImpl extends Mod {
             systemClass: CustomPipeRendererSystem,
             drawHooks: ["staticBefore"],
         });
+
+        registerOil();
     }
 
     checkSettings() {
