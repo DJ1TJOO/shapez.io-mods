@@ -7,6 +7,7 @@ export const enumOilTypes = {
     red: "red",
 };
 
+// Call on init
 export function registerOil() {
     // @ts-ignore
     const { BaseFluid, gFluidRegistry } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
