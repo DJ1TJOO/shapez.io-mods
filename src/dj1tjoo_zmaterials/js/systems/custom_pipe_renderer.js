@@ -2,13 +2,15 @@ import { globalConfig } from "shapez/core/config";
 import { Loader } from "shapez/core/loader";
 import { GameSystem } from "shapez/game/game_system";
 import { MapChunkView } from "shapez/game/map_chunk_view";
-import { enumPipeVariant, enumPipeVariantToVariant } from "../buildings/pipe";
-import { enumPipeType, PipeComponent } from "../components/pipe";
-import { PipeNetwork } from "./pipe";
+import { MODS } from "shapez/mods/modloader";
+import { enumPipeVariant, enumPipeVariantToVariant } from "../buildings/custom_pipe";
 
-export class DefaultPipeRendererSystem extends GameSystem {
+export class CustomPipeRendererSystem extends GameSystem {
     constructor(root) {
         super(root);
+
+        // @ts-ignore
+        const { enumPipeType } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
 
         /**
          * @type {Object<enumPipeVariant, Object<enumPipeType, import("shapez/core/draw_utils").AtlasSprite>>}
@@ -30,7 +32,7 @@ export class DefaultPipeRendererSystem extends GameSystem {
 
     /**
      * Returns the given tileset and opacity
-     * @param {PipeComponent} pipeComp
+     * @param {any} pipeComp
      * @returns {{ spriteSet: Object<enumPipeType, import("../../core/draw_utils").AtlasSprite>, opacity: number}}
      */
     getSpriteSetAndOpacityForPipe(pipeComp) {
@@ -56,12 +58,14 @@ export class DefaultPipeRendererSystem extends GameSystem {
      */
     drawChunk(parameters, chunk) {
         // @ts-ignore
+        const { enumPipeType } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
+
         const contents = chunk.contents;
         for (let y = 0; y < globalConfig.mapChunkSize; ++y) {
             for (let x = 0; x < globalConfig.mapChunkSize; ++x) {
                 const entity = contents[x][y];
                 // @ts-ignore
-                if (entity && entity.components.DefaultPipeRenderer && entity.components.Pipe) {
+                if (entity && entity.components.CustomPipeRenderer && entity.components.Pipe) {
                     // @ts-ignore
                     const pipeComp = entity.components.Pipe;
                     const pipeType = pipeComp.type;
@@ -75,7 +79,6 @@ export class DefaultPipeRendererSystem extends GameSystem {
                     parameters.context.globalAlpha = opacity;
                     staticComp.drawSpriteOnBoundsClipped(parameters, sprite, 0);
 
-                    /** @type {PipeNetwork} */
                     const network = pipeComp.linkedNetwork;
 
                     if (network && network.currentFluid && pipeComp.localPressure > 0) {
@@ -83,7 +86,7 @@ export class DefaultPipeRendererSystem extends GameSystem {
                         parameters.context.fillStyle = network.currentFluid.getBackgroundColorAsResource();
 
                         const size =
-                            enumPipeVariant.pipe === enumPipeVariantToVariant[staticComp.getVariant()]
+                            enumPipeVariant.pipe2 === enumPipeVariantToVariant[staticComp.getVariant()]
                                 ? 3
                                 : 8;
 

@@ -1,6 +1,9 @@
 import { Mod } from "shapez/mods/mod";
+import { MetaCustomPipeBuilding } from "./buildings/custom_pipe";
 import { MetaExtractorBuilding } from "./buildings/extractor";
+import { CustomPipeRendererComponent } from "./components/custom_pipe_renderer";
 import { ExtractorComponent } from "./components/extractor";
+import { CustomPipeRendererSystem } from "./systems/custom_pipe_renderer";
 import { ExtractorSystem } from "./systems/extractor";
 
 class ModImpl extends Mod {
@@ -20,6 +23,24 @@ class ModImpl extends Mod {
             toolbar: "regular",
             location: "primary",
             metaClass: MetaExtractorBuilding,
+        });
+
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaCustomPipeBuilding,
+        });
+        this.modInterface.addNewBuildingToToolbar({
+            toolbar: "regular",
+            location: "primary",
+            metaClass: MetaCustomPipeBuilding,
+        });
+
+        this.modInterface.registerComponent(CustomPipeRendererComponent);
+
+        this.modInterface.registerGameSystem({
+            id: "customPipeRenderer",
+            before: "staticMapEntities",
+            systemClass: CustomPipeRendererSystem,
+            drawHooks: ["staticBefore"],
         });
     }
 

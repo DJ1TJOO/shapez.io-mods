@@ -5,13 +5,11 @@ import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { MODS } from "shapez/mods/modloader";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { SOUNDS } from "shapez/platform/sound";
-import { DefaultPipeRendererComponent } from "../components/default_pipe_renderer";
-import { enumPipeType, PipeComponent } from "../components/pipe";
-import { arrayPipeRotationVariantToType } from "../systems/pipe";
+import { CustomPipeRendererComponent } from "../components/custom_pipe_renderer";
 
 /** @enum {string} */
 export const enumPipeVariant = {
-    pipe: "pipe",
+    pipe2: "pipe2",
     industrial: "industrial",
 };
 
@@ -21,7 +19,7 @@ export const pipeVariants = {
 };
 
 export const enumPipeVariantToVariant = {
-    [defaultBuildingVariant]: enumPipeVariant.pipe,
+    [defaultBuildingVariant]: enumPipeVariant.pipe2,
     [pipeVariants.industrial]: enumPipeVariant.industrial,
 };
 
@@ -30,16 +28,9 @@ const enumPipeVariantToPressureFriction = {
     [pipeVariants.industrial]: 1,
 };
 
-export const pipeOverlayMatrices = {
-    [enumPipeType.forward]: generateMatrixRotations([0, 1, 0, 0, 1, 0, 0, 1, 0]),
-    [enumPipeType.split]: generateMatrixRotations([0, 0, 0, 1, 1, 1, 0, 1, 0]),
-    [enumPipeType.turn]: generateMatrixRotations([0, 0, 0, 0, 1, 1, 0, 1, 0]),
-    [enumPipeType.cross]: generateMatrixRotations([0, 1, 0, 1, 1, 1, 0, 1, 0]),
-};
-
-export class MetaPipeBuilding extends ModMetaBuilding {
+export class MetaCustomPipeBuilding extends ModMetaBuilding {
     constructor() {
-        super("pipe");
+        super("custom_pipe");
     }
 
     getHasDirectionLockAvailable() {
@@ -157,8 +148,11 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      * @param {import("shapez/savegame/savegame_typedefs").Entity} entity
      */
     setupEntityComponents(entity) {
+        //@ts-ignore
+        const { PipeComponent } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
+
         entity.addComponent(new PipeComponent({}));
-        entity.addComponent(new DefaultPipeRendererComponent());
+        entity.addComponent(new CustomPipeRendererComponent());
     }
 
     /**
@@ -167,6 +161,8 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      * @param {string} variant
      */
     updateVariants(entity, rotationVariant, variant) {
+        // @ts-ignore
+        const { arrayPipeRotationVariantToType } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
         // @ts-ignore
         entity.components.Pipe.type = arrayPipeRotationVariantToType[rotationVariant];
         // @ts-ignore
@@ -184,6 +180,16 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      */
     getSpecialOverlayRenderMatrix(rotation, rotationVariant, variant, entity) {
         // @ts-ignore
+        const { enumPipeType } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
+
+        const pipeOverlayMatrices = {
+            [enumPipeType.forward]: generateMatrixRotations([0, 1, 0, 0, 1, 0, 0, 1, 0]),
+            [enumPipeType.split]: generateMatrixRotations([0, 0, 0, 1, 1, 1, 0, 1, 0]),
+            [enumPipeType.turn]: generateMatrixRotations([0, 0, 0, 0, 1, 1, 0, 1, 0]),
+            [enumPipeType.cross]: generateMatrixRotations([0, 1, 0, 1, 1, 1, 0, 1, 0]),
+        };
+
+        // @ts-ignore
         return pipeOverlayMatrices[entity.components.Pipe.type][rotation];
     }
 
@@ -194,6 +200,10 @@ export class MetaPipeBuilding extends ModMetaBuilding {
      * @returns {import("shapez/core/draw_utils").AtlasSprite}
      */
     getPreviewSprite(rotationVariant, variant) {
+        // @ts-ignore
+        const { enumPipeType, arrayPipeRotationVariantToType } = MODS.mods.find(
+            x => x.metadata.id === "dj1tjoo_pipes"
+        );
         const pipeVariant = enumPipeVariantToVariant[variant];
         switch (arrayPipeRotationVariantToType[rotationVariant]) {
             case enumPipeType.forward: {

@@ -11,7 +11,7 @@ import { PumpComponent } from "./components/pump";
 import { WATER_SINGLETON } from "./fluids/water";
 import { getMod } from "./getMod";
 import { DefaultPipeRendererSystem } from "./systems/default_pipe_renderer";
-import { arrayPipeRotationVariantToType, PipeSystem } from "./systems/pipe";
+import { arrayPipeRotationVariantToType, PipeNetwork, PipeSystem } from "./systems/pipe";
 import { PipedPinsSystem } from "./systems/pipe_pins";
 import { PumpSystem } from "./systems/pump";
 
@@ -176,11 +176,19 @@ class ModImpl extends Mod {
         return PipeComponent;
     }
 
+    get PipeNetwork() {
+        return PipeNetwork;
+    }
+
     get arrayPipeRotationVariantToType() {
         return arrayPipeRotationVariantToType;
     }
     get enumPinSlotType() {
         return enumPinSlotType;
+    }
+
+    get enumPipeType() {
+        return enumPipeType;
     }
 
     // fluids
