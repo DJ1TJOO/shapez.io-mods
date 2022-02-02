@@ -180,6 +180,10 @@ class ModImpl extends Mod {
         return PipeNetwork;
     }
 
+    get PipeSystem() {
+        return PipeSystem;
+    }
+
     get arrayPipeRotationVariantToType() {
         return arrayPipeRotationVariantToType;
     }

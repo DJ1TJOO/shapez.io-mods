@@ -1,3 +1,5 @@
+import { enumDirectionToVector, enumInvertedDirections } from "shapez/core/vector";
+import { GameLogic } from "shapez/game/logic";
 import { Mod } from "shapez/mods/mod";
 import { MetaCustomPipeBuilding } from "./buildings/custom_pipe";
 import { MetaExtractorBuilding } from "./buildings/extractor";
@@ -43,6 +45,29 @@ class ModImpl extends Mod {
             systemClass: CustomPipeRendererSystem,
             drawHooks: ["staticBefore"],
         });
+
+        // TODO: try make pipes work like belts
+        this.modInterface.replaceMethod(
+            // @ts-ignore
+            this.modLoader.mods.find(x => x.metadata.id === "dj1tjoo_pipes").PipeSystem,
+            "findSurroundingPipeTargets",
+            function ($super, [initialTile, directions, network, variantMask = null, distance = []]) {
+                const results = $super(initialTile, directions, network, variantMask, distance);
+
+                const newResults = [];
+                for (let i = 0; i < results.length; i++) {
+                    const { entity, slot, distance } = results[i];
+                    if (slot) newResults.push({ entity, slot, distance });
+
+                    // if (newResults.filter(x => !x.slot).length > 1) continue;
+                    // Get neigbours, check if connections, less than 2 push
+
+                    newResults.push({ entity, slot, distance });
+                }
+
+                return newResults;
+            }
+        );
 
         registerOil();
     }
