@@ -37,7 +37,7 @@ declare const desiredMsDelay: number;
 declare let lastTick: number;
 declare module "shapez/core/config.local" {
     namespace _default {
-        export const externalModUrl: string;
+        export const externalModUrl: string[];
     }
     export default _default;
 }
@@ -2278,6 +2278,7 @@ declare module "shapez/game/item_resolver" {
             data: any;
         }
     ): any;
+    export const MODS_ADDITIONAL_ITEMS: {};
     export const typeItemSingleton: import("shapez/savegame/serialization_data_types").TypeClass;
 }
 declare module "shapez/game/belt_path" {
@@ -6752,8 +6753,8 @@ declare module "shapez/savegame/serialization" {
          * in non-dev builds
          */
         constructor(...args: any[]);
-        /** @returns {object} */
-        serialize(): object;
+        /** @returns {object | string | number} */
+        serialize(): object | string | number;
         /**
          * @param {any} data
          * @param {import("shapez/savegame/savegame_serializer").GameRoot} root
@@ -12238,6 +12239,11 @@ declare module "shapez/mods/mod_interface" {
         }): void;
         registerTranslations(language: any, translations: any): void;
         /**
+         * @param {typeof BaseItem} item
+         * @param {(itemData: any) => BaseItem} resolver
+         */
+        registerItem(item: typeof BaseItem, resolver: (itemData: any) => BaseItem): void;
+        /**
          *
          * @param {typeof Component} component
          */
@@ -12329,7 +12335,17 @@ declare module "shapez/mods/mod_interface" {
          */
         get dialogs(): HUDModalDialogs;
         setBuildingToolbarIcon(buildingId: any, iconBase64: any): void;
-        setBuildingTutorialImage(buildingId: any, variant: any, imageBase64: any): void;
+        /**
+         *
+         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
+         * @param {*} variant
+         * @param {*} imageBase64
+         */
+        setBuildingTutorialImage(
+            buildingIdOrClass: string | (new () => MetaBuilding),
+            variant: any,
+            imageBase64: any
+        ): void;
         /**
          * @param {Object} param0
          * @param {string} param0.id
@@ -12444,6 +12460,76 @@ declare module "shapez/mods/mod_interface" {
          * @param {new (...args) => BaseHUDPart} element
          */
         registerHudElement(id: string, element: new (...args: any[]) => BaseHUDPart): void;
+        /**
+         *
+         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
+         * @param {string} variant
+         * @param {object} param0
+         * @param {string} param0.name
+         * @param {string} param0.description
+         * @param {string=} param0.language
+         */
+        registerBuildingTranslation(
+            buildingIdOrClass: string | (new () => MetaBuilding),
+            variant: string,
+            {
+                name,
+                description,
+                language,
+            }: {
+                name: string;
+                description: string;
+                language?: string | undefined;
+            }
+        ): void;
+        /**
+         *
+         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
+         * @param {string} variant
+         * @param {object} param2
+         * @param {string=} param2.regularBase64
+         * @param {string=} param2.blueprintBase64
+         */
+        registerBuildingSprites(
+            buildingIdOrClass: string | (new () => MetaBuilding),
+            variant: string,
+            {
+                regularBase64,
+                blueprintBase64,
+            }: {
+                regularBase64?: string | undefined;
+                blueprintBase64?: string | undefined;
+            }
+        ): void;
+        /**
+         * @param {new () => MetaBuilding} metaClass
+         * @param {string} variant
+         * @param {object} payload
+         * @param {number[]=} payload.rotationVariants
+         * @param {string=} payload.tutorialImageBase64
+         * @param {string=} payload.regularSpriteBase64
+         * @param {string=} payload.blueprintSpriteBase64
+         * @param {string=} payload.name
+         * @param {string=} payload.description
+         * @param {Vector=} payload.dimensions
+         * @param {(root: GameRoot) => [string, string][]} payload.additionalStatistics
+         * @param {(root: GameRoot) => boolean[]} payload.isUnlocked
+         */
+        addVariantToExistingBuilding(
+            metaClass: new () => MetaBuilding,
+            variant: string,
+            payload: {
+                rotationVariants?: number[] | undefined;
+                tutorialImageBase64?: string | undefined;
+                regularSpriteBase64?: string | undefined;
+                blueprintSpriteBase64?: string | undefined;
+                name?: string | undefined;
+                description?: string | undefined;
+                dimensions?: Vector | undefined;
+                additionalStatistics: (root: GameRoot) => [string, string][];
+                isUnlocked: (root: GameRoot) => boolean[];
+            }
+        ): void;
     }
     export type constructable = {
         new (...args: any[]): any;
@@ -12466,12 +12552,15 @@ declare module "shapez/mods/mod_interface" {
         ...args_1: any[]
     ) => ReturnType<F>;
     import { ModLoader } from "shapez/mods/modloader";
+    import { BaseItem } from "shapez/game/base_item";
     import { Component } from "shapez/game/component";
     import { GameSystem } from "shapez/game/game_system";
     import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
     import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
     import { MetaBuilding } from "shapez/game/meta_building";
     import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Vector } from "shapez/core/vector";
+    import { GameRoot } from "shapez/game/root";
 }
 declare module "shapez/mods/modloader" {
     /**

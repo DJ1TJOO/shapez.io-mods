@@ -1,49 +1,21 @@
-import { enumDirection, enumDirectionToVector, enumInvertedDirections } from "shapez/core/vector";
-import { GameLogic } from "shapez/game/logic";
+import { MapChunk } from "shapez/game/map_chunk";
 import { Mod } from "shapez/mods/mod";
-import { MetaCustomPipeBuilding } from "./buildings/custom_pipe";
-import { MetaExtractorBuilding } from "./buildings/extractor";
-import { CustomPipeRendererComponent } from "./components/custom_pipe_renderer";
-import { ExtractorComponent } from "./components/extractor";
-import { registerOil } from "./fluid/oil";
-import { CustomPipeRendererSystem } from "./systems/custom_pipe_renderer";
-import { ExtractorSystem } from "./systems/extractor";
+import { MetaBlastFurnaceBuilding, setupBlastFurnace } from "./buildings/blast_furnace";
+import { enumSandType, SandItem, SAND_ITEM_SINGLETONS } from "./items/sand";
+import { enumStoneType, StoneItem, STONE_ITEM_SINGLETONS } from "./items/stone";
 
 class ModImpl extends Mod {
     init() {
         this.checkSettings();
 
+        setupBlastFurnace.apply(this);
         this.modInterface.registerNewBuilding({
-            metaClass: MetaExtractorBuilding,
-        });
-        this.modInterface.registerComponent(ExtractorComponent);
-        this.modInterface.registerGameSystem({
-            id: "extractor",
-            before: "end",
-            systemClass: ExtractorSystem,
+            metaClass: MetaBlastFurnaceBuilding,
         });
         this.modInterface.addNewBuildingToToolbar({
             toolbar: "regular",
             location: "primary",
-            metaClass: MetaExtractorBuilding,
-        });
-
-        this.modInterface.registerNewBuilding({
-            metaClass: MetaCustomPipeBuilding,
-        });
-        this.modInterface.addNewBuildingToToolbar({
-            toolbar: "regular",
-            location: "primary",
-            metaClass: MetaCustomPipeBuilding,
-        });
-
-        this.modInterface.registerComponent(CustomPipeRendererComponent);
-
-        this.modInterface.registerGameSystem({
-            id: "customPipeRenderer",
-            before: "staticMapEntities",
-            systemClass: CustomPipeRendererSystem,
-            drawHooks: ["staticBefore"],
+            metaClass: MetaBlastFurnaceBuilding,
         });
 
         // TODO: try make pipes work like belts
@@ -112,7 +84,20 @@ class ModImpl extends Mod {
         //     }
         // );
 
-        registerOil();
+        // Make the item spawn on the map
+        this.modInterface.runAfterMethod(
+            MapChunk,
+            "generatePatches",
+            function ({ rng, chunkCenter, distanceToOriginInChunks }) {
+                if (rng.next() < 0.1) {
+                    const sandType = rng.choice(Array.from(Object.keys(enumSandType)));
+                    this.internalGeneratePatch(rng, 3, SAND_ITEM_SINGLETONS[sandType]);
+                }
+            }
+        );
+
+        this.modInterface.registerItem(SandItem, itemData => SAND_ITEM_SINGLETONS[itemData]);
+        this.modInterface.registerItem(StoneItem, itemData => STONE_ITEM_SINGLETONS[itemData]);
     }
 
     checkSettings() {
