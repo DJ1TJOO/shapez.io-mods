@@ -17,6 +17,8 @@ export class ExtractorSystem extends GameSystemWithFilter {
 
             if (pinsComp) {
                 pinsComp.slots[0].pressure = extractorComp.pressure;
+                // On action remove volume
+                // pinsComp.slots[0].linkedNetwork.currentVolume -= 10;
             }
         }
     }

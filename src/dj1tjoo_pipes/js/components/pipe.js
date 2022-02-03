@@ -19,8 +19,14 @@ export class PipeComponent extends Component {
      * @param {enumPipeType=} param0.type
      * @param {string=} param0.variant
      * @param {number=} param0.pressureFriction
+     * @param {number=} param0.volume
      */
-    constructor({ type = enumPipeType.forward, variant = defaultBuildingVariant, pressureFriction = 0.2 }) {
+    constructor({
+        type = enumPipeType.forward,
+        variant = defaultBuildingVariant,
+        pressureFriction = 0.2,
+        volume = 30,
+    }) {
         super();
         this.type = type;
 
@@ -36,6 +42,7 @@ export class PipeComponent extends Component {
         this.linkedNetwork = null;
 
         this.pressureFriction = pressureFriction;
+        this.volume = volume;
 
         this.distance = [];
     }
@@ -45,6 +52,7 @@ export class PipeComponent extends Component {
         for (let j = 0; j < this.distance.length; j++) {
             costs += this.distance[j];
         }
-        return this.linkedNetwork.currentPressure - costs;
+        const pressure = this.linkedNetwork.currentPressure - costs;
+        return pressure < 0 ? 0 : pressure;
     }
 }

@@ -18,6 +18,7 @@ export class PumpSystem extends GameSystemWithFilter {
             if (pinsComp) {
                 pinsComp.slots[0].pressure = pumpComp.pressure;
                 pinsComp.slots[0].fluid = pumpComp.fluid;
+                pinsComp.slots[0].linkedNetwork.currentVolume += 10;
             }
         }
     }

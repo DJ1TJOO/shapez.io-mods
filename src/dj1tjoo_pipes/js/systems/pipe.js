@@ -68,6 +68,12 @@ export class PipeNetwork {
         this.currentFluid = null;
 
         /**
+         * The current volume of this network
+         * @type {Number}
+         */
+        this.currentVolume = 0;
+
+        /**
          * Unique network identifier
          * @type {number}
          */
@@ -493,8 +499,21 @@ export class PipeSystem extends GameSystem {
             }
 
             // Assign value
-            network.currentPressure = pressure;
             network.currentFluid = fluid;
+            if (network.currentVolume <= 0) {
+                network.currentPressure = 0;
+            } else {
+                network.currentPressure = pressure;
+            }
+
+            let maxVolume = network.pipes
+                //@ts-ignore
+                .map(x => x.components.Pipe.volume)
+                .reduce((volume, currentVolume) => (volume ? (volume += currentVolume) : currentVolume));
+
+            if (network.currentVolume > maxVolume) {
+                network.currentVolume = maxVolume;
+            }
         }
     }
 

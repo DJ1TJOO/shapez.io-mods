@@ -1,38 +1,27 @@
-import { Component } from "shapez/game/component";
-import { types } from "shapez/savegame/serialization";
+import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
+import { PumpComponent } from "../components/pump";
 
-export class PumpComponent extends Component {
-    static getId() {
-        return "Pump";
+export class PumpSystem extends GameSystemWithFilter {
+    constructor(root) {
+        super(root, [PumpComponent]);
     }
 
-    static getSchema() {
-        // @ts-ignore
-        const { typeFluidSingleton } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
-        return {
-            pressure: types.uint,
-            fluid: types.nullable(typeFluidSingleton),
-        };
-    }
+    update() {
+        // Set signals
+        for (let i = 0; i < this.allEntities.length; ++i) {
+            const entity = this.allEntities[i];
+            // @ts-ignore
+            const pumpComp = entity.components.Pump;
+            // @ts-ignore
+            const pinsComp = entity.components.PipedPins;
 
-    /**
-     * Copy the current state to another component
-     * @param {PumpComponent} otherComponent
-     */
-    copyAdditionalStateTo(otherComponent) {
-        otherComponent.pressure = this.pressure;
-        otherComponent.fluid = this.fluid;
-    }
+            if (pinsComp) {
+                pinsComp.slots[0].pressure = pumpComp.pressure;
+                pinsComp.slots[0].fluid = pumpComp.fluid;
 
-    /**
-     *
-     * @param {object} param0
-     * @param {Number} param0.pressure The pressure to store
-     * @param {any=} param0.fluid The fluid to store
-     */
-    constructor({ pressure = 0, fluid = null }) {
-        super();
-        this.pressure = pressure;
-        this.fluid = fluid;
+                // On action (in this case extract from tile) add volume
+                pinsComp.slots[0].linkedNetwork.currentVolume += 10;
+            }
+        }
     }
 }

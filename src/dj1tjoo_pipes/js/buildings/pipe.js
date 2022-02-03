@@ -30,6 +30,11 @@ const enumPipeVariantToPressureFriction = {
     [pipeVariants.industrial]: 1,
 };
 
+const enumPipeVariantToVolume = {
+    [defaultBuildingVariant]: 30,
+    [pipeVariants.industrial]: 60,
+};
+
 export const pipeOverlayMatrices = {
     [enumPipeType.forward]: generateMatrixRotations([0, 1, 0, 0, 1, 0, 0, 1, 0]),
     [enumPipeType.split]: generateMatrixRotations([0, 0, 0, 1, 1, 1, 0, 1, 0]),
@@ -173,6 +178,8 @@ export class MetaPipeBuilding extends ModMetaBuilding {
         entity.components.Pipe.variant = enumPipeVariantToVariant[variant];
         // @ts-ignore
         entity.components.Pipe.pressureFriction = enumPipeVariantToPressureFriction[variant];
+        // @ts-ignore
+        entity.components.Pipe.volume = enumPipeVariantToVolume[variant];
     }
 
     /**
