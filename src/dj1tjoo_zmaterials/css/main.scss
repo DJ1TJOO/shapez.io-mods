@@ -1,3 +1,9 @@
-@import "mixins.scss";
-@import "variables.scss";
-@import "dynamic_ui.scss";
+[data-icon="building_icons/blast_furnace.png"] .icon {
+    background-image: url("../res/icons/blast_furnace.png") !important;
+}
+[data-icon="building_icons/heater.png"] .icon {
+    background-image: url("../res/icons/heater.png") !important;
+}
+[data-icon="building_icons/cooler.png"] .icon {
+    background-image: url("../res/icons/cooler.png") !important;
+}

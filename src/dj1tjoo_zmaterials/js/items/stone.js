@@ -7,11 +7,13 @@ import { BaseItem } from "shapez/game/base_item";
  */
 export const enumStoneType = {
     stone: "stone",
+    basalt: "basalt",
 };
 
 // Define which color they should have on the map
 export const stoneColors = {
     [enumStoneType.stone]: "#918E85",
+    [enumStoneType.basalt]: "#201C2C",
 };
 
 // The stone item class (also see ColorItem and ShapeItem)
