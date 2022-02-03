@@ -79,9 +79,10 @@ class ModImpl extends Mod {
              * @param {string} param0.pipeVariant
              * @param {Vector} param0.tile The tile to check at
              * @param {enumDirection} param0.edge The edge to check for
+             * @param {boolean=} param0.checkNetwork
              * @this {GameLogic}
              */
-            computePipeEdgeStatus({ pipeVariant, tile, edge }) {
+            computePipeEdgeStatus({ pipeVariant, tile, edge, checkNetwork = false }) {
                 const offset = enumDirectionToVector[edge];
                 const targetTile = tile.add(offset);
 
@@ -133,13 +134,32 @@ class ModImpl extends Mod {
                     return false;
                 }
 
-                const targetStaticComp = targetEntity.components.StaticMapEntity;
-
                 // Check if its a pipe
                 // @ts-ignore
                 const pipesComp = targetEntity.components.Pipe;
                 if (!pipesComp) {
                     return false;
+                }
+                if (checkNetwork) {
+                    const pipe = this.root.map.getTileContent(tile, "regular");
+                    if (pipe) {
+                        // @ts-ignore
+                        const pipeComp = pipe.components.Pipe;
+                        if (pipeComp) {
+                            if (
+                                (pipeComp.linkedNetwork && !pipesComp.linkedNetwork) ||
+                                (!pipeComp.linkedNetwork && pipesComp.linkedNetwork)
+                            ) {
+                                return false;
+                            }
+
+                            if (pipeComp.linkedNetwork && pipesComp.linkedNetwork) {
+                                if (pipesComp.linkedNetwork.uid !== pipeComp.linkedNetwork.uid) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // It's connected if its the same variant

@@ -1,4 +1,4 @@
-import { enumDirectionToVector, enumInvertedDirections } from "shapez/core/vector";
+import { enumDirection, enumDirectionToVector, enumInvertedDirections } from "shapez/core/vector";
 import { GameLogic } from "shapez/game/logic";
 import { Mod } from "shapez/mods/mod";
 import { MetaCustomPipeBuilding } from "./buildings/custom_pipe";
@@ -47,27 +47,70 @@ class ModImpl extends Mod {
         });
 
         // TODO: try make pipes work like belts
-        this.modInterface.replaceMethod(
-            // @ts-ignore
-            this.modLoader.mods.find(x => x.metadata.id === "dj1tjoo_pipes").PipeSystem,
-            "findSurroundingPipeTargets",
-            function ($super, [initialTile, directions, network, variantMask = null, distance = []]) {
-                const results = $super(initialTile, directions, network, variantMask, distance);
+        // this.modInterface.replaceMethod(
+        //     // @ts-ignore
+        //     this.modLoader.mods.find(x => x.metadata.id === "dj1tjoo_pipes").PipeSystem,
+        //     "findSurroundingPipeTargets",
+        //     function ($super, [initialTile, directions, network, variantMask = null, distance = []]) {
+        //         const results = $super(initialTile, directions, network, variantMask, distance);
 
-                const newResults = [];
-                for (let i = 0; i < results.length; i++) {
-                    const { entity, slot, distance } = results[i];
-                    if (slot) newResults.push({ entity, slot, distance });
+        //         const initialPipe = network.pipes.find(x =>
+        //             x.components.StaticMapEntity.origin.equals(initialTile)
+        //         );
 
-                    // if (newResults.filter(x => !x.slot).length > 1) continue;
-                    // Get neigbours, check if connections, less than 2 push
+        //         if (!initialPipe) {
+        //             return results;
+        //         }
 
-                    newResults.push({ entity, slot, distance });
-                }
+        //         const pipeComp = initialPipe.components.Pipe;
+        //         const connections = [
+        //             this.root.logic.computePipeEdgeStatus({
+        //                 tile: initialTile,
+        //                 pipeVariant: pipeComp.variant,
+        //                 edge: enumDirection.top,
+        //             }),
+        //             this.root.logic.computePipeEdgeStatus({
+        //                 tile: initialTile,
+        //                 pipeVariant: pipeComp.variant,
+        //                 edge: enumDirection.right,
+        //             }),
+        //             this.root.logic.computePipeEdgeStatus({
+        //                 tile: initialTile,
+        //                 pipeVariant: pipeComp.variant,
+        //                 edge: enumDirection.bottom,
+        //             }),
+        //             this.root.logic.computePipeEdgeStatus({
+        //                 tile: initialTile,
+        //                 pipeVariant: pipeComp.variant,
+        //                 edge: enumDirection.left,
+        //             }),
+        //         ];
+        //         const connected = connections.filter(x => !!x).length;
 
-                return newResults;
-            }
-        );
+        //         const newResults = [];
+        //         for (let i = 0; i < results.length; i++) {
+        //             const { entity, slot, distance } = results[i];
+        //             if (slot) {
+        //                 newResults.push({ entity, slot, distance });
+        //                 continue;
+        //             }
+
+        //             // if (newResults.filter(x => !x.slot).length > 1) continue;
+        //             // Get initialTile, check if connections, less than 2 push
+
+        //             console.log(connected + newResults.filter(x => !x.slot).length);
+        //             // If one or less connections connect
+        //             if (connected + newResults.filter(x => !x.slot).length <= 1) {
+        //                 newResults.push({ entity, slot, distance });
+        //                 continue;
+        //             }
+
+        //             // newResults.push({ entity, slot, distance });
+        //         }
+
+        //         return newResults;
+        //     }
+        // );
 
         registerOil();
     }
