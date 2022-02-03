@@ -4,16 +4,19 @@ import { Mod } from "shapez/mods/mod";
 import { BaseFluid, gFluidRegistry, typeFluidSingleton } from "./base_fluid";
 import { MetaPipeBuilding } from "./buildings/pipe";
 import { MetaPumpBuilding } from "./buildings/pump";
+import { MetaTankBuilding } from "./buildings/tank";
 import { DefaultPipeRendererComponent } from "./components/default_pipe_renderer";
 import { enumPipeType, PipeComponent } from "./components/pipe";
 import { enumPinSlotType, PipedPinsComponent } from "./components/pipe_pins";
 import { PumpComponent } from "./components/pump";
+import { TankComponent } from "./components/tank";
 import { WATER_SINGLETON } from "./fluids/water";
 import { getMod } from "./getMod";
 import { DefaultPipeRendererSystem } from "./systems/default_pipe_renderer";
 import { arrayPipeRotationVariantToType, PipeNetwork, PipeSystem } from "./systems/pipe";
 import { PipedPinsSystem } from "./systems/pipe_pins";
 import { PumpSystem } from "./systems/pump";
+import { TankSystem } from "./systems/tank";
 
 class ModImpl extends Mod {
     init() {
@@ -27,10 +30,15 @@ class ModImpl extends Mod {
             metaClass: MetaPumpBuilding,
         });
 
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaTankBuilding,
+        });
+
         this.modLoader.signals.hudElementInitialized.add(element => {
             if (element.constructor.name === "HUDBuildingsToolbar") {
                 if (this.settings.defaultPump) element.primaryBuildings.push(MetaPumpBuilding);
                 if (this.settings.defaultPipes) element.primaryBuildings.push(MetaPipeBuilding);
+                if (this.settings.defaultTank) element.primaryBuildings.push(MetaTankBuilding);
             }
         });
 
@@ -46,6 +54,7 @@ class ModImpl extends Mod {
         this.modInterface.registerComponent(PipedPinsComponent);
         this.modInterface.registerComponent(DefaultPipeRendererComponent);
         this.modInterface.registerComponent(PumpComponent);
+        this.modInterface.registerComponent(TankComponent);
 
         this.modInterface.registerGameSystem({
             id: "pipe",
@@ -69,6 +78,11 @@ class ModImpl extends Mod {
             id: "pump",
             before: "end",
             systemClass: PumpSystem,
+        });
+        this.modInterface.registerGameSystem({
+            id: "tank",
+            before: "end",
+            systemClass: TankSystem,
         });
 
         this.modInterface.extendClass(GameLogic, () => ({
@@ -183,7 +197,9 @@ class ModImpl extends Mod {
         if (!this.settings.defaultWater) {
             this.settings.defaultWater = true;
         }
-
+        if (!this.settings.defaultTank) {
+            this.settings.defaultTank = true;
+        }
         this.saveSettings();
     }
 

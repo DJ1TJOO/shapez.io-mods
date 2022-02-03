@@ -48,11 +48,15 @@ export class PipeComponent extends Component {
     }
 
     get localPressure() {
-        let costs = 0;
-        for (let j = 0; j < this.distance.length; j++) {
-            costs += this.distance[j];
+        if (this.linkedNetwork) {
+            let costs = 0;
+            for (let j = 0; j < this.distance.length; j++) {
+                costs += this.distance[j];
+            }
+            const pressure = this.linkedNetwork.currentPressure - costs;
+            return pressure < 0 ? 0 : pressure;
         }
-        const pressure = this.linkedNetwork.currentPressure - costs;
-        return pressure < 0 ? 0 : pressure;
+
+        return 0;
     }
 }

@@ -5,12 +5,13 @@ import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { BaseFluid } from "../base_fluid";
 import { enumPinSlotType, PipedPinsComponent } from "../components/pipe_pins";
 import { PumpComponent } from "../components/pump";
+import { TankComponent } from "../components/tank";
 
 const overlayMatrix = generateMatrixRotations([1, 0, 1, 0, 1, 0, 1, 0, 1]);
 
-export class MetaPumpBuilding extends ModMetaBuilding {
+export class MetaTankBuilding extends ModMetaBuilding {
     constructor() {
-        super("pump");
+        super("tank");
     }
 
     getSilhouetteColor() {
@@ -21,8 +22,8 @@ export class MetaPumpBuilding extends ModMetaBuilding {
         return [
             {
                 variant: defaultBuildingVariant,
-                name: "Pump",
-                description: "",
+                name: "Tank",
+                description: "Store fluid and combine pressure",
             },
         ];
     }
@@ -45,27 +46,25 @@ export class MetaPumpBuilding extends ModMetaBuilding {
                         type: enumPinSlotType.logicalEjector,
                         volume: 50,
                     },
+                    {
+                        pos: new Vector(0, 0),
+                        direction: enumDirection.left,
+                        type: enumPinSlotType.logicalAcceptor,
+                    },
+                    {
+                        pos: new Vector(0, 0),
+                        direction: enumDirection.bottom,
+                        type: enumPinSlotType.logicalAcceptor,
+                    },
+                    {
+                        pos: new Vector(0, 0),
+                        direction: enumDirection.right,
+                        type: enumPinSlotType.logicalAcceptor,
+                    },
                 ],
             })
         );
 
-        // @ts-ignore
-        let fluid = null;
-
-        if (entity.root) {
-            // @ts-ignore
-            const layerFluid = /** @type {BaseFluid} */ (
-                entity.root.map.getLowerLayerContentXY(
-                    entity.components.StaticMapEntity.origin.x,
-                    entity.components.StaticMapEntity.origin.y
-                )
-            );
-
-            if (layerFluid && layerFluid.getItemType() === "fluid") {
-                fluid = layerFluid;
-            }
-        }
-
-        entity.addComponent(new PumpComponent({ pressure: 100, fluid: fluid }));
+        entity.addComponent(new TankComponent({ maxVolume: 500 }));
     }
 }

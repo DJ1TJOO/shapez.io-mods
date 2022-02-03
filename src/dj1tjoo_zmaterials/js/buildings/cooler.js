@@ -80,6 +80,7 @@ export class MetaCoolerBuilding extends ModMetaBuilding {
                         pos: new Vector(1, 0),
                         direction: enumDirection.right,
                         type: enumPinSlotType.logicalAcceptor,
+                        pressure: 10,
                     },
                 ],
             })
@@ -153,7 +154,10 @@ export function setupCooler() {
             // Output basalt
             if (pinsComp) {
                 if (pinsComp.slots[0].linkedNetwork) {
-                    if (pinsComp.slots[0].linkedNetwork.currentVolume > 10) {
+                    if (
+                        pinsComp.slots[0].linkedNetwork.currentVolume > 10 &&
+                        pinsComp.getLocalPressure(this.root, entity, 0) > 50
+                    ) {
                         outItems.push({
                             item: STONE_ITEM_SINGLETONS[enumStoneType.basalt],
                         });

@@ -79,6 +79,7 @@ export class DefaultPipeRendererSystem extends GameSystem {
                     const network = pipeComp.linkedNetwork;
 
                     if (network && network.currentFluid && pipeComp.localPressure > 0) {
+                        parameters.context.globalAlpha = pipeComp.localPressure / network.currentPressure;
                         // @ts-ignore
                         parameters.context.fillStyle = network.currentFluid.getBackgroundColorAsResource();
 

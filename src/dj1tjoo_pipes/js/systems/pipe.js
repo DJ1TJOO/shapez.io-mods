@@ -24,12 +24,12 @@ export const arrayPipeRotationVariantToType = [
     enumPipeType.cross,
 ];
 
-const renderPipesInfo = BUILD_OPTIONS.IS_DEV && false;
+const renderPipesInfo = BUILD_OPTIONS.IS_DEV && true;
 
 const logger = createLogger("pipes");
 let networkUidCounter = 0;
 
-const VERBOSE_WIRES = BUILD_OPTIONS.IS_DEV && false;
+const VERBOSE_PIPES = BUILD_OPTIONS.IS_DEV && false;
 
 export class PipeNetwork {
     constructor() {
@@ -166,7 +166,7 @@ export class PipeSystem extends GameSystem {
             this.isFirstRecompute = false;
         }
 
-        VERBOSE_WIRES && logger.log("Recomputing slots");
+        VERBOSE_PIPES && logger.log("Recomputing slots");
 
         // Iterate over all ejector slots
         for (let i = 0; i < pinEntities.length; ++i) {
@@ -192,8 +192,6 @@ export class PipeSystem extends GameSystem {
             );
         }
 
-        console.log(this.networks);
-        console.log(this.oldNetworks);
         for (let i = 0; i < this.oldNetworks.length; i++) {
             const oldNetwork = this.oldNetworks[i];
             const provider = oldNetwork.provider.entity.components.StaticMapEntity.origin;
@@ -201,9 +199,11 @@ export class PipeSystem extends GameSystem {
                 provider.equals(x.provider.entity.components.StaticMapEntity.origin)
             );
 
-            currentNetwork.currentVolume = oldNetwork.currentVolume;
-            currentNetwork.currentPressure = oldNetwork.currentPressure;
-            currentNetwork.currentFluid = oldNetwork.currentFluid;
+            if (currentNetwork) {
+                currentNetwork.currentVolume = oldNetwork.currentVolume;
+                currentNetwork.currentPressure = oldNetwork.currentPressure;
+                currentNetwork.currentFluid = oldNetwork.currentFluid;
+            }
         }
     }
 
@@ -214,7 +214,7 @@ export class PipeSystem extends GameSystem {
      */
     findNetworkForEjector(initialEntity, slot) {
         let currentNetwork = new PipeNetwork();
-        VERBOSE_WIRES &&
+        VERBOSE_PIPES &&
             logger.log(
                 "Finding network for entity",
                 initialEntity.uid,
@@ -247,7 +247,7 @@ export class PipeSystem extends GameSystem {
             const pipeComp = nextEntity.components.Pipe;
             const staticComp = nextEntity.components.StaticMapEntity;
 
-            VERBOSE_WIRES && logger.log("Visiting", staticComp.origin.toString(), "(", nextEntity.uid, ")");
+            VERBOSE_PIPES && logger.log("Visiting", staticComp.origin.toString(), "(", nextEntity.uid, ")");
 
             // Where to search for neighbours
             let newSearchDirections = [];
@@ -271,7 +271,7 @@ export class PipeSystem extends GameSystem {
                         // Mismatching variant
                     } else {
                         // This one is new! :D
-                        VERBOSE_WIRES && logger.log("  Visited new pipe:", staticComp.origin.toString());
+                        VERBOSE_PIPES && logger.log("  Visited new pipe:", staticComp.origin.toString());
                         pipeComp.linkedNetwork = currentNetwork;
 
                         distance.push(pipeComp.pressureFriction);
@@ -294,10 +294,10 @@ export class PipeSystem extends GameSystem {
                 assert(slot, "No slot set for next entity");
 
                 if (slot.type === enumPinSlotType.logicalEjector) {
-                    VERBOSE_WIRES &&
+                    VERBOSE_PIPES &&
                         logger.log("  Visiting ejector slot", staticComp.origin.toString(), "->", slot.type);
                 } else if (slot.type === enumPinSlotType.logicalAcceptor) {
-                    VERBOSE_WIRES &&
+                    VERBOSE_PIPES &&
                         logger.log("  Visiting acceptor slot", staticComp.origin.toString(), "->", slot.type);
                 } else {
                     assertAlways(false, "Bad slot type: " + slot.type);
@@ -313,7 +313,7 @@ export class PipeSystem extends GameSystem {
                 );
                 if (!slot.linkedNetwork) {
                     // This one is new
-                    VERBOSE_WIRES && logger.log("  Visited new slot:", staticComp.origin.toString());
+                    VERBOSE_PIPES && logger.log("  Visited new slot:", staticComp.origin.toString());
 
                     // Add to the right list
                     if (slot.type === enumPinSlotType.logicalEjector) {
@@ -348,7 +348,7 @@ export class PipeSystem extends GameSystem {
                     distance
                 );
 
-                VERBOSE_WIRES && logger.log("   Found", newTargets, "new targets to visit!");
+                VERBOSE_PIPES && logger.log("   Found", newTargets, "new targets to visit!");
                 for (let i = 0; i < newTargets.length; ++i) {
                     entitiesToVisit.push(newTargets[i]);
                 }
@@ -360,7 +360,7 @@ export class PipeSystem extends GameSystem {
             (currentNetwork.pipes.length > 0 || currentNetwork.receivers.length > 0)
         ) {
             this.networks.push(currentNetwork);
-            VERBOSE_WIRES && logger.log("Attached new network with uid", currentNetwork);
+            VERBOSE_PIPES && logger.log("Attached new network with uid", currentNetwork);
         } else {
             // Unregister network again
             for (let i = 0; i < currentNetwork.pipes.length; ++i) {
@@ -386,7 +386,7 @@ export class PipeSystem extends GameSystem {
     findSurroundingPipeTargets(initialTile, directions, network, variantMask = null, distance = []) {
         let result = [];
 
-        VERBOSE_WIRES &&
+        VERBOSE_PIPES &&
             logger.log(
                 "    Searching for new targets at",
                 initialTile.toString(),
@@ -474,7 +474,7 @@ export class PipeSystem extends GameSystem {
             }
         }
 
-        VERBOSE_WIRES && logger.log("     -> Found", result.length);
+        VERBOSE_PIPES && logger.log("     -> Found", result.length);
 
         return result;
     }
@@ -500,8 +500,9 @@ export class PipeSystem extends GameSystem {
 
             // Remove pressure from network
             for (let j = 0; j < network.receivers.length; j++) {
-                const reveiverSlot = network.receivers[j];
-                const slotPressure = reveiverSlot.slot.pressure;
+                const receiverSlot = network.receivers[j];
+                const slotPressure = receiverSlot.slot.pressure;
+                receiverSlot.slot.fluid = fluid;
 
                 // The first sender can just put in his value
                 if (!pressure) {
@@ -528,7 +529,7 @@ export class PipeSystem extends GameSystem {
             let maxVolume = network.pipes
                 //@ts-ignore
                 .map(x => x.components.Pipe.volume)
-                .reduce((volume, currentVolume) => (volume ? (volume += currentVolume) : currentVolume));
+                .reduce((volume, currentVolume) => (volume += currentVolume), 0);
 
             if (network.currentVolume > maxVolume) {
                 network.currentVolume = maxVolume;
