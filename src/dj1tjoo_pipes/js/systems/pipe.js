@@ -113,6 +113,7 @@ export class PipeSystem extends GameSystem {
          * @type {Array<PipeNetwork>}
          */
         this.networks = [];
+        this.oldNetworks = [];
     }
 
     /**
@@ -126,6 +127,7 @@ export class PipeSystem extends GameSystem {
 
         if (this.isEntityRelevantForPipes(entity)) {
             this.needsRecompute = true;
+            this.oldNetworks = [...this.networks];
             this.networks = [];
         }
     }
@@ -137,6 +139,9 @@ export class PipeSystem extends GameSystem {
         this.needsRecompute = false;
         logger.log("Recomputing pipes network");
 
+        if (this.networks.length > 0) {
+            this.oldNetworks = [...this.networks];
+        }
         this.networks = [];
 
         const pipeEntities = this.root.entityMgr.getAllWithComponent(PipeComponent);
@@ -185,6 +190,20 @@ export class PipeSystem extends GameSystem {
             this.updateSurroundingPipePlacement(
                 entity.components.StaticMapEntity.getTileSpaceBounds().expandedInAllDirections(1)
             );
+        }
+
+        console.log(this.networks);
+        console.log(this.oldNetworks);
+        for (let i = 0; i < this.oldNetworks.length; i++) {
+            const oldNetwork = this.oldNetworks[i];
+            const provider = oldNetwork.provider.entity.components.StaticMapEntity.origin;
+            const currentNetwork = this.networks.find(x =>
+                provider.equals(x.provider.entity.components.StaticMapEntity.origin)
+            );
+
+            currentNetwork.currentVolume = oldNetwork.currentVolume;
+            currentNetwork.currentPressure = oldNetwork.currentPressure;
+            currentNetwork.currentFluid = oldNetwork.currentFluid;
         }
     }
 
