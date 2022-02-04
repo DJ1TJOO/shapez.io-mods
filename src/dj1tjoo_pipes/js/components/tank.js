@@ -1,5 +1,6 @@
 import { Component } from "shapez/game/component";
 import { types } from "shapez/savegame/serialization";
+import { typeFluidSingleton } from "../base_fluid";
 
 export class TankComponent extends Component {
     static getId() {
@@ -9,6 +10,8 @@ export class TankComponent extends Component {
     static getSchema() {
         return {
             volume: types.uint,
+            pressure: types.uint,
+            fluid: types.nullable(typeFluidSingleton),
             maxVolume: types.uint,
         };
     }
@@ -20,6 +23,8 @@ export class TankComponent extends Component {
     copyAdditionalStateTo(otherComponent) {
         otherComponent.maxVolume = this.maxVolume;
         otherComponent.volume = this.volume;
+        otherComponent.fluid = this.fluid;
+        otherComponent.pressure = this.pressure;
     }
 
     /**
@@ -29,7 +34,9 @@ export class TankComponent extends Component {
      */
     constructor({ maxVolume }) {
         super();
+        this.pressure = 0;
         this.volume = 0;
+        this.fluid = null;
         this.maxVolume = maxVolume;
     }
 }

@@ -34,8 +34,8 @@ export class TankSystem extends GameSystemWithFilter {
                 /**
                  * @TODO clean up
                  * */
-                let fluid = null;
-                let pressure = 0;
+                let fluid = tankComp.fluid;
+                let pressures = [];
                 let volumes = [];
                 for (let i = 0; i < acceptors.length; i++) {
                     const acceptor = acceptors[i];
@@ -48,14 +48,14 @@ export class TankSystem extends GameSystemWithFilter {
                         break;
                     }
 
-                    pressure += pinsComp.getLocalPressure(this.root, entity, acceptor);
+                    pressures.push(pinsComp.getLocalPressure(this.root, entity, acceptor));
 
                     if (doTransfer) {
                         if (acceptor.linkedNetwork) {
                             const pipe = pinsComp.getConnectedPipe(this.root, entity, acceptor);
                             let volume = 0;
                             if (pipe.components.Pipe) {
-                                volume = pipe.components.Pipe.volume;
+                                volume = pipe.components.Pipe.maxVolume;
                             } else if (pipe.components.PipedPins) {
                                 // Get correct slot
                                 const pipePinsComp = pipe.components.PipedPins;
@@ -87,46 +87,92 @@ export class TankSystem extends GameSystemWithFilter {
 
                 ejector.fluid = fluid;
                 if (fluid) {
-                    ejector.pressure = pressure;
+                    let pressure = Math.round(
+                        pressures.reduce((prev, curr) => prev + curr, 0) / pressures.length
+                    );
+                    if (pressure <= 0 && tankComp.pressure > 0) {
+                        ejector.pressure = tankComp.pressure;
+                    } else {
+                        ejector.pressure = pressure;
+                        tankComp.pressure = pressure;
+                    }
+                    tankComp.fluid = fluid;
 
                     if (doTransfer) {
                         for (let i = 0; i < volumes.length; i++) {
                             const volume = volumes[i];
 
-                            const volumeToMove =
-                                tankComp.volume + volume.volume < tankComp.maxVolume
-                                    ? volume.volume
-                                    : tankComp.maxVolume - tankComp.volume;
-
-                            if (volume.network.currentVolume - volumeToMove > 0) {
-                                // Remove from network
-                                volume.network.currentVolume -= volumeToMove;
-
-                                // Add to tank
-                                tankComp.volume += volumeToMove;
+                            let volumeToMove = 0;
+                            if (tankComp.volume + volume.volume < tankComp.maxVolume) {
+                                volumeToMove = volume.volume;
+                            } else {
+                                volumeToMove = tankComp.maxVolume - tankComp.volume;
                             }
+
+                            if (volume.network.currentVolume - volumeToMove < 0) {
+                                volumeToMove = volume.network.currentVolume;
+                            }
+
+                            // Remove from network
+                            volume.network.currentVolume -= volumeToMove;
+
+                            // Add to tank
+                            tankComp.volume += volumeToMove;
                         }
 
                         if (ejector.linkedNetwork) {
                             // Can only eject into pipes
                             const pipe = pinsComp.getConnectedPipe(this.root, entity, ejector);
-                            const volume = pipe ? pipe.components.Pipe.volume : 0;
+
+                            let volumeToMove = 0;
+                            if (pipe.components.Pipe) {
+                                volumeToMove = pipe.components.Pipe.maxVolume;
+                            } else if (pipe.components.PipedPins) {
+                                // Get correct slot
+                                const pipePinsComp = pipe.components.PipedPins;
+                                const pipeStaticComp = pipe.components.StaticMapEntity;
+
+                                for (let i = 0; i < pipePinsComp.slots.length; i++) {
+                                    const currentSlot = pipePinsComp.slots[i];
+                                    if (
+                                        pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
+                                        enumInvertedDirections[
+                                            staticComp.localDirectionToWorld(ejector.direction)
+                                        ]
+                                    ) {
+                                        volumeToMove = currentSlot.volume;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (tankComp.volume < volumeToMove) {
+                                volumeToMove = tankComp.volume;
+                            }
 
                             if (
-                                tankComp.volume >= volume &&
-                                ejector.linkedNetwork.currentVolume + volume <=
-                                    ejector.linkedNetwork.maxVolume
+                                ejector.linkedNetwork.currentVolume + volumeToMove >=
+                                ejector.linkedNetwork.maxVolume
                             ) {
-                                // Remove from tank
-                                tankComp.volume -= volume;
-
-                                // Add to ejector
-                                ejector.linkedNetwork.currentVolume += volume;
+                                volumeToMove =
+                                    ejector.linkedNetwork.maxVolume - ejector.linkedNetwork.currentVolume;
                             }
+
+                            // Remove from tank
+                            tankComp.volume -= volumeToMove;
+
+                            // Add to ejector
+                            ejector.linkedNetwork.currentVolume += volumeToMove;
+                        }
+
+                        if (tankComp.volume <= 0) {
+                            tankComp.pressure = 0;
+                            tankComp.fluid = null;
                         }
                     }
                 } else {
                     ejector.pressure = 0;
+                    tankComp.pressure = 0;
                 }
             }
         }
@@ -152,16 +198,10 @@ export class TankSystem extends GameSystemWithFilter {
                     /** @type {TankComponent} */
                     // @ts-ignore
                     const tankComp = entity.components.Tank;
-                    /** @type {PipedPinsComponent} */
-                    // @ts-ignore
-                    const pinsComp = entity.components.PipedPins;
                     const staticComp = entity.components.StaticMapEntity;
 
-                    const fluid = pinsComp.slots.filter(x => x.type === enumPinSlotType.logicalEjector)[0]
-                        .fluid;
-
-                    if (fluid) {
-                        parameters.context.strokeStyle = fluid.getBackgroundColorAsResource();
+                    if (tankComp.fluid && tankComp.volume > 0) {
+                        parameters.context.strokeStyle = tankComp.fluid.getBackgroundColorAsResource();
 
                         let rotated = false;
 
@@ -182,14 +222,14 @@ export class TankSystem extends GameSystemWithFilter {
                             rotated ? 10.5 : 11.1,
                             rotated ? 11.1 : 10.5,
                             0,
-                            (1 / 2) * Math.PI,
-                            (tankComp.volume / tankComp.maxVolume) * 2 * Math.PI - (1 / 2) * Math.PI
+                            0,
+                            (tankComp.volume / tankComp.maxVolume) * 2 * Math.PI
                         );
                         parameters.context.lineWidth = 1.7;
                         parameters.context.lineCap = "round";
                         parameters.context.stroke();
 
-                        fluid.drawItemCenteredClipped(
+                        tankComp.fluid.drawItemCenteredClipped(
                             (staticComp.origin.x + 0.5) * globalConfig.tileSize,
                             (staticComp.origin.y + 0.5) * globalConfig.tileSize,
                             parameters,

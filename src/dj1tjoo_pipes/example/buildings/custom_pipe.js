@@ -28,6 +28,16 @@ const enumPipeVariantToPressureFriction = {
     [pipeVariants.industrial]: 1,
 };
 
+const enumPipeVariantToVolume = {
+    [defaultBuildingVariant]: 30,
+    [pipeVariants.industrial]: 60,
+};
+
+const enumPipeVariantToPressure = {
+    [defaultBuildingVariant]: 100,
+    [pipeVariants.industrial]: 200,
+};
+
 export class MetaCustomPipeBuilding extends ModMetaBuilding {
     constructor() {
         super("custom_pipe");
@@ -162,13 +172,15 @@ export class MetaCustomPipeBuilding extends ModMetaBuilding {
      */
     updateVariants(entity, rotationVariant, variant) {
         // @ts-ignore
-        const { arrayPipeRotationVariantToType } = MODS.mods.find(x => x.metadata.id === "dj1tjoo_pipes");
-        // @ts-ignore
         entity.components.Pipe.type = arrayPipeRotationVariantToType[rotationVariant];
         // @ts-ignore
         entity.components.Pipe.variant = enumPipeVariantToVariant[variant];
         // @ts-ignore
         entity.components.Pipe.pressureFriction = enumPipeVariantToPressureFriction[variant];
+        // @ts-ignore
+        entity.components.Pipe.maxVolume = enumPipeVariantToVolume[variant];
+        // @ts-ignore
+        entity.components.Pipe.maxPressure = enumPipeVariantToPressure[variant];
     }
 
     /**

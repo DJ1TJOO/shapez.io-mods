@@ -3,7 +3,7 @@ import { GameLogic } from "shapez/game/logic";
 import { Mod } from "shapez/mods/mod";
 import { BaseFluid, gFluidRegistry, typeFluidSingleton } from "./base_fluid";
 import { MetaPipeBuilding } from "./buildings/pipe";
-import { MetaPumpBuilding } from "./buildings/pump";
+import { MetaPumpBuilding, setupPump } from "./buildings/pump";
 import { MetaTankBuilding } from "./buildings/tank";
 import { DefaultPipeRendererComponent } from "./components/default_pipe_renderer";
 import { enumPipeType, PipeComponent } from "./components/pipe";
@@ -26,6 +26,7 @@ class ModImpl extends Mod {
             metaClass: MetaPipeBuilding,
         });
 
+        setupPump.apply(this);
         this.modInterface.registerNewBuilding({
             metaClass: MetaPumpBuilding,
         });

@@ -15,24 +15,24 @@ export const enumPipeVariant = {
     industrial: "industrial",
 };
 
-/** @enum {string} */
-export const pipeVariants = {
-    industrial: "industrial",
-};
-
 export const enumPipeVariantToVariant = {
     [defaultBuildingVariant]: enumPipeVariant.pipe,
-    [pipeVariants.industrial]: enumPipeVariant.industrial,
+    [enumPipeVariant.industrial]: enumPipeVariant.industrial,
 };
 
 const enumPipeVariantToPressureFriction = {
     [defaultBuildingVariant]: 2,
-    [pipeVariants.industrial]: 1,
+    [enumPipeVariant.industrial]: 1,
 };
 
 const enumPipeVariantToVolume = {
     [defaultBuildingVariant]: 30,
-    [pipeVariants.industrial]: 60,
+    [enumPipeVariant.industrial]: 60,
+};
+
+const enumPipeVariantToPressure = {
+    [defaultBuildingVariant]: 100,
+    [enumPipeVariant.industrial]: 200,
 };
 
 export const pipeOverlayMatrices = {
@@ -179,7 +179,9 @@ export class MetaPipeBuilding extends ModMetaBuilding {
         // @ts-ignore
         entity.components.Pipe.pressureFriction = enumPipeVariantToPressureFriction[variant];
         // @ts-ignore
-        entity.components.Pipe.volume = enumPipeVariantToVolume[variant];
+        entity.components.Pipe.maxVolume = enumPipeVariantToVolume[variant];
+        // @ts-ignore
+        entity.components.Pipe.maxPressure = enumPipeVariantToPressure[variant];
     }
 
     /**

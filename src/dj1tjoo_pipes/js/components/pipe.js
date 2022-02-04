@@ -1,5 +1,6 @@
 import { Component } from "shapez/game/component";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
+import { types } from "shapez/savegame/serialization";
 
 /** @enum {string} */
 export const enumPipeType = {
@@ -14,18 +15,26 @@ export class PipeComponent extends Component {
         return "Pipe";
     }
 
+    static getSchema() {
+        return {
+            volume: types.uint,
+        };
+    }
+
     /**
      * @param {object} param0
      * @param {enumPipeType=} param0.type
      * @param {string=} param0.variant
      * @param {number=} param0.pressureFriction
-     * @param {number=} param0.volume
+     * @param {number=} param0.maxVolume
+     * @param {number=} param0.maxPressure
      */
     constructor({
         type = enumPipeType.forward,
         variant = defaultBuildingVariant,
         pressureFriction = 0.2,
-        volume = 30,
+        maxVolume = 30,
+        maxPressure = 100,
     }) {
         super();
         this.type = type;
@@ -42,7 +51,9 @@ export class PipeComponent extends Component {
         this.linkedNetwork = null;
 
         this.pressureFriction = pressureFriction;
-        this.volume = volume;
+        this.maxPressure = maxPressure;
+        this.maxVolume = maxVolume;
+        this.volume = 0;
 
         this.distance = [];
     }
@@ -54,7 +65,7 @@ export class PipeComponent extends Component {
                 costs += this.distance[j];
             }
             const pressure = this.linkedNetwork.currentPressure - costs;
-            return pressure < 0 ? 0 : pressure;
+            return pressure < 0 ? 0 : pressure > this.maxPressure ? this.maxPressure : pressure;
         }
 
         return 0;

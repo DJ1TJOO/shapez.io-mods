@@ -24,7 +24,7 @@ export const arrayPipeRotationVariantToType = [
     enumPipeType.cross,
 ];
 
-const renderPipesInfo = BUILD_OPTIONS.IS_DEV && false;
+const renderPipesInfo = BUILD_OPTIONS.IS_DEV && true;
 
 const logger = createLogger("pipes");
 let networkUidCounter = 0;
@@ -119,7 +119,6 @@ export class PipeSystem extends GameSystem {
          * @type {Array<PipeNetwork>}
          */
         this.networks = [];
-        this.oldNetworks = [];
     }
 
     /**
@@ -133,7 +132,6 @@ export class PipeSystem extends GameSystem {
 
         if (this.isEntityRelevantForPipes(entity)) {
             this.needsRecompute = true;
-            this.oldNetworks = [...this.networks];
             this.networks = [];
         }
     }
@@ -145,9 +143,6 @@ export class PipeSystem extends GameSystem {
         this.needsRecompute = false;
         logger.log("Recomputing pipes network");
 
-        if (this.networks.length > 0) {
-            this.oldNetworks = [...this.networks];
-        }
         this.networks = [];
 
         const pipeEntities = this.root.entityMgr.getAllWithComponent(PipeComponent);
@@ -196,21 +191,6 @@ export class PipeSystem extends GameSystem {
             this.updateSurroundingPipePlacement(
                 entity.components.StaticMapEntity.getTileSpaceBounds().expandedInAllDirections(1)
             );
-        }
-
-        /** @TODO fix keeping volume in pipes */
-        for (let i = 0; i < this.oldNetworks.length; i++) {
-            const oldNetwork = this.oldNetworks[i];
-            const provider = oldNetwork.provider.entity.components.StaticMapEntity.origin;
-            const currentNetwork = this.networks.find(x =>
-                provider.equals(x.provider.entity.components.StaticMapEntity.origin)
-            );
-
-            if (currentNetwork) {
-                currentNetwork.currentVolume = oldNetwork.currentVolume;
-                currentNetwork.currentPressure = oldNetwork.currentPressure;
-                currentNetwork.currentFluid = oldNetwork.currentFluid;
-            }
         }
     }
 
@@ -285,6 +265,7 @@ export class PipeSystem extends GameSystem {
                         pipeComp.distance = distance;
 
                         currentNetwork.pipes.push(nextEntity);
+                        currentNetwork.currentVolume += pipeComp.volume;
 
                         newSearchDirections = arrayAllDirections;
                         newSearchTile = nextEntity.components.StaticMapEntity.origin;
@@ -526,20 +507,39 @@ export class PipeSystem extends GameSystem {
             }
 
             // Assign value
-            network.currentFluid = fluid;
             if (network.currentVolume <= 0) {
                 network.currentPressure = 0;
+                network.currentFluid = null;
             } else {
                 network.currentPressure = pressure;
+                network.currentFluid = fluid;
             }
 
             network.maxVolume = network.pipes
                 //@ts-ignore
-                .map(x => x.components.Pipe.volume)
+                .map(x => x.components.Pipe.maxVolume)
                 .reduce((volume, currentVolume) => (volume += currentVolume), 0);
 
             if (network.currentVolume > network.maxVolume) {
                 network.currentVolume = network.maxVolume;
+            }
+
+            let volumeLeft = network.currentVolume;
+            for (let i = 0; i < network.pipes.length; i++) {
+                const pipe = network.pipes[i];
+                /** @type {PipeComponent} */
+                //@ts-ignore
+                const pipeComp = pipe.components.Pipe;
+
+                if (volumeLeft >= pipeComp.maxVolume) {
+                    pipeComp.volume = pipeComp.maxVolume;
+                    volumeLeft -= pipeComp.maxVolume;
+                } else if (volumeLeft > 0) {
+                    pipeComp.volume = volumeLeft;
+                    volumeLeft = 0;
+                } else {
+                    pipeComp.volume = 0;
+                }
             }
         }
     }
@@ -623,6 +623,12 @@ export class PipeSystem extends GameSystem {
                             parameters.context.fillText(
                                 "D:" + pipeComp.distance.length,
                                 (staticComp.origin.x + 0) * globalConfig.tileSize,
+                                (staticComp.origin.y + 0.8) * globalConfig.tileSize
+                            );
+
+                            parameters.context.fillText(
+                                "v:" + round1Digit(pipeComp.linkedNetwork.currentVolume),
+                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
                                 (staticComp.origin.y + 0.8) * globalConfig.tileSize
                             );
                         }
