@@ -1,6 +1,7 @@
 import { globalConfig } from "shapez/core/config";
 import { formatItemsPerSecond } from "shapez/core/utils";
 import { Vector, enumDirection } from "shapez/core/vector";
+import { enumColors } from "shapez/game/colors";
 import { ItemAcceptorComponent } from "shapez/game/components/item_acceptor";
 import { ItemEjectorComponent } from "shapez/game/components/item_ejector";
 import { enumItemProcessorTypes, ItemProcessorComponent } from "shapez/game/components/item_processor";
@@ -112,6 +113,72 @@ export class MetaCoolerBuilding extends ModMetaBuilding {
 export function setupCooler() {
     // @ts-ignore
     const MAGMA_SINGLETONS = this.MAGMA_SINGLETONS;
+    const coolerRecipes = [
+        {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.basalt],
+            fluid: MAGMA_SINGLETONS[enumMagmaTypes.stone_magma],
+            fluidCost: 10,
+            minPressure: 50,
+            shape:
+                /**
+                 * @param {ShapeDefinition} shapeDefinition
+                 */
+                shapeDefinition => {
+                    const newLayers = shapeDefinition.getClonedLayers();
+                    for (let i = 0; i < newLayers.length; i++) {
+                        const layer = newLayers[i];
+
+                        const tr = layer[TOP_RIGHT];
+                        const br = layer[BOTTOM_RIGHT];
+                        const bl = layer[BOTTOM_LEFT];
+                        const tl = layer[TOP_LEFT];
+
+                        if (
+                            tr.subShape !== enumSubShape.circle ||
+                            br.subShape !== enumSubShape.circle ||
+                            tl.subShape !== enumSubShape.circle ||
+                            bl.subShape !== enumSubShape.circle
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+        },
+        {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.granite],
+            fluid: MAGMA_SINGLETONS[enumMagmaTypes.basalt_magma],
+            fluidCost: 20,
+            minPressure: 60,
+            shape:
+                /**
+                 * @param {ShapeDefinition} shapeDefinition
+                 */
+                shapeDefinition => {
+                    const newLayers = shapeDefinition.getClonedLayers();
+                    for (let i = 0; i < newLayers.length; i++) {
+                        const layer = newLayers[i];
+
+                        const tr = layer[TOP_RIGHT];
+                        const br = layer[BOTTOM_RIGHT];
+                        const bl = layer[BOTTOM_LEFT];
+                        const tl = layer[TOP_LEFT];
+
+                        if (
+                            tr.color !== enumColors.red ||
+                            br.color !== enumColors.red ||
+                            tl.color !== enumColors.red ||
+                            bl.color !== enumColors.red
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+        },
+    ];
     enumItemProcessorTypes["cooler"] = "cooler";
     /**
      * @this {ItemProcessorSystem}
@@ -120,52 +187,35 @@ export function setupCooler() {
         // @ts-ignore
         const pinsComp = entity.components.PipedPins;
 
-        /** @type {ShapeDefinition} */
-        const shapeDefinition = items.get(0).definition;
+        if (pinsComp) {
+            if (pinsComp.slots[0].linkedNetwork) {
+                const recipes = coolerRecipes.filter(x => x.fluid === pinsComp.slots[0].fluid);
+                const recipe = recipes.find(x => x.shape(items.get(0).definition));
 
-        const newLayers = shapeDefinition.getClonedLayers();
-        let allowed = true;
-        for (let i = 0; i < newLayers.length; i++) {
-            const layer = newLayers[i];
+                if (!recipe) {
+                    // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
+                    return outItems.push({
+                        item: items.get(0),
+                    });
+                }
 
-            const tr = layer[TOP_RIGHT];
-            const br = layer[BOTTOM_RIGHT];
-            const bl = layer[BOTTOM_LEFT];
-            const tl = layer[TOP_LEFT];
+                // Output
+                if (
+                    pinsComp.slots[0].linkedNetwork.currentVolume > recipe.fluidCost &&
+                    pinsComp.getLocalPressure(this.root, entity, pinsComp.slots[0]) > recipe.minPressure
+                ) {
+                    outItems.push({
+                        item: recipe.item,
+                    });
 
-            if (
-                tr.subShape !== enumSubShape.circle ||
-                br.subShape !== enumSubShape.circle ||
-                tl.subShape !== enumSubShape.circle ||
-                bl.subShape !== enumSubShape.circle
-            ) {
-                allowed = false;
-                break;
-            }
-        }
-
-        if (!allowed) {
-            // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
-            const newDefinition = new ShapeDefinition({ layers: newLayers });
-            outItems.push({
-                item: this.root.shapeDefinitionMgr.getShapeItemFromDefinition(newDefinition),
-            });
-        } else {
-            // Output basalt
-            if (pinsComp) {
-                if (pinsComp.slots[0].linkedNetwork) {
-                    if (
-                        pinsComp.slots[0].linkedNetwork.currentVolume > 10 &&
-                        pinsComp.getLocalPressure(this.root, entity, pinsComp.slots[0]) > 50
-                    ) {
-                        outItems.push({
-                            item: STONE_ITEM_SINGLETONS[enumStoneType.basalt],
-                        });
-
-                        pinsComp.slots[0].linkedNetwork.currentVolume -= 10;
-                    }
+                    pinsComp.slots[0].linkedNetwork.currentVolume -= recipe.fluidCost;
                 }
             }
+        } else {
+            // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
+            return outItems.push({
+                item: items.get(0),
+            });
         }
     };
 

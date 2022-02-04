@@ -33,6 +33,7 @@ export class TankSystem extends GameSystemWithFilter {
 
                 /**
                  * @TODO clean up
+                 * @TODO fix direct
                  * */
                 let fluid = tankComp.fluid;
                 let pressures = [];

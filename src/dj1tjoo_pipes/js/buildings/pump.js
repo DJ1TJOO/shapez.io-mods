@@ -189,6 +189,8 @@ export function setupPump() {
 
         /**
          * @TODO clean up
+         * @TODO sprite for pressure pump
+         * @TODO fix direct
          * */
         const newLayers = shapeDefinition.getClonedLayers();
         let allowed = true;
