@@ -24,7 +24,7 @@ export const arrayPipeRotationVariantToType = [
     enumPipeType.cross,
 ];
 
-const renderPipesInfo = BUILD_OPTIONS.IS_DEV && true;
+const renderPipesInfo = BUILD_OPTIONS.IS_DEV && false;
 
 const logger = createLogger("pipes");
 let networkUidCounter = 0;
@@ -72,6 +72,12 @@ export class PipeNetwork {
          * @type {Number}
          */
         this.currentVolume = 0;
+
+        /**
+         * The maximum volume of this network
+         * @type {Number}
+         */
+        this.maxVolume = 0;
 
         /**
          * Unique network identifier
@@ -192,6 +198,7 @@ export class PipeSystem extends GameSystem {
             );
         }
 
+        /** @TODO fix keeping volume in pipes */
         for (let i = 0; i < this.oldNetworks.length; i++) {
             const oldNetwork = this.oldNetworks[i];
             const provider = oldNetwork.provider.entity.components.StaticMapEntity.origin;
@@ -526,13 +533,13 @@ export class PipeSystem extends GameSystem {
                 network.currentPressure = pressure;
             }
 
-            let maxVolume = network.pipes
+            network.maxVolume = network.pipes
                 //@ts-ignore
                 .map(x => x.components.Pipe.volume)
                 .reduce((volume, currentVolume) => (volume += currentVolume), 0);
 
-            if (network.currentVolume > maxVolume) {
-                network.currentVolume = maxVolume;
+            if (network.currentVolume > network.maxVolume) {
+                network.currentVolume = network.maxVolume;
             }
         }
     }

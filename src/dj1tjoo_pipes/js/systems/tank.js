@@ -1,5 +1,7 @@
+import { globalConfig } from "shapez/core/config";
 import { enumInvertedDirections } from "shapez/core/vector";
 import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
+import { MapChunkView } from "shapez/game/map_chunk_view";
 import { enumPinSlotType, PipedPinsComponent } from "../components/pipe_pins";
 import { TankComponent } from "../components/tank";
 
@@ -31,7 +33,6 @@ export class TankSystem extends GameSystemWithFilter {
 
                 /**
                  * @TODO clean up
-                 * @TODO fix tank sprite
                  * */
                 let fluid = null;
                 let pressure = 0;
@@ -40,6 +41,8 @@ export class TankSystem extends GameSystemWithFilter {
                     const acceptor = acceptors[i];
                     if (!fluid) {
                         fluid = acceptor.fluid;
+                    } else if (!acceptor.fluid) {
+                        continue;
                     } else if (fluid !== acceptor.fluid) {
                         fluid = null;
                         break;
@@ -90,15 +93,17 @@ export class TankSystem extends GameSystemWithFilter {
                         for (let i = 0; i < volumes.length; i++) {
                             const volume = volumes[i];
 
-                            if (
-                                tankComp.volume + volume.volume < tankComp.maxVolume &&
-                                volume.network.currentVolume - volume.volume > 0
-                            ) {
+                            const volumeToMove =
+                                tankComp.volume + volume.volume < tankComp.maxVolume
+                                    ? volume.volume
+                                    : tankComp.maxVolume - tankComp.volume;
+
+                            if (volume.network.currentVolume - volumeToMove > 0) {
                                 // Remove from network
-                                volume.network.currentVolume -= volume.volume;
+                                volume.network.currentVolume -= volumeToMove;
 
                                 // Add to tank
-                                tankComp.volume += volume.volume;
+                                tankComp.volume += volumeToMove;
                             }
                         }
 
@@ -107,7 +112,11 @@ export class TankSystem extends GameSystemWithFilter {
                             const pipe = pinsComp.getConnectedPipe(this.root, entity, ejector);
                             const volume = pipe ? pipe.components.Pipe.volume : 0;
 
-                            if (tankComp.volume >= volume) {
+                            if (
+                                tankComp.volume >= volume &&
+                                ejector.linkedNetwork.currentVolume + volume <=
+                                    ejector.linkedNetwork.maxVolume
+                            ) {
                                 // Remove from tank
                                 tankComp.volume -= volume;
 
@@ -125,5 +134,72 @@ export class TankSystem extends GameSystemWithFilter {
         if (doTransfer) {
             this.transferVolume = Date.now();
         }
+    }
+
+    /**
+     * Draws a given chunk
+     * @param {import("shapez/core/draw_utils").DrawParameters} parameters
+     * @param {MapChunkView} chunk
+     */
+    drawChunk(parameters, chunk) {
+        // @ts-ignore
+        const contents = chunk.contents;
+        for (let y = 0; y < globalConfig.mapChunkSize; ++y) {
+            for (let x = 0; x < globalConfig.mapChunkSize; ++x) {
+                const entity = contents[x][y];
+                // @ts-ignore
+                if (entity && entity.components.Tank) {
+                    /** @type {TankComponent} */
+                    // @ts-ignore
+                    const tankComp = entity.components.Tank;
+                    /** @type {PipedPinsComponent} */
+                    // @ts-ignore
+                    const pinsComp = entity.components.PipedPins;
+                    const staticComp = entity.components.StaticMapEntity;
+
+                    const fluid = pinsComp.slots.filter(x => x.type === enumPinSlotType.logicalEjector)[0]
+                        .fluid;
+
+                    if (fluid) {
+                        parameters.context.strokeStyle = fluid.getBackgroundColorAsResource();
+
+                        let rotated = false;
+
+                        if (staticComp.rotation % 360 === 0) {
+                            rotated = false;
+                        } else if (staticComp.rotation % 270 === 0) {
+                            rotated = true;
+                        } else if (staticComp.rotation % 180 === 0) {
+                            rotated = false;
+                        } else if (staticComp.rotation % 90 === 0) {
+                            rotated = true;
+                        }
+
+                        parameters.context.beginPath();
+                        parameters.context.ellipse(
+                            (staticComp.origin.x + 0.5) * globalConfig.tileSize - 0.1,
+                            (staticComp.origin.y + 0.5) * globalConfig.tileSize,
+                            rotated ? 10.5 : 11.1,
+                            rotated ? 11.1 : 10.5,
+                            0,
+                            (1 / 2) * Math.PI,
+                            (tankComp.volume / tankComp.maxVolume) * 2 * Math.PI - (1 / 2) * Math.PI
+                        );
+                        parameters.context.lineWidth = 1.7;
+                        parameters.context.lineCap = "round";
+                        parameters.context.stroke();
+
+                        fluid.drawItemCenteredClipped(
+                            (staticComp.origin.x + 0.5) * globalConfig.tileSize,
+                            (staticComp.origin.y + 0.5) * globalConfig.tileSize,
+                            parameters,
+                            globalConfig.tileSize
+                        );
+                    }
+                }
+            }
+        }
+
+        parameters.context.globalAlpha = 1;
     }
 }

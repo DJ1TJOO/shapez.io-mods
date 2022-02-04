@@ -83,6 +83,7 @@ class ModImpl extends Mod {
             id: "tank",
             before: "end",
             systemClass: TankSystem,
+            drawHooks: ["staticAfter"],
         });
 
         this.modInterface.extendClass(GameLogic, () => ({

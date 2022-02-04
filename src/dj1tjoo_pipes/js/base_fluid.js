@@ -119,6 +119,9 @@ export class BaseFluid extends BasicSerializableObject {
         throw "Abstract";
     }
 
+    /**
+     * @returns {String}
+     */
     getBackgroundColorAsResource() {
         throw "Abstract";
     }
