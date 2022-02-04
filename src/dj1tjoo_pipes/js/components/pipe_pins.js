@@ -1,4 +1,4 @@
-import { Vector, enumDirection, enumDirectionToVector } from "shapez/core/vector";
+import { Vector, enumDirection, enumDirectionToVector, enumInvertedDirections } from "shapez/core/vector";
 import { Component } from "shapez/game/component";
 import { Entity } from "shapez/game/entity";
 import { GameRoot } from "shapez/game/root";
@@ -79,12 +79,10 @@ export class PipedPinsComponent extends Component {
     /**
      * @param {GameRoot} root
      * @param {Entity} entity
-     * @param {number} slotIndex
+     * @param {PipePinSlot} slot
      * @returns {number}
      */
-    getLocalPressure(root, entity, slotIndex) {
-        const slot = this.slots[slotIndex];
-
+    getLocalPressure(root, entity, slot) {
         // If ejector the local pressure is the one generated
         if (slot.type === enumPinSlotType.logicalEjector) {
             return slot.pressure;
@@ -92,8 +90,30 @@ export class PipedPinsComponent extends Component {
 
         const pipe = this.getConnectedPipe(root, entity, slot);
 
-        // @ts-ignore
-        return pipe.components.Pipe.localPressure;
+        if (pipe) {
+            if (pipe.components.Pipe) {
+                // @ts-ignore
+                return pipe.components.Pipe.localPressure;
+            } else if (pipe.components.PipedPins) {
+                // Get correct slot
+                const pipePinsComp = pipe.components.PipedPins;
+                const pipeStaticComp = pipe.components.StaticMapEntity;
+
+                for (let i = 0; i < pipePinsComp.slots.length; i++) {
+                    const currentSlot = pipePinsComp.slots[i];
+                    if (
+                        pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
+                        enumInvertedDirections[
+                            entity.components.StaticMapEntity.localDirectionToWorld(slot.direction)
+                        ]
+                    ) {
+                        return currentSlot.pressure;
+                    }
+                }
+            }
+        }
+
+        return 0;
     }
 
     getConnectedPipe(root, entity, slot) {

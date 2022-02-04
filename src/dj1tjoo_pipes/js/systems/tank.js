@@ -11,8 +11,8 @@ export class TankSystem extends GameSystemWithFilter {
     }
 
     update() {
-        // Transfer every 500 miliseconds
-        const doTransfer = Date.now() - this.transferVolume > 500;
+        // Transfer every second
+        const doTransfer = Date.now() - this.transferVolume > 1000;
 
         // Set signals
         for (let i = 0; i < this.allEntities.length; ++i) {
@@ -45,7 +45,7 @@ export class TankSystem extends GameSystemWithFilter {
                         break;
                     }
 
-                    pressure += acceptor.pressure;
+                    pressure += pinsComp.getLocalPressure(this.root, entity, acceptor);
 
                     if (doTransfer) {
                         if (acceptor.linkedNetwork) {
@@ -57,12 +57,11 @@ export class TankSystem extends GameSystemWithFilter {
                                 // Get correct slot
                                 const pipePinsComp = pipe.components.PipedPins;
                                 const pipeStaticComp = pipe.components.StaticMapEntity;
-                                staticComp.localDirectionToWorld(acceptor.direction);
 
                                 for (let i = 0; i < pipePinsComp.slots.length; i++) {
                                     const currentSlot = pipePinsComp.slots[i];
                                     if (
-                                        pipeStaticComp.localDirectionToWorld(acceptor.direction) ===
+                                        pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
                                         enumInvertedDirections[
                                             staticComp.localDirectionToWorld(acceptor.direction)
                                         ]
@@ -91,7 +90,10 @@ export class TankSystem extends GameSystemWithFilter {
                         for (let i = 0; i < volumes.length; i++) {
                             const volume = volumes[i];
 
-                            if (tankComp.volume + volume.volume <= tankComp.maxVolume) {
+                            if (
+                                tankComp.volume + volume.volume < tankComp.maxVolume &&
+                                volume.network.currentVolume - volume.volume > 0
+                            ) {
                                 // Remove from network
                                 volume.network.currentVolume -= volume.volume;
 
@@ -101,6 +103,7 @@ export class TankSystem extends GameSystemWithFilter {
                         }
 
                         if (ejector.linkedNetwork) {
+                            // Can only eject into pipes
                             const pipe = pinsComp.getConnectedPipe(this.root, entity, ejector);
                             const volume = pipe ? pipe.components.Pipe.volume : 0;
 

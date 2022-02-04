@@ -156,7 +156,7 @@ export function setupCooler() {
                 if (pinsComp.slots[0].linkedNetwork) {
                     if (
                         pinsComp.slots[0].linkedNetwork.currentVolume > 10 &&
-                        pinsComp.getLocalPressure(this.root, entity, 0) > 50
+                        pinsComp.getLocalPressure(this.root, entity, pinsComp.slots[0]) > 50
                     ) {
                         outItems.push({
                             item: STONE_ITEM_SINGLETONS[enumStoneType.basalt],
