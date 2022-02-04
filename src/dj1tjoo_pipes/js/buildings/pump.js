@@ -187,6 +187,9 @@ export function setupPump() {
         const shapeDefinition = items.get(0).definition;
         const staticComp = entity.components.StaticMapEntity;
 
+        /**
+         * @TODO clean up
+         * */
         const newLayers = shapeDefinition.getClonedLayers();
         let allowed = true;
         for (let i = 0; i < newLayers.length; i++) {
@@ -229,18 +232,15 @@ export function setupPump() {
                         pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
                         enumInvertedDirections[staticComp.localDirectionToWorld(acceptor.direction)]
                     ) {
-                        volume = currentSlot.volume;
+                        volume = currentSlot.linkedNetwork.currentVolume;
                         break;
                     }
                 }
-
-                volume = 0;
             }
         }
 
         // Delete inputted shape. @TODO: maybe nicer as item acceptor filter
         if (allowed) {
-            // @TODO: pins
             ejector.pressure = Math.floor(pinsComp.getLocalPressure(this.root, entity, acceptor) * 1.3);
             ejector.fluid = acceptor.fluid;
 

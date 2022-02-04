@@ -39,16 +39,19 @@ export class TankSystem extends GameSystemWithFilter {
                 let volumes = [];
                 for (let i = 0; i < acceptors.length; i++) {
                     const acceptor = acceptors[i];
-                    if (!fluid) {
-                        fluid = acceptor.fluid;
-                    } else if (!acceptor.fluid) {
+                    if (!acceptor.fluid) {
                         continue;
+                    } else if (!fluid) {
+                        fluid = acceptor.fluid;
                     } else if (fluid !== acceptor.fluid) {
                         fluid = null;
                         break;
                     }
 
-                    pressures.push(pinsComp.getLocalPressure(this.root, entity, acceptor));
+                    const pressure = pinsComp.getLocalPressure(this.root, entity, acceptor);
+                    if (pressure > 0) {
+                        pressures.push(pressure);
+                    }
 
                     if (doTransfer) {
                         if (acceptor.linkedNetwork) {
@@ -87,9 +90,10 @@ export class TankSystem extends GameSystemWithFilter {
 
                 ejector.fluid = fluid;
                 if (fluid) {
-                    let pressure = Math.round(
-                        pressures.reduce((prev, curr) => prev + curr, 0) / pressures.length
-                    );
+                    let pressure =
+                        pressures.length > 0
+                            ? Math.round(pressures.reduce((prev, curr) => prev + curr, 0) / pressures.length)
+                            : 0;
                     if (pressure <= 0 && tankComp.pressure > 0) {
                         ejector.pressure = tankComp.pressure;
                     } else {
@@ -140,7 +144,7 @@ export class TankSystem extends GameSystemWithFilter {
                                             staticComp.localDirectionToWorld(ejector.direction)
                                         ]
                                     ) {
-                                        volumeToMove = currentSlot.volume;
+                                        volumeToMove = currentSlot.linkedNetwork.currentVolume;
                                         break;
                                     }
                                 }

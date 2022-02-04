@@ -520,6 +520,10 @@ export class PipeSystem extends GameSystem {
                 .map(x => x.components.Pipe.maxVolume)
                 .reduce((volume, currentVolume) => (volume += currentVolume), 0);
 
+            if (network.pipes.length <= 0) {
+                network.maxVolume = 50;
+            }
+
             if (network.currentVolume > network.maxVolume) {
                 network.currentVolume = network.maxVolume;
             }
