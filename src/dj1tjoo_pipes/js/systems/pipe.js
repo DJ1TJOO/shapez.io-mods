@@ -192,6 +192,15 @@ export class PipeSystem extends GameSystem {
                 entity.components.StaticMapEntity.getTileSpaceBounds().expandedInAllDirections(1)
             );
         }
+
+        for (let i = 0; i < pipeEntities.length; i++) {
+            /** @type { PipeComponent } */
+            // @ts-ignore
+            const pipeComp = pipeEntities[i].components.Pipe;
+            if (pipeComp.linkedNetwork) continue;
+
+            pipeComp.volume = 0;
+        }
     }
 
     /**
@@ -230,6 +239,7 @@ export class PipeSystem extends GameSystem {
             const nextEntity = nextData.entity;
             const distance = [...nextData.distance];
 
+            /** @type { PipeComponent } */
             // @ts-ignore
             const pipeComp = nextEntity.components.Pipe;
             const staticComp = nextEntity.components.StaticMapEntity;
