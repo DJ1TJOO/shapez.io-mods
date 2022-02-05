@@ -185,6 +185,38 @@ export function setupWaterSprayer() {
                 },
         },
         {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.clean_marble],
+            fluidCost: 10,
+            minPressure: 50,
+            stone: enumStoneType.marble,
+            shape:
+                /**
+                 * @param {ShapeDefinition} shapeDefinition
+                 */
+                shapeDefinition => {
+                    const newLayers = shapeDefinition.getClonedLayers();
+                    for (let i = 0; i < newLayers.length; i++) {
+                        const layer = newLayers[i];
+
+                        const tr = layer[TOP_RIGHT];
+                        const br = layer[BOTTOM_RIGHT];
+                        const bl = layer[BOTTOM_LEFT];
+                        const tl = layer[TOP_LEFT];
+
+                        if (
+                            tr.color !== enumColors.cyan ||
+                            br.color !== enumColors.cyan ||
+                            tl.color !== enumColors.cyan ||
+                            bl.color !== enumColors.cyan
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+        },
+        {
             item: SAND_ITEM_SINGLETONS[enumSandType.sand],
             fluidCost: 10,
             minPressure: 50,

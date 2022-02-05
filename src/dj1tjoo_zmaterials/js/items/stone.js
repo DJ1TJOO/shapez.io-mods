@@ -6,12 +6,14 @@ import { types } from "shapez/savegame/serialization";
  * Define which stone types there are
  * @enum { String }
  */
+/** @TODO better sprites */
 export const enumStoneType = {
     stone: "stone",
     basalt: "basalt",
     granite: "granite",
     onyx: "onyx",
     marble: "marble",
+    clean_marble: "clean_marble",
 };
 
 // Define which color they should have on the map
@@ -21,6 +23,7 @@ export const stoneColors = {
     [enumStoneType.granite]: "#B87366",
     [enumStoneType.onyx]: "#242834",
     [enumStoneType.marble]: "#F3FFFF",
+    [enumStoneType.clean_marble]: "#FAFBFB",
 };
 
 // The stone item class (also see ColorItem and ShapeItem)
