@@ -88,11 +88,6 @@ export class MetaWaterSprayerBuilding extends ModMetaBuilding {
                         type: enumPinSlotType.logicalAcceptor,
                         pressure: 10,
                     },
-                    {
-                        pos: new Vector(0, 0),
-                        direction: enumDirection.top,
-                        type: enumPinSlotType.logicalEjector,
-                    },
                 ],
             })
         );
@@ -172,10 +167,10 @@ export function setupWaterSprayer() {
         if (pinsComp) {
             if (pinsComp.slots[0].linkedNetwork) {
                 const recipe = waterSprayerRecipes.find(
-                    x => x.shape(items.get(0).definition) && items.get(1).stoneType == x.stone
+                    x => x.shape(items.get(0).definition) && items.get(1).stoneType === x.stone
                 );
 
-                if (!recipe || !pinsComp.slots[0].linkedNetwork.fluid !== WATER_SINGLETON) {
+                if (!recipe || pinsComp.slots[0].linkedNetwork.currentFluid !== WATER_SINGLETON) {
                     // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
                     return outItems.push({
                         item: items.get(0),
