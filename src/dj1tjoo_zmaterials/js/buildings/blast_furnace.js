@@ -87,49 +87,59 @@ export class MetaBlastFurnaceBuilding extends ModMetaBuilding {
  * @this { Mod }
  */
 export function setupBlastFurnace() {
+    const blastFurnaceRecipes = [
+        {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.stone],
+            shape:
+                /**
+                 * @param {ShapeDefinition} shapeDefinition
+                 */
+                shapeDefinition => {
+                    const newLayers = shapeDefinition.getClonedLayers();
+                    for (let i = 0; i < newLayers.length; i++) {
+                        const layer = newLayers[i];
+
+                        const tr = layer[TOP_RIGHT];
+                        const br = layer[BOTTOM_RIGHT];
+                        const bl = layer[BOTTOM_LEFT];
+                        const tl = layer[TOP_LEFT];
+
+                        if (
+                            tr.subShape !== enumSubShape.rect ||
+                            br.subShape !== enumSubShape.rect ||
+                            tl.subShape !== enumSubShape.rect ||
+                            bl.subShape !== enumSubShape.rect
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+        },
+    ];
     enumItemProcessorTypes["blast_furnace"] = "blast_furnace";
     /**
      * @this {ItemProcessorSystem}
      */
-    MOD_ITEM_PROCESSOR_HANDLERS[enumItemProcessorTypes["blast_furnace"]] = function (payload) {
-        /** @type {ShapeDefinition} */
-        const shapeDefinition = payload.items.get(0).definition;
+    MOD_ITEM_PROCESSOR_HANDLERS[enumItemProcessorTypes["blast_furnace"]] = function ({
+        entity,
+        items,
+        outItems,
+    }) {
+        const recipe = blastFurnaceRecipes.find(x => x.shape(items.get(0).definition));
 
-        const newLayers = shapeDefinition.getClonedLayers();
-        let allowed = true;
-        for (let i = 0; i < newLayers.length; i++) {
-            const layer = newLayers[i];
-
-            const tr = layer[TOP_RIGHT];
-            const br = layer[BOTTOM_RIGHT];
-            const bl = layer[BOTTOM_LEFT];
-            const tl = layer[TOP_LEFT];
-
-            if (
-                tr.subShape !== enumSubShape.rect ||
-                br.subShape !== enumSubShape.rect ||
-                tl.subShape !== enumSubShape.rect ||
-                bl.subShape !== enumSubShape.rect
-            ) {
-                allowed = false;
-                break;
-            }
-        }
-
-        if (!allowed) {
+        if (!recipe) {
             // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
-            const newDefinition = new ShapeDefinition({ layers: newLayers });
-            payload.outItems.push({
-                item: this.root.shapeDefinitionMgr.getShapeItemFromDefinition(newDefinition),
+            return outItems.push({
+                item: items.get(0),
             });
-        } else {
-            // Output stone
-            for (let i = 0; i < newLayers.length; i++) {
-                payload.outItems.push({
-                    item: STONE_ITEM_SINGLETONS[enumStoneType.stone],
-                });
-            }
         }
+
+        // Output
+        outItems.push({
+            item: recipe.item,
+        });
     };
 
     /**

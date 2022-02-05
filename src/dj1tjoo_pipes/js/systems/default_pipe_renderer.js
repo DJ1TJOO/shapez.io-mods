@@ -1,38 +1,11 @@
 import { globalConfig } from "shapez/core/config";
 import { Loader } from "shapez/core/loader";
+import { enumDirection } from "shapez/core/vector";
 import { GameSystem } from "shapez/game/game_system";
 import { MapChunkView } from "shapez/game/map_chunk_view";
 import { enumPipeVariant, enumPipeVariantToVariant } from "../buildings/pipe";
 import { enumPipeType, PipeComponent } from "../components/pipe";
 import { PipeNetwork } from "./pipe";
-
-/**
- * @param {String} color
- * @param {number} percent
- * @returns
- */
-function shadeColor(color, percent) {
-    var R = parseInt(color.substring(1, 3), 16);
-    var G = parseInt(color.substring(3, 5), 16);
-    var B = parseInt(color.substring(5, 7), 16);
-
-    // @ts-ignore
-    R = parseInt((R * (100 + percent)) / 100);
-    // @ts-ignore
-    G = parseInt((G * (100 + percent)) / 100);
-    // @ts-ignore
-    B = parseInt((B * (100 + percent)) / 100);
-
-    R = R < 255 ? R : 255;
-    G = G < 255 ? G : 255;
-    B = B < 255 ? B : 255;
-
-    var RR = R.toString(16).length == 1 ? "0" + R.toString(16) : R.toString(16);
-    var GG = G.toString(16).length == 1 ? "0" + G.toString(16) : G.toString(16);
-    var BB = B.toString(16).length == 1 ? "0" + B.toString(16) : B.toString(16);
-
-    return "#" + RR + GG + BB;
-}
 
 export class DefaultPipeRendererSystem extends GameSystem {
     constructor(root) {
@@ -78,6 +51,63 @@ export class DefaultPipeRendererSystem extends GameSystem {
     }
 
     /**
+     * @param {enumDirection} direction
+     * @returns
+     */
+    getGradient(parameters, entity, direction, half = false, offset = 0) {
+        // @ts-ignore
+        const pipeComp = entity.components.Pipe;
+        const staticComp = entity.components.StaticMapEntity;
+        const network = pipeComp.linkedNetwork;
+
+        const size = half ? globalConfig.tileSize / 2 : globalConfig.tileSize;
+        let startX = 0,
+            startY = 0,
+            endX = 0,
+            endY = 0,
+            ownFirst = true;
+        if (direction === enumDirection.top) {
+            endY = size;
+            ownFirst = false;
+        } else if (direction === enumDirection.bottom) {
+            if (half) startY = size;
+            endY = half ? size * 2 : size;
+        } else if (direction === enumDirection.left) {
+            endX = size;
+        } else if (direction === enumDirection.right) {
+            if (half) startX = size;
+            endX = half ? size * 2 : size;
+            ownFirst = false;
+        }
+
+        if (startX > 0) startX += offset;
+        if (startY > 0) startY += offset;
+
+        const gradient = parameters.context.createLinearGradient(
+            staticComp.origin.x * globalConfig.tileSize + startX,
+            staticComp.origin.y * globalConfig.tileSize + startY,
+            staticComp.origin.x * globalConfig.tileSize + endX,
+            staticComp.origin.y * globalConfig.tileSize + endY
+        );
+        const nextPipe = network.pipes[network.pipes.findIndex(x => x.uid === entity.uid) + 1];
+        const ownColor = pipeComp.localFluidColor(network.currentFluid);
+        // @ts-ignore
+        const otherColor = nextPipe
+            ? nextPipe.components.Pipe.localFluidColor(network.currentFluid)
+            : ownColor;
+
+        if (ownFirst) {
+            gradient.addColorStop(0, ownColor);
+            gradient.addColorStop(1, otherColor);
+        } else {
+            gradient.addColorStop(0, otherColor);
+            gradient.addColorStop(1, ownColor);
+        }
+
+        return gradient;
+    }
+
+    /**
      * Draws a given chunk
      * @param {import("shapez/core/draw_utils").DrawParameters} parameters
      * @param {MapChunkView} chunk
@@ -106,13 +136,14 @@ export class DefaultPipeRendererSystem extends GameSystem {
                     /** @type {PipeNetwork} */
                     const network = pipeComp.linkedNetwork;
 
-                    if (network && network.currentFluid && pipeComp.localPressure > 0) {
-                        // @ts-ignore
-                        parameters.context.fillStyle = shadeColor(
-                            network.currentFluid.getBackgroundColorAsResource(),
-                            pipeComp.localPressure / pipeComp.maxPressure
-                        );
-
+                    if (
+                        network &&
+                        network.currentFluid &&
+                        pipeComp.localPressure > 0 &&
+                        pipeComp.volume > 0
+                    ) {
+                        /** @TODO gradients */
+                        parameters.context.fillStyle = pipeComp.localFluidColor(network.currentFluid);
                         const size =
                             enumPipeVariant.pipe === enumPipeVariantToVariant[staticComp.getVariant()]
                                 ? 3
@@ -121,6 +152,13 @@ export class DefaultPipeRendererSystem extends GameSystem {
                         switch (pipeType) {
                             case enumPipeType.forward:
                                 if (staticComp.rotation % 180 === 0) {
+                                    // parameters.context.fillStyle = this.getGradient(
+                                    //     parameters,
+                                    //     entity,
+                                    //     staticComp.rotation % 360 === 0
+                                    //         ? enumDirection.top
+                                    //         : enumDirection.bottom
+                                    // );
                                     parameters.context.fillRect(
                                         (staticComp.origin.x + 0.5) * globalConfig.tileSize - size / 2,
                                         staticComp.origin.y * globalConfig.tileSize - 0.1,
@@ -128,6 +166,13 @@ export class DefaultPipeRendererSystem extends GameSystem {
                                         globalConfig.tileSize + 0.2
                                     );
                                 } else {
+                                    // parameters.context.fillStyle = this.getGradient(
+                                    //     parameters,
+                                    //     entity,
+                                    //     staticComp.rotation % 270 === 0
+                                    //         ? enumDirection.left
+                                    //         : enumDirection.right
+                                    // );
                                     parameters.context.fillRect(
                                         staticComp.origin.x * globalConfig.tileSize - 0.1,
                                         (staticComp.origin.y + 0.5) * globalConfig.tileSize - size / 2,
@@ -137,6 +182,7 @@ export class DefaultPipeRendererSystem extends GameSystem {
                                 }
                                 break;
                             case enumPipeType.cross:
+                                // parameters.context.fillStyle = pipeComp.localFluidColor(network.currentFluid);
                                 parameters.context.fillRect(
                                     (staticComp.origin.x + 0.5) * globalConfig.tileSize - size / 2,
                                     staticComp.origin.y * globalConfig.tileSize - 0.1,
@@ -151,6 +197,7 @@ export class DefaultPipeRendererSystem extends GameSystem {
                                 );
                                 break;
                             case enumPipeType.split:
+                                // parameters.context.fillStyle = pipeComp.localFluidColor(network.currentFluid);
                                 if (staticComp.rotation % 360 === 0) {
                                     parameters.context.fillRect(
                                         (staticComp.origin.x + 0.5) * globalConfig.tileSize - size / 2,
@@ -208,12 +255,22 @@ export class DefaultPipeRendererSystem extends GameSystem {
 
                             case enumPipeType.turn:
                                 if (staticComp.rotation % 360 === 0) {
+                                    // parameters.context.fillStyle = this.getGradient(
+                                    //     parameters,
+                                    //     entity,
+                                    //     enumDirection.bottom,
+                                    //     true,
+                                    //     size / 2
+                                    // );
                                     parameters.context.fillRect(
                                         (staticComp.origin.x + 0.5) * globalConfig.tileSize - size / 2,
                                         (staticComp.origin.y + 0.5) * globalConfig.tileSize - 0.1,
                                         size,
                                         globalConfig.tileSize / 2 + 0.2
                                     );
+                                    // parameters.context.fillStyle = pipeComp.localFluidColor(
+                                    //     network.currentFluid
+                                    // );
                                     parameters.context.fillRect(
                                         (staticComp.origin.x + 0.5) * globalConfig.tileSize - 0.1,
                                         (staticComp.origin.y + 0.5) * globalConfig.tileSize - size / 2,
@@ -221,12 +278,22 @@ export class DefaultPipeRendererSystem extends GameSystem {
                                         size
                                     );
                                 } else if (staticComp.rotation % 270 === 0) {
+                                    // parameters.context.fillStyle = this.getGradient(
+                                    //     parameters,
+                                    //     entity,
+                                    //     enumDirection.top,
+                                    //     true,
+                                    //     size / 2
+                                    // );
                                     parameters.context.fillRect(
                                         (staticComp.origin.x + 0.5) * globalConfig.tileSize - size / 2,
                                         staticComp.origin.y * globalConfig.tileSize - 0.1,
                                         size,
                                         globalConfig.tileSize / 2 + 0.2
                                     );
+                                    // parameters.context.fillStyle = pipeComp.localFluidColor(
+                                    //     network.currentFluid
+                                    // );
                                     parameters.context.fillRect(
                                         (staticComp.origin.x + 0.5) * globalConfig.tileSize - 0.1,
                                         (staticComp.origin.y + 0.5) * globalConfig.tileSize - size / 2,
@@ -261,6 +328,7 @@ export class DefaultPipeRendererSystem extends GameSystem {
                                     );
                                 }
 
+                                // parameters.context.fillStyle = pipeComp.localFluidColor(network.currentFluid);
                                 parameters.context.beginPath();
                                 parameters.context.arc(
                                     (staticComp.origin.x + 0.5) * globalConfig.tileSize,

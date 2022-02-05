@@ -246,6 +246,10 @@ class ModImpl extends Mod {
         return typeFluidSingleton;
     }
 
+    get WATER_SINGLETON() {
+        return WATER_SINGLETON;
+    }
+
     /**
      * @param {typeof BaseFluid} fluid
      */

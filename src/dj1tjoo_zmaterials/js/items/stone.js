@@ -1,5 +1,6 @@
 import { globalConfig } from "shapez/core/config";
 import { BaseItem } from "shapez/game/base_item";
+import { types } from "shapez/savegame/serialization";
 
 /**
  * Define which stone types there are
@@ -9,6 +10,7 @@ export const enumStoneType = {
     stone: "stone",
     basalt: "basalt",
     granite: "granite",
+    onyx: "onyx",
 };
 
 // Define which color they should have on the map
@@ -16,6 +18,7 @@ export const stoneColors = {
     [enumStoneType.stone]: "#918E85",
     [enumStoneType.basalt]: "#201C2C",
     [enumStoneType.granite]: "#B87366",
+    [enumStoneType.onyx]: "#242834",
 };
 
 // The stone item class (also see ColorItem and ShapeItem)
@@ -25,7 +28,7 @@ export class StoneItem extends BaseItem {
     }
 
     static getSchema() {
-        return shapez.types.enum(enumStoneType);
+        return types.enum(enumStoneType);
     }
 
     // @ts-ignore

@@ -3,6 +3,7 @@ import { Mod } from "shapez/mods/mod";
 import { MetaBlastFurnaceBuilding, setupBlastFurnace } from "./buildings/blast_furnace";
 import { MetaCoolerBuilding, setupCooler } from "./buildings/cooler";
 import { MetaHeaterBuilding, setupHeater } from "./buildings/heater";
+import { MetaWaterSprayerBuilding, setupWaterSprayer } from "./buildings/water_sprayer";
 import { registerMagma } from "./fluids/magma";
 import { enumSandType, SandItem, SAND_ITEM_SINGLETONS } from "./items/sand";
 import { enumStoneType, StoneItem, STONE_ITEM_SINGLETONS } from "./items/stone";
@@ -59,6 +60,16 @@ class ModImpl extends Mod {
             toolbar: "regular",
             location: "primary",
             metaClass: MetaCoolerBuilding,
+        });
+
+        setupWaterSprayer.apply(this);
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaWaterSprayerBuilding,
+        });
+        this.modInterface.addNewBuildingToToolbar({
+            toolbar: "regular",
+            location: "primary",
+            metaClass: MetaWaterSprayerBuilding,
         });
 
         // TODO: try make pipes work like belts
@@ -132,7 +143,7 @@ class ModImpl extends Mod {
          * marble: from stone with heat and pressure
          * granite: from extreme heat (magma) with different minerals
          * basalt: fast cooling from magma with magnesium and iron
-         * oxyn: washed basalt in zuurbad
+         * onyx: washed basalt in zuurbad
          * travertine: high pressure water on marble and dry out
          * sand: stone with high pressure water
          *
@@ -147,7 +158,7 @@ class ModImpl extends Mod {
          * Granite:
          *   Basalt Magma: Fast cooling in cooler with different red shapez creates granite
          *
-         * Oxyn:
+         * Onyx:
          *   Basalt: High pressure water in indsutrial water sprayer with full windmill
          *
          * Marble:

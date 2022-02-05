@@ -570,11 +570,11 @@ export class PipeSystem extends GameSystem {
                         parameters.context.globalAlpha = 1;
                         parameters.context.fillStyle = "red";
                         parameters.context.font = "5px Tahoma";
-                        // parameters.context.fillText(
-                        //     "" + staticComp.originalRotation,
-                        //     staticComp.origin.x * globalConfig.tileSize,
-                        //     staticComp.origin.y * globalConfig.tileSize + 5
-                        // );
+                        parameters.context.fillText(
+                            "" + staticComp.rotation,
+                            staticComp.origin.x * globalConfig.tileSize,
+                            staticComp.origin.y * globalConfig.tileSize + 5
+                        );
 
                         parameters.context.fillStyle = "rgba(255, 0, 0, 0.2)";
                         if (staticComp.originalRotation % 180 === 0) {
@@ -631,7 +631,7 @@ export class PipeSystem extends GameSystem {
                             );
 
                             parameters.context.fillText(
-                                "v:" + round1Digit(pipeComp.linkedNetwork.currentVolume),
+                                "v:" + round1Digit(pipeComp.volume),
                                 (staticComp.origin.x + 0.5) * globalConfig.tileSize,
                                 (staticComp.origin.y + 0.8) * globalConfig.tileSize
                             );
