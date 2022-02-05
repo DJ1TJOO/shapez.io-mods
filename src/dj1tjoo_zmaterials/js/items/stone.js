@@ -11,6 +11,7 @@ export const enumStoneType = {
     basalt: "basalt",
     granite: "granite",
     onyx: "onyx",
+    marble: "marble",
 };
 
 // Define which color they should have on the map
@@ -19,6 +20,7 @@ export const stoneColors = {
     [enumStoneType.basalt]: "#201C2C",
     [enumStoneType.granite]: "#B87366",
     [enumStoneType.onyx]: "#242834",
+    [enumStoneType.marble]: "#F3FFFF",
 };
 
 // The stone item class (also see ColorItem and ShapeItem)

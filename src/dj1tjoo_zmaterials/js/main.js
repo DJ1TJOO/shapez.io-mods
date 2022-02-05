@@ -163,9 +163,9 @@ class ModImpl extends Mod {
          *
          * Marble:
          *   Stone: High pressure water in indsutrial water sprayer with white shapez
+         *   Marble: High pressure water in indsutrial water sprayer creates cleaned marble
          *
          * Travertine:
-         *   Marble: High pressure water in indsutrial water sprayer creates cleaned marble
          *   Cleaned Marble: in cooler with rects
          *
          * Sand:

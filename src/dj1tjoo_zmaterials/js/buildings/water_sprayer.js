@@ -22,6 +22,7 @@ import { MODS } from "shapez/mods/modloader";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { T } from "shapez/translations";
 import { enumMagmaTypes } from "../fluids/magma";
+import { enumSandType, SAND_ITEM_SINGLETONS } from "../items/sand";
 import { STONE_ITEM_SINGLETONS, enumStoneType, StoneItem } from "../items/stone";
 
 export class MetaWaterSprayerBuilding extends ModMetaBuilding {
@@ -143,6 +144,70 @@ export function setupWaterSprayer() {
                             br.subShape !== enumSubShape.windmill ||
                             tl.subShape !== enumSubShape.windmill ||
                             bl.subShape !== enumSubShape.windmill
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+        },
+        {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.marble],
+            fluidCost: 10,
+            minPressure: 50,
+            stone: enumStoneType.stone,
+            shape:
+                /**
+                 * @param {ShapeDefinition} shapeDefinition
+                 */
+                shapeDefinition => {
+                    const newLayers = shapeDefinition.getClonedLayers();
+                    for (let i = 0; i < newLayers.length; i++) {
+                        const layer = newLayers[i];
+
+                        const tr = layer[TOP_RIGHT];
+                        const br = layer[BOTTOM_RIGHT];
+                        const bl = layer[BOTTOM_LEFT];
+                        const tl = layer[TOP_LEFT];
+
+                        if (
+                            tr.color !== enumColors.white ||
+                            br.color !== enumColors.white ||
+                            tl.color !== enumColors.white ||
+                            bl.color !== enumColors.white
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+        },
+        {
+            item: SAND_ITEM_SINGLETONS[enumSandType.sand],
+            fluidCost: 10,
+            minPressure: 50,
+            stone: enumStoneType.stone,
+            shape:
+                /**
+                 * @param {ShapeDefinition} shapeDefinition
+                 */
+                shapeDefinition => {
+                    const newLayers = shapeDefinition.getClonedLayers();
+                    for (let i = 0; i < newLayers.length; i++) {
+                        const layer = newLayers[i];
+
+                        const tr = layer[TOP_RIGHT];
+                        const br = layer[BOTTOM_RIGHT];
+                        const bl = layer[BOTTOM_LEFT];
+                        const tl = layer[TOP_LEFT];
+
+                        if (
+                            tr.color !== enumColors.yellow ||
+                            br.color !== enumColors.yellow ||
+                            tl.color !== enumColors.yellow ||
+                            bl.color !== enumColors.yellow
                         ) {
                             return false;
                         }
