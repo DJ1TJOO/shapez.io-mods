@@ -37,7 +37,7 @@ declare const desiredMsDelay: number;
 declare let lastTick: number;
 declare module "shapez/core/config.local" {
     namespace _default {
-        export const externalModUrl: string[];
+        export const externalModUrl: string;
     }
     export default _default;
 }
@@ -2887,6 +2887,10 @@ declare module "shapez/game/components/item_processor" {
          */
         bonusTime: number;
         /**
+         * @type {Array<EjectorItemToEject>}
+         */
+        queuedEjects: Array<EjectorItemToEject>;
+        /**
          * Tries to take the item
          * @param {BaseItem} item
          * @param {number} sourceSlot
@@ -5564,353 +5568,686 @@ declare module "shapez/core/global_registries" {
      */
     export type MetaBuilding = import("shapez/game/meta_building").MetaBuilding;
 }
-declare module "shapez/savegame/serializer_internal" {
-    export class SerializerInternal {
-        /**
-         * Serializes an array of entities
-         * @param {Array<Entity>} array
-         */
-        serializeEntityArray(array: Array<Entity>): any[];
-        /**
-         *
-         * @param {GameRoot} root
-         * @param {Array<Entity>} array
-         * @returns {string|void}
-         */
-        deserializeEntityArray(root: GameRoot, array: Array<Entity>): string | void;
-        /**
-         *
-         * @param {GameRoot} root
-         * @param {Entity} payload
-         */
-        deserializeEntity(root: GameRoot, payload: Entity): void;
-        /**
-         * Deserializes components of an entity
-         * @param {GameRoot} root
-         * @param {Entity} entity
-         * @param {Object.<string, any>} data
-         * @returns {string|void}
-         */
-        deserializeComponents(
-            root: GameRoot,
-            entity: Entity,
-            data: {
-                [x: string]: any;
-            }
-        ): string | void;
-    }
-    import { Entity } from "shapez/game/entity";
-    import { GameRoot } from "shapez/game/root";
+declare module "shapez/core/error_handler" {
+    export let APPLICATION_ERROR_OCCURED: boolean;
 }
-declare module "shapez/game/hud/parts/pinned_shapes" {
+declare module "shapez/core/state_manager" {
     /**
-     * Manages the pinned shapes on the left side of the screen
+     * This is the main state machine which drives the game states.
      */
-    export class HUDPinnedShapes extends BaseHUDPart {
-        constructor(root: any);
+    export class StateManager {
         /**
-         * Store a list of pinned shapes
-         * @type {Array<string>}
+         * @param {Application} app
          */
-        pinnedShapes: Array<string>;
-        /**
-         * Store handles to the currently rendered elements, so we can update them more
-         * convenient. Also allows for cleaning up handles.
-         * @type {Array<{
-         *  key: string,
-         *  definition: ShapeDefinition,
-         *  amountLabel: HTMLElement,
-         *  lastRenderedValue: string,
-         *  element: HTMLElement,
-         *  detector?: ClickDetector,
-         *  infoDetector?: ClickDetector,
-         *  throughputOnly?: boolean
-         * }>}
-         */
-        handles: {
-            key: string;
-            definition: ShapeDefinition;
-            amountLabel: HTMLElement;
-            lastRenderedValue: string;
-            element: HTMLElement;
-            detector?: ClickDetector;
-            infoDetector?: ClickDetector;
-            throughputOnly?: boolean;
-        }[];
-        element: HTMLDivElement;
-        /**
-         * Serializes the pinned shapes
-         */
-        serialize(): {
-            shapes: string[];
+        constructor(app: Application);
+        app: Application;
+        /** @type {GameState} */
+        currentState: GameState;
+        /** @type {Object.<string, new() => GameState>} */
+        stateClasses: {
+            [x: string]: new () => GameState;
         };
         /**
-         * Deserializes the pinned shapes
-         * @param {{ shapes: Array<string>}} data
+         * Registers a new state class, should be a GameState derived class
+         * @param {object} stateClass
          */
-        deserialize(data: { shapes: Array<string> }): string;
+        register(stateClass: object): void;
         /**
-         * Updates all shapes after an upgrade has been purchased and removes the unused ones
-         */
-        updateShapesAfterUpgrade(): void;
-        /**
-         * Finds the current goal for the given key. If the key is the story goal, returns
-         * the story goal. If its the blueprint shape, no goal is returned. Otherwise
-         * it's searched for upgrades.
+         * Constructs a new state or returns the instance from the cache
          * @param {string} key
          */
-        findGoalValueForShape(key: string): any;
+        constructState(key: string): GameState;
         /**
-         * Returns whether a given shape is currently pinned
-         * @param {string} key
+         * Moves to a given state
+         * @param {string} key State Key
          */
-        isShapePinned(key: string): boolean;
+        moveToState(key: string, payload?: {}): boolean;
         /**
-         * Rerenders the whole component
+         * Returns the current state
+         * @returns {GameState}
          */
-        rerenderFull(): void;
-        /**
-         * Pins a new shape
-         * @param {object} param0
-         * @param {string} param0.key
-         * @param {boolean=} param0.canUnpin
-         * @param {string=} param0.className
-         * @param {boolean=} param0.throughputOnly
-         */
-        internalPinShape({
-            key,
-            canUnpin,
-            className,
-            throughputOnly,
-        }: {
-            key: string;
-            canUnpin?: boolean | undefined;
-            className?: string | undefined;
-            throughputOnly?: boolean | undefined;
-        }): void;
-        /**
-         * Unpins a shape
-         * @param {string} key
-         */
-        unpinShape(key: string): void;
-        /**
-         * Requests to pin a new shape
-         * @param {ShapeDefinition} definition
-         */
-        pinNewShape(definition: ShapeDefinition): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { ShapeDefinition } from "shapez/game/shape_definition";
-    import { ClickDetector } from "shapez/core/click_detector";
-}
-declare module "shapez/core/modal_dialog_forms" {
-    export class FormElement {
-        constructor(id: any, label: any);
-        id: any;
-        label: any;
-        valueChosen: Signal;
-        getHtml(): string;
-        getFormElement(parent: any): any;
-        bindEvents(parent: any, clickTrackers: any): void;
-        focus(): void;
-        isValid(): boolean;
-        /** @returns {any} */
-        getValue(): any;
-    }
-    export class FormElementInput extends FormElement {
-        constructor({
-            id,
-            label,
-            placeholder,
-            defaultValue,
-            inputType,
-            validator,
-        }: {
-            id: any;
-            label?: any;
-            placeholder: any;
-            defaultValue?: string;
-            inputType?: string;
-            validator?: any;
-        });
-        placeholder: any;
-        defaultValue: string;
-        inputType: string;
-        validator: any;
-        element: any;
-        updateErrorState(): void;
-        setValue(value: any): void;
-    }
-    export class FormElementCheckbox extends FormElement {
-        constructor({ id, label, defaultValue }: { id: any; label: any; defaultValue?: boolean });
-        defaultValue: boolean;
-        value: boolean;
-        element: any;
-        toggle(): void;
-    }
-    export class FormElementItemChooser extends FormElement {
-        /**
-         *
-         * @param {object} param0
-         * @param {string} param0.id
-         * @param {string=} param0.label
-         * @param {Array<BaseItem>} param0.items
-         */
-        constructor({ id, label, items }: { id: string; label?: string | undefined; items: Array<BaseItem> });
-        items: BaseItem[];
-        element: any;
-        /**
-         * @type {BaseItem}
-         */
-        chosenItem: BaseItem;
-    }
-    import { Signal } from "shapez/core/signal";
-    import { BaseItem } from "shapez/game/base_item";
-}
-declare module "shapez/core/modal_dialog_elements" {
-    /**
-     * Basic text based dialog
-     */
-    export class Dialog {
-        /**
-         *
-         * Constructs a new dialog with the given options
-         * @param {object} param0
-         * @param {Application} param0.app
-         * @param {string} param0.title Title of the dialog
-         * @param {string} param0.contentHTML Inner dialog html
-         * @param {Array<string>} param0.buttons
-         *  Button list, each button contains of up to 3 parts separated by ':'.
-         *  Part 0: The id, one of the one defined in dialog_buttons.yaml
-         *  Part 1: The style, either good, bad or misc
-         *  Part 2 (optional): Additional parameters separated by '/', available are:
-         *    timeout: This button is only available after some waiting time
-         *    kb_enter: This button is triggered by the enter key
-         *    kb_escape This button is triggered by the escape key
-         * @param {string=} param0.type The dialog type, either "info" or "warn"
-         * @param {boolean=} param0.closeButton Whether this dialog has a close button
-         */
-        constructor({
-            app,
-            title,
-            contentHTML,
-            buttons,
-            type,
-            closeButton,
-        }: {
-            app: Application;
-            title: string;
-            contentHTML: string;
-            buttons: Array<string>;
-            type?: string | undefined;
-            closeButton?: boolean | undefined;
-        });
-        app: Application;
-        title: string;
-        contentHTML: string;
-        type: string;
-        buttonIds: string[];
-        closeButton: boolean;
-        closeRequested: Signal;
-        buttonSignals: {};
-        valueChosen: Signal;
-        timeouts: any[];
-        clickDetectors: any[];
-        inputReciever: InputReceiver;
-        enterHandler: string;
-        escapeHandler: string;
-        /**
-         * Internal keydown handler
-         * @param {object} param0
-         * @param {number} param0.keyCode
-         * @param {boolean} param0.shift
-         * @param {boolean} param0.alt
-         * @param {boolean} param0.ctrl
-         */
-        handleKeydown({
-            keyCode,
-            shift,
-            alt,
-            ctrl,
-        }: {
-            keyCode: number;
-            shift: boolean;
-            alt: boolean;
-            ctrl: boolean;
-        }): string;
-        internalButtonHandler(id: any, ...payload: any[]): void;
-        createElement(): HTMLDivElement;
-        dialogElem: HTMLDivElement;
-        element: HTMLDivElement;
-        setIndex(index: any): void;
-        destroy(): void;
-        hide(): void;
-        show(): void;
-        /**
-         * Helper method to track clicks on an element
-         * @param {Element} elem
-         * @param {function():void} handler
-         * @param {import("shapez/core/click_detector").ClickDetectorConstructorArgs=} args
-         * @returns {ClickDetector}
-         */
-        trackClicks(
-            elem: Element,
-            handler: () => void,
-            args?: import("shapez/core/click_detector").ClickDetectorConstructorArgs | undefined
-        ): ClickDetector;
-    }
-    /**
-     * Dialog which simply shows a loading spinner
-     */
-    export class DialogLoading extends Dialog {
-        constructor(app: any, text?: string);
-        text: string;
-    }
-    export class DialogOptionChooser extends Dialog {
-        constructor({ app, title, options }: { app: any; title: any; options: any });
-        options: any;
-        initialOption: any;
-    }
-    export class DialogWithForm extends Dialog {
-        /**
-         *
-         * @param {object} param0
-         * @param {Application} param0.app
-         * @param {string} param0.title
-         * @param {string} param0.desc
-         * @param {array=} param0.buttons
-         * @param {string=} param0.confirmButtonId
-         * @param {string=} param0.extraButton
-         * @param {boolean=} param0.closeButton
-         * @param {Array<FormElement>} param0.formElements
-         */
-        constructor({
-            app,
-            title,
-            desc,
-            formElements,
-            buttons,
-            confirmButtonId,
-            closeButton,
-        }: {
-            app: Application;
-            title: string;
-            desc: string;
-            buttons?: any[] | undefined;
-            confirmButtonId?: string | undefined;
-            extraButton?: string | undefined;
-            closeButton?: boolean | undefined;
-            formElements: Array<FormElement>;
-        });
-        confirmButtonId: string;
-        formElements: FormElement[];
-        hasAnyInvalid(): boolean;
+        getCurrentState(): GameState;
     }
     import { Application } from "shapez/application";
-    import { Signal } from "shapez/core/signal";
-    import { InputReceiver } from "shapez/core/input_receiver";
+    import { GameState } from "shapez/core/game_state";
+}
+declare module "shapez/core/request_channel" {
+    export const PROMISE_ABORTED: "promise-aborted";
+    export class RequestChannel {
+        /** @type {Array<Promise>} */
+        pendingPromises: Array<Promise>;
+        /**
+         *
+         * @param {Promise<any>} promise
+         * @returns {Promise<any>}
+         */
+        watch(promise: Promise<any>): Promise<any>;
+        cancelAll(): void;
+    }
+}
+declare module "shapez/core/game_state" {
+    /**
+     * Basic state of the game state machine. This is the base of the whole game
+     */
+    export class GameState {
+        /**
+         * Constructs a new state with the given id
+         * @param {string} key The id of the state. We use ids to refer to states because otherwise we get
+         *                     circular references
+         */
+        constructor(key: string);
+        key: string;
+        /** @type {StateManager} */
+        stateManager: StateManager;
+        /** @type {Application} */
+        app: Application;
+        fadingOut: boolean;
+        /** @type {Array<ClickDetector>} */
+        clickDetectors: Array<ClickDetector>;
+        inputReciever: InputReceiver;
+        asyncChannel: RequestChannel;
+        /**
+         * Returns the states key
+         * @returns {string}
+         */
+        getKey(): string;
+        /**
+         * Returns the html element of the state
+         * @returns {HTMLElement}
+         */
+        getDivElement(): HTMLElement;
+        /**
+         * Transfers to a new state
+         * @param {string} stateKey The id of the new state
+         */
+        moveToState(stateKey: string, payload?: {}, skipFadeOut?: boolean): void;
+        /**
+         * Tracks clicks on a given element and calls the given callback *on this state*.
+         * If you want to call another function wrap it inside a lambda.
+         * @param {Element} element The element to track clicks on
+         * @param {function():void} handler The handler to call
+         * @param {import("shapez/core/click_detector").ClickDetectorConstructorArgs=} args Click detector arguments
+         */
+        trackClicks(
+            element: Element,
+            handler: () => void,
+            args?: import("shapez/core/click_detector").ClickDetectorConstructorArgs | undefined
+        ): void;
+        /**
+         * Cancels all promises on the api as well as our async channel
+         */
+        cancelAllAsyncOperations(): void;
+        /**
+         * Callback when entering the state, to be overriddemn
+         * @param {any} payload Arbitrary data passed from the state which we are transferring from
+         */
+        onEnter(payload: any): void;
+        /**
+         * Callback when leaving the state
+         */
+        onLeave(): void;
+        /**
+         * Callback before leaving the game state or when the page is unloaded
+         */
+        onBeforeExit(): void;
+        /**
+         * Callback when the app got paused (on android, this means in background)
+         */
+        onAppPause(): void;
+        /**
+         * Callback when the app got resumed (on android, this means in foreground again)
+         */
+        onAppResume(): void;
+        /**
+         * Render callback
+         * @param {number} dt Delta time in ms since last render
+         */
+        onRender(dt: number): void;
+        /**
+         * Background tick callback, called while the game is inactiev
+         * @param {number} dt Delta time in ms since last tick
+         */
+        onBackgroundTick(dt: number): void;
+        /**
+         * Called when the screen resized
+         * @param {number} w window/screen width
+         * @param {number} h window/screen height
+         */
+        onResized(w: number, h: number): void;
+        /**
+         * Internal backbutton handler, called when the hardware back button is pressed or
+         * the escape key is pressed
+         */
+        onBackButton(): void;
+        /**
+         * Should return how many mulliseconds to fade in / out the state. Not recommended to override!
+         * @returns {number} Time in milliseconds to fade out
+         */
+        getInOutFadeTime(): number;
+        /**
+         * Should return whether to fade in the game state. This will then apply the right css classes
+         * for the fadein.
+         * @returns {boolean}
+         */
+        getHasFadeIn(): boolean;
+        /**
+         * Should return whether to fade out the game state. This will then apply the right css classes
+         * for the fadeout and wait the delay before moving states
+         * @returns {boolean}
+         */
+        getHasFadeOut(): boolean;
+        /**
+         * Returns if this state should get paused if it does not have focus
+         * @returns {boolean} true to pause the updating of the game
+         */
+        getPauseOnFocusLost(): boolean;
+        /**
+         * Should return the html code of the state.
+         * @returns {string}
+         */
+        getInnerHTML(): string;
+        /**
+         * Returns if the state has an unload confirmation, this is the
+         * "Are you sure you want to leave the page" message.
+         */
+        getHasUnloadConfirmation(): boolean;
+        /**
+         * Should return the theme music for this state
+         * @returns {string|null}
+         */
+        getThemeMusic(): string | null;
+        /**
+         * Internal callback from the manager. Do not override!
+         * @param {StateManager} stateManager
+         */
+        internalRegisterCallback(stateManager: StateManager, app: any): void;
+        /**
+         * Internal callback when entering the state. Do not override!
+         * @param {any} payload Arbitrary data passed from the state which we are transferring from
+         * @param {boolean} callCallback Whether to call the onEnter callback
+         */
+        internalEnterCallback(payload: any, callCallback?: boolean): void;
+        htmlElement: HTMLElement;
+        /**
+         * Internal callback when the state is left. Do not override!
+         */
+        internalLeaveCallback(): void;
+        /**
+         * Internal callback *before* the state is left. Also is called on page unload
+         */
+        internalOnBeforeExitCallback(): void;
+        /**
+         * Internal app pause callback
+         */
+        internalOnAppPauseCallback(): void;
+        /**
+         * Internal app resume callback
+         */
+        internalOnAppResumeCallback(): void;
+        /**
+         * Cleans up all click detectors
+         */
+        internalCleanUpClickDetectors(): void;
+        /**
+         * Internal method to get the HTML of the game state.
+         * @returns {string}
+         */
+        internalGetFullHtml(): string;
+        /**
+         * Internal method to compute the time to fade in / out
+         * @returns {number} time to fade in / out in ms
+         */
+        internalGetFadeInOutTime(): number;
+    }
+    import { StateManager } from "shapez/core/state_manager";
+    import { Application } from "shapez/application";
     import { ClickDetector } from "shapez/core/click_detector";
-    import { FormElement } from "shapez/core/modal_dialog_forms";
+    import { InputReceiver } from "shapez/core/input_receiver";
+    import { RequestChannel } from "shapez/core/request_channel";
+}
+declare module "shapez/game/game_loading_overlay" {
+    export class GameLoadingOverlay {
+        /**
+         *
+         * @param {Application} app
+         * @param {HTMLElement} parent
+         */
+        constructor(app: Application, parent: HTMLElement);
+        app: Application;
+        parent: HTMLElement;
+        /** @type {HTMLElement} */
+        element: HTMLElement;
+        /**
+         * Removes the overlay if its currently visible
+         */
+        removeIfAttached(): void;
+        /**
+         * Returns if the loading overlay is attached
+         */
+        isAttached(): HTMLElement;
+        /**
+         * Shows a super basic overlay
+         */
+        showBasic(): void;
+        /**
+         * Adds a text with 'loading' and a spinner
+         * @param {HTMLElement} element
+         */
+        internalAddSpinnerAndText(element: HTMLElement): void;
+        /**
+         * Adds a random hint
+         * @param {HTMLElement} element
+         */
+        internalAddHint(element: HTMLElement): void;
+    }
+    import { Application } from "shapez/application";
+}
+declare module "shapez/core/lzstring" {
+    export function compressU8(uncompressed: any): Uint8Array;
+    /**
+     * @param {string} uncompressed
+     * @param {number} header
+     */
+    export function compressU8WHeader(uncompressed: string, header: number): Uint8Array;
+    /**
+     *
+     * @param {Uint8Array} compressed
+     */
+    export function decompressU8WHeader(compressed: Uint8Array): string;
+    export function compressX64(input: any): string;
+    export function decompressX64(input: any): string;
+}
+declare module "shapez/core/sensitive_utils.encrypt" {
+    export function sha1(str: any): any;
+    export function getNameOfProvider(): any;
+    /**
+     * Computes the crc for a given string
+     * @param {string} str
+     */
+    export function computeCrc(str: string): string;
+    export const CRC_PREFIX: string;
+}
+declare module "shapez/platform/storage" {
+    export const FILE_NOT_FOUND: "file_not_found";
+    export class StorageInterface {
+        constructor(app: any);
+        /** @type {Application} */
+        app: Application;
+        /**
+         * Initializes the storage
+         * @returns {Promise<void>}
+         */
+        initialize(): Promise<void>;
+        /**
+         * Writes a string to a file asynchronously
+         * @param {string} filename
+         * @param {string} contents
+         * @returns {Promise<void>}
+         */
+        writeFileAsync(filename: string, contents: string): Promise<void>;
+        /**
+         * Reads a string asynchronously. Returns Promise<FILE_NOT_FOUND> if file was not found.
+         * @param {string} filename
+         * @returns {Promise<string>}
+         */
+        readFileAsync(filename: string): Promise<string>;
+        /**
+         * Tries to delete a file
+         * @param {string} filename
+         * @returns {Promise<void>}
+         */
+        deleteFileAsync(filename: string): Promise<void>;
+    }
+    import { Application } from "shapez/application";
+}
+declare module "shapez/savegame/savegame_compressor" {
+    /**
+     * @param {object} obj
+     */
+    export function compressObject(obj: object): {
+        keys: any[];
+        values: any[];
+        data: any;
+    };
+    /**
+     * @param {object} obj
+     */
+    export function decompressObject(obj: object): any;
+}
+declare module "shapez/webworkers/compression.worker" {
+    export {};
+}
+declare module "shapez/core/async_compression" {
+    export let compressionPrefix: string;
+    export const asyncCompressor: AsynCompression;
+    export type JobEntry = {
+        errorHandler: (arg0: any) => void;
+        resolver: (arg0: any) => void;
+        startTime: number;
+    };
+    /**
+     * @typedef {{
+     *   errorHandler: function(any) : void,
+     *   resolver: function(any) : void,
+     *   startTime: number
+     * }} JobEntry
+     */
+    class AsynCompression {
+        worker: any;
+        currentJobId: number;
+        /** @type {Object.<number, JobEntry>} */
+        currentJobs: {
+            [x: number]: JobEntry;
+        };
+        /**
+         * Compresses any object
+         * @param {any} obj
+         */
+        compressObjectAsync(obj: any): Promise<any>;
+        /**
+         * Queues a new job
+         * @param {string} job
+         * @param {any} data
+         * @returns {Promise<any>}
+         */
+        internalQueueJob(job: string, data: any): Promise<any>;
+    }
+    export {};
+}
+declare module "shapez/core/read_write_proxy" {
+    export class ReadWriteProxy {
+        /**
+         *
+         * @param {object} obj
+         */
+        static serializeObject(obj: object): string;
+        /**
+         *
+         * @param {object} text
+         */
+        static deserializeObject(text: object): any;
+        constructor(app: any, filename: any);
+        /** @type {Application} */
+        app: Application;
+        filename: any;
+        /** @type {object} */
+        currentData: object;
+        /**
+         * Store a debounced handler to prevent double writes
+         */
+        debouncedWrite: any;
+        /** @returns {ExplainedResult} */
+        verify(data: any): ExplainedResult;
+        getDefaultData(): {};
+        getCurrentVersion(): number;
+        /** @returns {ExplainedResult} */
+        migrate(data: any): ExplainedResult;
+        resetEverythingAsync(): Promise<void>;
+        /**
+         * Writes the data asychronously, fails if verify() fails.
+         * Debounces the operation by up to 50ms
+         * @returns {Promise<void>}
+         */
+        writeAsync(): Promise<void>;
+        /**
+         * Actually writes the data asychronously
+         * @returns {Promise<void>}
+         */
+        doWriteAsync(): Promise<void>;
+        readAsync(): Promise<any>;
+        /**
+         * Deletes the file
+         * @returns {Promise<void>}
+         */
+        deleteAsync(): Promise<void>;
+        /** @returns {ExplainedResult} */
+        internalVerifyBasicStructure(data: any): ExplainedResult;
+        /** @returns {ExplainedResult} */
+        internalVerifyEntry(data: any): ExplainedResult;
+    }
+    import { Application } from "shapez/application";
+    import { ExplainedResult } from "shapez/core/explained_result";
+}
+declare module "shapez/savegame/savegame_interface" {
+    export class BaseSavegameInterface {
+        /**
+         * Constructs an new interface for the given savegame
+         * @param {any} data
+         */
+        constructor(data: any);
+        /**
+         * Returns the interfaces version
+         */
+        getVersion(): void;
+        /**
+         * Returns the uncached json schema
+         * @returns {object}
+         */
+        getSchemaUncached(): object;
+        getValidator(): any;
+        data: any;
+        /**
+         * Validates the data
+         * @returns {boolean}
+         */
+        validate(): boolean;
+        /**
+         * Returns the time of last update
+         * @returns {number}
+         */
+        readLastUpdate(): number;
+        /**
+         * Returns the ingame time in seconds
+         * @returns {number}
+         */
+        readIngameTimeSeconds(): number;
+    }
+}
+declare module "shapez/savegame/schemas/1000" {
+    export class SavegameInterface_V1000 extends BaseSavegameInterface {
+        constructor(data: any);
+    }
+    import { BaseSavegameInterface } from "shapez/savegame/savegame_interface";
+}
+declare module "shapez/savegame/savegame_typedefs" {
+    let _default: {};
+    export default _default;
+    export type Entity = import("shapez/game/entity").Entity;
+    export type SavegameStoredMods = {
+        id: string;
+        version: string;
+        website: string;
+        name: string;
+        author: string;
+    }[];
+    export type SavegameStats = {
+        failedMam: boolean;
+        trashedCount: number;
+        usedInverseRotater: boolean;
+    };
+    export type SerializedGame = {
+        camera: any;
+        time: any;
+        entityMgr: any;
+        map: any;
+        gameMode: object;
+        hubGoals: any;
+        pinnedShapes: any;
+        waypoints: any;
+        entities: Array<Entity>;
+        beltPaths: Array<any>;
+        modExtraData: any;
+    };
+    export type SavegameData = {
+        version: number;
+        dump: SerializedGame;
+        stats: SavegameStats;
+        lastUpdate: number;
+        mods: {
+            id: string;
+            version: string;
+            website: string;
+            name: string;
+            author: string;
+        }[];
+    };
+    export type SavegameMetadata = {
+        lastUpdate: number;
+        version: number;
+        internalId: string;
+        level: number;
+        name: string | null;
+    };
+    export type SavegamesData = {
+        version: number;
+        savegames: Array<SavegameMetadata>;
+    };
+    export type PuzzleMetadata = {
+        id: number;
+        shortKey: string;
+        likes: number;
+        downloads: number;
+        completions: number;
+        difficulty: number | null;
+        averageTime: number | null;
+        title: string;
+        author: string;
+        completed: boolean;
+    };
+    export type PuzzleGameBuildingConstantProducer = {
+        type: "emitter";
+        item: string;
+        pos: {
+            x: number;
+            y: number;
+            r: number;
+        };
+    };
+    export type PuzzleGameBuildingGoal = {
+        type: "goal";
+        item: string;
+        pos: {
+            x: number;
+            y: number;
+            r: number;
+        };
+    };
+    export type PuzzleGameBuildingBlock = {
+        type: "block";
+        pos: {
+            x: number;
+            y: number;
+            r: number;
+        };
+    };
+    export type PuzzleGameData = {
+        version: number;
+        bounds: {
+            w: number;
+            h: number;
+        };
+        buildings: (PuzzleGameBuildingGoal | PuzzleGameBuildingConstantProducer | PuzzleGameBuildingBlock)[];
+        excludedBuildings: Array<string>;
+    };
+    export type PuzzleFullData = {
+        meta: PuzzleMetadata;
+        game: PuzzleGameData;
+    };
+}
+declare module "shapez/savegame/schemas/1001" {
+    export class SavegameInterface_V1001 extends SavegameInterface_V1000 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1000to1001(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1000 } from "shapez/savegame/schemas/1000";
+}
+declare module "shapez/savegame/schemas/1002" {
+    export class SavegameInterface_V1002 extends SavegameInterface_V1001 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1001to1002(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1001 } from "shapez/savegame/schemas/1001";
+}
+declare module "shapez/savegame/schemas/1003" {
+    export class SavegameInterface_V1003 extends SavegameInterface_V1002 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1002to1003(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1002 } from "shapez/savegame/schemas/1002";
+}
+declare module "shapez/savegame/schemas/1004" {
+    export class SavegameInterface_V1004 extends SavegameInterface_V1003 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1003to1004(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1003 } from "shapez/savegame/schemas/1003";
+}
+declare module "shapez/savegame/schemas/1005" {
+    export class SavegameInterface_V1005 extends SavegameInterface_V1004 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1004to1005(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1004 } from "shapez/savegame/schemas/1004";
+}
+declare module "shapez/game/buildings/balancer" {
+    export type enumBalancerVariants = string;
+    export namespace enumBalancerVariants {
+        export const merger: string;
+        export const mergerInverse: string;
+        export const splitter: string;
+        export const splitterInverse: string;
+    }
+    export class MetaBalancerBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/belt" {
+    export const arrayBeltVariantToRotation: string[];
+    export const beltOverlayMatrices: {
+        [x: string]: {
+            [x: number]: number[];
+        };
+    };
+    export class MetaBeltBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+            rotationVariant: number;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/cutter" {
+    export type enumCutterVariants = string;
+    export namespace enumCutterVariants {
+        export const quad: string;
+    }
+    export class MetaCutterBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
 }
 declare module "shapez/game/buildings/hub" {
     export class MetaHubBuilding extends MetaBuilding {
@@ -5920,6 +6257,612 @@ declare module "shapez/game/buildings/hub" {
         }[];
     }
     import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/miner" {
+    export type enumMinerVariants = string;
+    export namespace enumMinerVariants {
+        export const chainable: string;
+    }
+    export class MetaMinerBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/mixer" {
+    export class MetaMixerBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/painter" {
+    export type enumPainterVariants = string;
+    export namespace enumPainterVariants {
+        export const mirrored: string;
+        export const double: string;
+        export const quad: string;
+    }
+    export class MetaPainterBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/rotater" {
+    export type enumRotaterVariants = string;
+    export namespace enumRotaterVariants {
+        export const ccw: string;
+        export const rotate180: string;
+    }
+    export class MetaRotaterBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/stacker" {
+    export class MetaStackerBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/storage" {
+    export class MetaStorageBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/trash" {
+    export class MetaTrashBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+        addAchievementReceiver(entity: any): void;
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/underground_belt" {
+    export type arrayUndergroundRotationVariantToMode = string;
+    /** @enum {string} */
+    export const arrayUndergroundRotationVariantToMode: string[];
+    export type enumUndergroundBeltVariants = string;
+    export namespace enumUndergroundBeltVariants {
+        export const tier2: string;
+    }
+    export const enumUndergroundBeltVariantToTier: {
+        [x: string]: number;
+        default: number;
+    };
+    export class MetaUndergroundBeltBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+            rotationVariant: number;
+        }[];
+    }
+    import { defaultBuildingVariant } from "shapez/game/meta_building";
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/savegame/schemas/1006" {
+    export class SavegameInterface_V1006 extends SavegameInterface_V1005 {
+        static computeSpriteMapping(): {
+            "sprites/blueprints/belt_top.png": string | number;
+            "sprites/blueprints/belt_left.png": string | number;
+            "sprites/blueprints/belt_right.png": string | number;
+            "sprites/blueprints/splitter.png": string | number;
+            "sprites/blueprints/splitter-compact.png": string | number;
+            "sprites/blueprints/splitter-compact-inverse.png": string | number;
+            "sprites/blueprints/underground_belt_entry.png": string | number;
+            "sprites/blueprints/underground_belt_exit.png": string | number;
+            "sprites/blueprints/underground_belt_entry-tier2.png": string | number;
+            "sprites/blueprints/underground_belt_exit-tier2.png": string | number;
+            "sprites/blueprints/miner.png": string | number;
+            "sprites/blueprints/miner-chainable.png": string | number;
+            "sprites/blueprints/cutter.png": string | number;
+            "sprites/blueprints/cutter-quad.png": string | number;
+            "sprites/blueprints/rotater.png": string | number;
+            "sprites/blueprints/rotater-ccw.png": string | number;
+            "sprites/blueprints/stacker.png": string | number;
+            "sprites/blueprints/mixer.png": string | number;
+            "sprites/blueprints/painter.png": string | number;
+            "sprites/blueprints/painter-mirrored.png": string | number;
+            "sprites/blueprints/painter-double.png": string | number;
+            "sprites/blueprints/painter-quad.png": string | number;
+            "sprites/blueprints/trash.png": string | number;
+            "sprites/blueprints/trash-storage.png": string | number;
+        };
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1005to1006(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        /**
+         *
+         * @param {Entity} entity
+         */
+        static migrateStaticComp1005to1006(entity: Entity): void;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1005 } from "shapez/savegame/schemas/1005";
+    import { Entity } from "shapez/game/entity";
+}
+declare module "shapez/savegame/schemas/1007" {
+    export class SavegameInterface_V1007 extends SavegameInterface_V1006 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1006to1007(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1006 } from "shapez/savegame/schemas/1006";
+}
+declare module "shapez/savegame/schemas/1008" {
+    export class SavegameInterface_V1008 extends SavegameInterface_V1007 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1007to1008(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1007 } from "shapez/savegame/schemas/1007";
+}
+declare module "shapez/game/buildings/constant_producer" {
+    export class MetaConstantProducerBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/goal_acceptor" {
+    export class MetaGoalAcceptorBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/block" {
+    export class MetaBlockBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/core/tracked_state" {
+    export class TrackedState {
+        constructor(callbackMethod?: any, callbackScope?: any);
+        lastSeenValue: any;
+        callback: any;
+        set(value: any, changeHandler?: any, changeScope?: any): void;
+        setSilent(value: any): void;
+        get(): any;
+    }
+}
+declare module "shapez/game/hud/dynamic_dom_attach" {
+    export class DynamicDomAttach {
+        /**
+         *
+         * @param {GameRoot} root
+         * @param {HTMLElement} element
+         * @param {object} param2
+         * @param {number=} param2.timeToKeepSeconds How long to keep the element visible (in ms) after it should be hidden.
+         *                                           Useful for fade-out effects
+         * @param {string=} param2.attachClass If set, attaches a class while the element is visible
+         * @param {boolean=} param2.trackHover If set, attaches the 'hovered' class if the cursor is above the element. Useful
+         *                                     for fading out the element if its below the cursor for example.
+         */
+        constructor(
+            root: GameRoot,
+            element: HTMLElement,
+            {
+                timeToKeepSeconds,
+                attachClass,
+                trackHover,
+            }?: {
+                timeToKeepSeconds?: number | undefined;
+                attachClass?: string | undefined;
+                trackHover?: boolean | undefined;
+            }
+        );
+        /** @type {GameRoot} */
+        root: GameRoot;
+        /** @type {HTMLElement} */
+        element: HTMLElement;
+        parent: HTMLElement;
+        attachClass: string;
+        trackHover: boolean;
+        timeToKeepSeconds: number;
+        lastVisibleTime: number;
+        attached: boolean;
+        internalIsClassAttached: any;
+        classAttachTimeout: NodeJS.Timeout;
+        /** @type {DOMRect} */
+        lastComputedBounds: DOMRect;
+        lastComputedBoundsTime: number;
+        trackedIsHovered: TrackedState;
+        /**
+         * Internal method to attach the element
+         */
+        internalAttach(): void;
+        /**
+         * Internal method to detach the element
+         */
+        internalDetach(): void;
+        /**
+         * Returns whether the element is currently attached
+         */
+        isAttached(): boolean;
+        /**
+         * Actually sets the 'hovered' class
+         * @param {boolean} isHovered
+         */
+        setIsHoveredClass(isHovered: boolean): void;
+        /**
+         * Call this every frame, and the dom attach class will take care of
+         * everything else
+         * @param {boolean} isVisible Whether the element should currently be visible or not
+         */
+        update(isVisible: boolean): void;
+    }
+    import { GameRoot } from "shapez/game/root";
+    import { TrackedState } from "shapez/core/tracked_state";
+}
+declare module "shapez/game/hud/parts/base_toolbar" {
+    export class HUDBaseToolbar extends BaseHUDPart {
+        /**
+         * @param {GameRoot} root
+         * @param {object} param0
+         * @param {Array<typeof MetaBuilding>} param0.primaryBuildings
+         * @param {Array<typeof MetaBuilding>=} param0.secondaryBuildings
+         * @param {function} param0.visibilityCondition
+         * @param {string} param0.htmlElementId
+         * @param {Layer=} param0.layer
+         */
+        constructor(
+            root: GameRoot,
+            {
+                primaryBuildings,
+                secondaryBuildings,
+                visibilityCondition,
+                htmlElementId,
+                layer,
+            }: {
+                primaryBuildings: Array<typeof MetaBuilding>;
+                secondaryBuildings?: Array<typeof MetaBuilding> | undefined;
+                visibilityCondition: Function;
+                htmlElementId: string;
+                layer?: any | undefined;
+            }
+        );
+        primaryBuildings: typeof MetaBuilding[];
+        secondaryBuildings: typeof MetaBuilding[];
+        visibilityCondition: Function;
+        htmlElementId: string;
+        layer: any;
+        /** @type {Object.<string, {
+         * metaBuilding: MetaBuilding,
+         * unlocked: boolean,
+         * selected: boolean,
+         * element: HTMLElement,
+         * index: number
+         * puzzleLocked: boolean;
+         * }>} */
+        buildingHandles: {
+            [x: string]: {
+                metaBuilding: MetaBuilding;
+                unlocked: boolean;
+                selected: boolean;
+                element: HTMLElement;
+                index: number;
+                puzzleLocked: boolean;
+            };
+        };
+        element: HTMLDivElement;
+        /**
+         * @param {Array<typeof MetaBuilding>} buildings
+         * @returns {Array<typeof MetaBuilding>}
+         */
+        filterBuildings(buildings: Array<typeof MetaBuilding>): Array<typeof MetaBuilding>;
+        /**
+         * Returns all buildings
+         * @returns {Array<typeof MetaBuilding>}
+         */
+        get allBuildings(): typeof MetaBuilding[];
+        secondaryDomAttach: DynamicDomAttach;
+        domAttach: DynamicDomAttach;
+        lastSelectedIndex: number;
+        /**
+         * Cycles through all buildings
+         */
+        cycleBuildings(): void;
+        /**
+         * Called when the selected building got changed
+         * @param {MetaBuilding} metaBuilding
+         */
+        onSelectedPlacementBuildingChanged(metaBuilding: MetaBuilding): void;
+        /**
+         * @param {MetaBuilding} metaBuilding
+         */
+        selectBuildingForPlacement(metaBuilding: MetaBuilding): string;
+        /**
+         * @param {MetaBuilding} metaBuilding
+         */
+        toggleBuildingLock(metaBuilding: MetaBuilding): string;
+        /**
+         * @param {MetaBuilding} metaBuilding
+         */
+        inRequiredBuildings(metaBuilding: MetaBuilding): boolean;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { MetaBuilding } from "shapez/game/meta_building";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { GameRoot } from "shapez/game/root";
+}
+declare module "shapez/game/buildings/constant_signal" {
+    export class MetaConstantSignalBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/logic_gate" {
+    export type enumLogicGateVariants = string;
+    export namespace enumLogicGateVariants {
+        export const not: string;
+        export const xor: string;
+        export const or: string;
+    }
+    export class MetaLogicGateBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    export type enumVariantToGate = string;
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/lever" {
+    export class MetaLeverBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/wire_tunnel" {
+    export class MetaWireTunnelBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/virtual_processor" {
+    export type enumVirtualProcessorVariants = string;
+    export namespace enumVirtualProcessorVariants {
+        export const rotater: string;
+        export const unstacker: string;
+        export const stacker: string;
+        export const painter: string;
+    }
+    export class MetaVirtualProcessorBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    export type enumVariantToGate = string;
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/transistor" {
+    export type enumTransistorVariants = string;
+    export namespace enumTransistorVariants {
+        export const mirrored: string;
+    }
+    export class MetaTransistorBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/analyzer" {
+    export class MetaAnalyzerBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/comparator" {
+    export class MetaComparatorBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/reader" {
+    export class MetaReaderBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/filter" {
+    export class MetaFilterBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/buildings/display" {
+    export class MetaDisplayBuilding extends MetaBuilding {
+        static getAllVariantCombinations(): {
+            internalId: number;
+            variant: string;
+        }[];
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/hud/parts/wires_toolbar" {
+    export class HUDWiresToolbar extends HUDBaseToolbar {
+        constructor(root: any);
+    }
+    import { HUDBaseToolbar } from "shapez/game/hud/parts/base_toolbar";
+}
+declare module "shapez/game/tutorial_goals_mappings" {
+    /**
+     * Stores which reward unlocks what
+     */
+    export type enumHubGoalRewardsToContentUnlocked = [typeof MetaBuilding, string][];
+    /**
+     * Stores which reward unlocks what
+     * @enum {TutorialGoalReward?}
+     */
+    export const enumHubGoalRewardsToContentUnlocked: {
+        [x: string]: [typeof MetaBuilding, string][];
+    };
+    export type TutorialGoalReward = [typeof MetaBuilding, string][];
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/game/hud/parts/notifications" {
+    export type enumNotificationType = string;
+    export namespace enumNotificationType {
+        export const saved: string;
+        export const upgrade: string;
+        export const success: string;
+        export const info: string;
+        export const warning: string;
+        export const error: string;
+    }
+    export class HUDNotifications extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        /** @type {Array<{ element: HTMLElement, expireAt: number}>} */
+        notificationElements: {
+            element: HTMLElement;
+            expireAt: number;
+        }[];
+        /**
+         * @param {string} message
+         * @param {enumNotificationType} type
+         */
+        internalShowNotification(message: string, type: enumNotificationType): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+}
+declare module "shapez/game/hud/parts/unlock_notification" {
+    export class HUDUnlockNotification extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        visible: boolean;
+        domAttach: DynamicDomAttach;
+        buttonShowTimeout: NodeJS.Timeout;
+        inputReciever: InputReceiver;
+        element: HTMLDivElement;
+        elemTitle: HTMLDivElement;
+        elemSubTitle: HTMLDivElement;
+        elemContents: HTMLDivElement;
+        btnClose: HTMLButtonElement;
+        /**
+         * @param {number} level
+         * @param {enumHubGoalRewards} reward
+         */
+        showForLevel(level: number, reward: enumHubGoalRewards): void;
+        requestClose(): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { InputReceiver } from "shapez/core/input_receiver";
+    import { enumHubGoalRewards } from "shapez/game/tutorial_goals";
+}
+declare module "shapez/game/blueprint" {
+    export class Blueprint {
+        /**
+         * Creates a new blueprint from the given entity uids
+         * @param {GameRoot} root
+         * @param {Array<number>} uids
+         */
+        static fromUids(root: GameRoot, uids: Array<number>): Blueprint;
+        /**
+         * @param {Array<Entity>} entities
+         */
+        constructor(entities: Array<Entity>);
+        entities: Entity[];
+        /**
+         * Returns the layer of this blueprint
+         * @returns {Layer}
+         */
+        get layer(): any;
+        /**
+         * Returns the cost of this blueprint in shapes
+         */
+        getCost(): number;
+        /**
+         * Draws the blueprint at the given origin
+         * @param {DrawParameters} parameters
+         */
+        draw(parameters: DrawParameters, tile: any): void;
+        /**
+         * Rotates the blueprint clockwise
+         */
+        rotateCw(): void;
+        /**
+         * Rotates the blueprint counter clock wise
+         */
+        rotateCcw(): void;
+        /**
+         * Checks if the blueprint can be placed at the given tile
+         * @param {GameRoot} root
+         * @param {Vector} tile
+         */
+        canPlace(root: GameRoot, tile: Vector): boolean;
+        /**
+         * @param {GameRoot} root
+         */
+        canAfford(root: GameRoot): boolean;
+        /**
+         * Attempts to place the blueprint at the given tile
+         * @param {GameRoot} root
+         * @param {Vector} tile
+         */
+        tryPlace(root: GameRoot, tile: Vector): any;
+    }
+    import { Entity } from "shapez/game/entity";
+    import { DrawParameters } from "shapez/core/draw_parameters";
+    import { GameRoot } from "shapez/game/root";
+    import { Vector } from "shapez/core/vector";
 }
 declare module "shapez/game/camera" {
     export const USER_INTERACT_MOVE: "move";
@@ -6207,110 +7150,280 @@ declare module "shapez/game/camera" {
     import { Signal } from "shapez/core/signal";
     import { Rectangle } from "shapez/core/rectangle";
 }
-declare module "shapez/core/tracked_state" {
-    export class TrackedState {
-        constructor(callbackMethod?: any, callbackScope?: any);
-        lastSeenValue: any;
-        callback: any;
-        set(value: any, changeHandler?: any, changeScope?: any): void;
-        setSilent(value: any): void;
-        get(): any;
-    }
-}
-declare module "shapez/game/hud/dynamic_dom_attach" {
-    export class DynamicDomAttach {
+declare module "shapez/game/hud/parts/mass_selector" {
+    export class HUDMassSelector extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        currentSelectionStartWorld: Vector;
+        currentSelectionEnd: Vector;
+        selectedUids: Set<any>;
+        /**
+         * Handles the destroy callback and makes sure we clean our list
+         * @param {Entity} entity
+         */
+        onEntityDestroyed(entity: Entity): void;
         /**
          *
-         * @param {GameRoot} root
-         * @param {HTMLElement} element
-         * @param {object} param2
-         * @param {number=} param2.timeToKeepSeconds How long to keep the element visible (in ms) after it should be hidden.
-         *                                           Useful for fade-out effects
-         * @param {string=} param2.attachClass If set, attaches a class while the element is visible
-         * @param {boolean=} param2.trackHover If set, attaches the 'hovered' class if the cursor is above the element. Useful
-         *                                     for fading out the element if its below the cursor for example.
          */
-        constructor(
-            root: GameRoot,
-            element: HTMLElement,
-            {
-                timeToKeepSeconds,
-                attachClass,
-                trackHover,
-            }?: {
-                timeToKeepSeconds?: number | undefined;
-                attachClass?: string | undefined;
-                trackHover?: boolean | undefined;
-            }
-        );
-        /** @type {GameRoot} */
-        root: GameRoot;
-        /** @type {HTMLElement} */
-        element: HTMLElement;
-        parent: HTMLElement;
-        attachClass: string;
-        trackHover: boolean;
-        timeToKeepSeconds: number;
-        lastVisibleTime: number;
-        attached: boolean;
-        internalIsClassAttached: any;
-        classAttachTimeout: NodeJS.Timeout;
-        /** @type {DOMRect} */
-        lastComputedBounds: DOMRect;
-        lastComputedBoundsTime: number;
-        trackedIsHovered: TrackedState;
+        onBack(): string;
         /**
-         * Internal method to attach the element
+         * Clears the entire selection
          */
-        internalAttach(): void;
+        clearSelection(): void;
+        confirmDelete(): void;
+        doDelete(): void;
+        startCopy(): void;
+        clearBelts(): void;
+        confirmCut(): void;
+        doCut(): void;
         /**
-         * Internal method to detach the element
+         * mouse down pre handler
+         * @param {Vector} pos
+         * @param {enumMouseButton} mouseButton
          */
-        internalDetach(): void;
+        onMouseDown(pos: Vector, mouseButton: enumMouseButton): string;
         /**
-         * Returns whether the element is currently attached
+         * mouse move pre handler
+         * @param {Vector} pos
          */
-        isAttached(): boolean;
-        /**
-         * Actually sets the 'hovered' class
-         * @param {boolean} isHovered
-         */
-        setIsHoveredClass(isHovered: boolean): void;
-        /**
-         * Call this every frame, and the dom attach class will take care of
-         * everything else
-         * @param {boolean} isVisible Whether the element should currently be visible or not
-         */
-        update(isVisible: boolean): void;
-    }
-    import { GameRoot } from "shapez/game/root";
-    import { TrackedState } from "shapez/core/tracked_state";
-}
-declare module "shapez/game/hud/parts/notifications" {
-    export type enumNotificationType = string;
-    export namespace enumNotificationType {
-        export const saved: string;
-        export const upgrade: string;
-        export const success: string;
-        export const info: string;
-        export const warning: string;
-        export const error: string;
-    }
-    export class HUDNotifications extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        /** @type {Array<{ element: HTMLElement, expireAt: number}>} */
-        notificationElements: {
-            element: HTMLElement;
-            expireAt: number;
-        }[];
-        /**
-         * @param {string} message
-         * @param {enumNotificationType} type
-         */
-        internalShowNotification(message: string, type: enumNotificationType): void;
+        onMouseMove(pos: Vector): void;
+        onMouseUp(): void;
     }
     import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Vector } from "shapez/core/vector";
+    import { Entity } from "shapez/game/entity";
+    import { enumMouseButton } from "shapez/game/camera";
+}
+declare module "shapez/game/hud/parts/shop" {
+    export class HUDShop extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        background: HTMLDivElement;
+        dialogInner: HTMLDivElement;
+        title: HTMLDivElement;
+        closeButton: HTMLDivElement;
+        contentDiv: HTMLDivElement;
+        upgradeToElements: {};
+        rerenderFull(): void;
+        renderCountsAndStatus(): void;
+        domAttach: DynamicDomAttach;
+        inputReciever: InputReceiver;
+        keyActionMapper: KeyActionMapper;
+        show(): void;
+        visible: boolean;
+        tryUnlockNextTier(upgradeId: any): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { InputReceiver } from "shapez/core/input_receiver";
+    import { KeyActionMapper } from "shapez/game/key_action_mapper";
+}
+declare module "shapez/core/modal_dialog_forms" {
+    export class FormElement {
+        constructor(id: any, label: any);
+        id: any;
+        label: any;
+        valueChosen: Signal;
+        getHtml(): string;
+        getFormElement(parent: any): any;
+        bindEvents(parent: any, clickTrackers: any): void;
+        focus(): void;
+        isValid(): boolean;
+        /** @returns {any} */
+        getValue(): any;
+    }
+    export class FormElementInput extends FormElement {
+        constructor({
+            id,
+            label,
+            placeholder,
+            defaultValue,
+            inputType,
+            validator,
+        }: {
+            id: any;
+            label?: any;
+            placeholder: any;
+            defaultValue?: string;
+            inputType?: string;
+            validator?: any;
+        });
+        placeholder: any;
+        defaultValue: string;
+        inputType: string;
+        validator: any;
+        element: any;
+        updateErrorState(): void;
+        setValue(value: any): void;
+    }
+    export class FormElementCheckbox extends FormElement {
+        constructor({ id, label, defaultValue }: { id: any; label: any; defaultValue?: boolean });
+        defaultValue: boolean;
+        value: boolean;
+        element: any;
+        toggle(): void;
+    }
+    export class FormElementItemChooser extends FormElement {
+        /**
+         *
+         * @param {object} param0
+         * @param {string} param0.id
+         * @param {string=} param0.label
+         * @param {Array<BaseItem>} param0.items
+         */
+        constructor({ id, label, items }: { id: string; label?: string | undefined; items: Array<BaseItem> });
+        items: BaseItem[];
+        element: any;
+        /**
+         * @type {BaseItem}
+         */
+        chosenItem: BaseItem;
+    }
+    import { Signal } from "shapez/core/signal";
+    import { BaseItem } from "shapez/game/base_item";
+}
+declare module "shapez/core/modal_dialog_elements" {
+    /**
+     * Basic text based dialog
+     */
+    export class Dialog {
+        /**
+         *
+         * Constructs a new dialog with the given options
+         * @param {object} param0
+         * @param {Application} param0.app
+         * @param {string} param0.title Title of the dialog
+         * @param {string} param0.contentHTML Inner dialog html
+         * @param {Array<string>} param0.buttons
+         *  Button list, each button contains of up to 3 parts separated by ':'.
+         *  Part 0: The id, one of the one defined in dialog_buttons.yaml
+         *  Part 1: The style, either good, bad or misc
+         *  Part 2 (optional): Additional parameters separated by '/', available are:
+         *    timeout: This button is only available after some waiting time
+         *    kb_enter: This button is triggered by the enter key
+         *    kb_escape This button is triggered by the escape key
+         * @param {string=} param0.type The dialog type, either "info" or "warn"
+         * @param {boolean=} param0.closeButton Whether this dialog has a close button
+         */
+        constructor({
+            app,
+            title,
+            contentHTML,
+            buttons,
+            type,
+            closeButton,
+        }: {
+            app: Application;
+            title: string;
+            contentHTML: string;
+            buttons: Array<string>;
+            type?: string | undefined;
+            closeButton?: boolean | undefined;
+        });
+        app: Application;
+        title: string;
+        contentHTML: string;
+        type: string;
+        buttonIds: string[];
+        closeButton: boolean;
+        closeRequested: Signal;
+        buttonSignals: {};
+        valueChosen: Signal;
+        timeouts: any[];
+        clickDetectors: any[];
+        inputReciever: InputReceiver;
+        enterHandler: string;
+        escapeHandler: string;
+        /**
+         * Internal keydown handler
+         * @param {object} param0
+         * @param {number} param0.keyCode
+         * @param {boolean} param0.shift
+         * @param {boolean} param0.alt
+         * @param {boolean} param0.ctrl
+         */
+        handleKeydown({
+            keyCode,
+            shift,
+            alt,
+            ctrl,
+        }: {
+            keyCode: number;
+            shift: boolean;
+            alt: boolean;
+            ctrl: boolean;
+        }): string;
+        internalButtonHandler(id: any, ...payload: any[]): void;
+        createElement(): HTMLDivElement;
+        dialogElem: HTMLDivElement;
+        element: HTMLDivElement;
+        setIndex(index: any): void;
+        destroy(): void;
+        hide(): void;
+        show(): void;
+        /**
+         * Helper method to track clicks on an element
+         * @param {Element} elem
+         * @param {function():void} handler
+         * @param {import("shapez/core/click_detector").ClickDetectorConstructorArgs=} args
+         * @returns {ClickDetector}
+         */
+        trackClicks(
+            elem: Element,
+            handler: () => void,
+            args?: import("shapez/core/click_detector").ClickDetectorConstructorArgs | undefined
+        ): ClickDetector;
+    }
+    /**
+     * Dialog which simply shows a loading spinner
+     */
+    export class DialogLoading extends Dialog {
+        constructor(app: any, text?: string);
+        text: string;
+    }
+    export class DialogOptionChooser extends Dialog {
+        constructor({ app, title, options }: { app: any; title: any; options: any });
+        options: any;
+        initialOption: any;
+    }
+    export class DialogWithForm extends Dialog {
+        /**
+         *
+         * @param {object} param0
+         * @param {Application} param0.app
+         * @param {string} param0.title
+         * @param {string} param0.desc
+         * @param {array=} param0.buttons
+         * @param {string=} param0.confirmButtonId
+         * @param {string=} param0.extraButton
+         * @param {boolean=} param0.closeButton
+         * @param {Array<FormElement>} param0.formElements
+         */
+        constructor({
+            app,
+            title,
+            desc,
+            formElements,
+            buttons,
+            confirmButtonId,
+            closeButton,
+        }: {
+            app: Application;
+            title: string;
+            desc: string;
+            buttons?: any[] | undefined;
+            confirmButtonId?: string | undefined;
+            extraButton?: string | undefined;
+            closeButton?: boolean | undefined;
+            formElements: Array<FormElement>;
+        });
+        confirmButtonId: string;
+        formElements: FormElement[];
+        hasAnyInvalid(): boolean;
+    }
+    import { Application } from "shapez/application";
+    import { Signal } from "shapez/core/signal";
+    import { InputReceiver } from "shapez/core/input_receiver";
+    import { ClickDetector } from "shapez/core/click_detector";
+    import { FormElement } from "shapez/core/modal_dialog_forms";
 }
 declare module "shapez/game/hud/parts/waypoints" {
     export class HUDWaypoints extends BaseHUDPart {
@@ -6490,484 +7603,814 @@ declare module "shapez/game/hud/parts/waypoints" {
     import { BaseItem } from "shapez/game/base_item";
     import { enumMouseButton } from "shapez/game/camera";
 }
-declare module "shapez/savegame/savegame_typedefs" {
-    let _default: {};
-    export default _default;
-    export type Entity = import("shapez/game/entity").Entity;
-    export type SavegameStats = {
-        failedMam: boolean;
-        trashedCount: number;
-        usedInverseRotater: boolean;
-    };
-    export type SerializedGame = {
-        camera: any;
-        time: any;
-        entityMgr: any;
-        map: any;
-        gameMode: object;
-        hubGoals: any;
-        pinnedShapes: any;
-        waypoints: any;
-        entities: Array<Entity>;
-        beltPaths: Array<any>;
-    };
-    export type SavegameData = {
-        version: number;
-        dump: SerializedGame;
-        stats: SavegameStats;
-        lastUpdate: number;
-    };
-    export type SavegameMetadata = {
-        lastUpdate: number;
-        version: number;
-        internalId: string;
-        level: number;
-        name: string | null;
-    };
-    export type SavegamesData = {
-        version: number;
-        savegames: Array<SavegameMetadata>;
-    };
-    export type PuzzleMetadata = {
-        id: number;
-        shortKey: string;
-        likes: number;
-        downloads: number;
-        completions: number;
-        difficulty: number | null;
-        averageTime: number | null;
-        title: string;
-        author: string;
-        completed: boolean;
-    };
-    export type PuzzleGameBuildingConstantProducer = {
-        type: "emitter";
-        item: string;
-        pos: {
-            x: number;
-            y: number;
-            r: number;
-        };
-    };
-    export type PuzzleGameBuildingGoal = {
-        type: "goal";
-        item: string;
-        pos: {
-            x: number;
-            y: number;
-            r: number;
-        };
-    };
-    export type PuzzleGameBuildingBlock = {
-        type: "block";
-        pos: {
-            x: number;
-            y: number;
-            r: number;
-        };
-    };
-    export type PuzzleGameData = {
-        version: number;
-        bounds: {
-            w: number;
-            h: number;
-        };
-        buildings: (PuzzleGameBuildingGoal | PuzzleGameBuildingConstantProducer | PuzzleGameBuildingBlock)[];
-        excludedBuildings: Array<string>;
-    };
-    export type PuzzleFullData = {
-        meta: PuzzleMetadata;
-        game: PuzzleGameData;
-    };
-}
-declare module "shapez/savegame/savegame_serializer" {
-    /**
-     * Serializes a savegame
-     */
-    export class SavegameSerializer {
-        internal: SerializerInternal;
-        /**
-         * Serializes the game root into a dump
-         * @param {GameRoot} root
-         * @param {boolean=} sanityChecks Whether to check for validity
-         * @returns {object}
-         */
-        generateDumpFromGameRoot(root: GameRoot, sanityChecks?: boolean | undefined): object;
-        /**
-         * Verifies if there are logical errors in the savegame
-         * @param {SerializedGame} savegame
-         * @returns {ExplainedResult}
-         */
-        verifyLogicalErrors(savegame: SerializedGame): ExplainedResult;
-        /**
-         * Tries to load the savegame from a given dump
-         * @param {SerializedGame} savegame
-         * @param {GameRoot} root
-         * @returns {ExplainedResult}
-         */
-        deserialize(savegame: SerializedGame, root: GameRoot): ExplainedResult;
-    }
-    export type Component = import("shapez/game/component").Component;
-    export type StaticComponent = typeof import("shapez/game/component").Component;
-    export type Entity = import("shapez/game/entity").Entity;
-    export type GameRoot = import("shapez/game/root").GameRoot;
-    export type SerializedGame = {
-        camera: any;
-        time: any;
-        entityMgr: any;
-        map: any;
-        gameMode: any;
-        hubGoals: any;
-        pinnedShapes: any;
-        waypoints: any;
-        entities: import("shapez/game/entity").Entity[];
-        beltPaths: any[];
-    };
-    import { SerializerInternal } from "shapez/savegame/serializer_internal";
-    import { ExplainedResult } from "shapez/core/explained_result";
-}
-declare module "shapez/savegame/serialization" {
-    /**
-     * Serializes an object using the given schema, mergin with the given properties
-     * @param {object} obj The object to serialize
-     * @param {Schema} schema The schema to use
-     * @param {object=} mergeWith Any additional properties to merge with the schema, useful for super calls
-     * @returns {object} Serialized data object
-     */
-    export function serializeSchema(obj: object, schema: Schema, mergeWith?: object | undefined): object;
-    /**
-     * Deserializes data into an object
-     * @param {object} obj The object to store the deserialized data into
-     * @param {Schema} schema The schema to use
-     * @param {object} data The serialized data
-     * @param {string|void|null=} baseclassErrorResult Convenience, if this is a string error code, do nothing and return it
-     * @param {import("shapez/game/root").GameRoot=} root Optional game root reference
-     * @returns {string|void} String error code or nothing on success
-     */
-    export function deserializeSchema(
-        obj: object,
-        schema: Schema,
-        data: object,
-        baseclassErrorResult?: (string | void | null) | undefined,
-        root?: import("shapez/game/root").GameRoot | undefined
-    ): string | void;
-    /**
-     * Verifies stored data using the given schema
-     * @param {Schema} schema The schema to use
-     * @param {object} data The data to verify
-     * @returns {string|void} String error code or nothing on success
-     */
-    export function verifySchema(schema: Schema, data: object): string | void;
-    /**
-     * Extends a schema by adding the properties from the new schema to the existing base schema
-     * @param {Schema} base
-     * @param {Schema} newOne
-     * @returns {Schema}
-     */
-    export function extendSchema(base: Schema, newOne: Schema): Schema;
-    export const types: {
-        int: TypeInteger;
-        uint: TypePositiveInteger;
-        float: TypeNumber;
-        ufloat: TypePositiveNumber;
-        string: TypeString;
-        entity: TypeEntity;
-        weakEntityRef: TypeEntityWeakref;
-        vector: TypeVector;
-        tileVector: TypeVector;
-        bool: TypeBoolean;
-        uintOrString: TypePositiveIntegerOrString;
-        /**
-         * @param {BaseDataType} wrapped
-         */
-        nullable(wrapped: BaseDataType): TypeNullable;
-        /**
-         * @param {FactoryTemplate<*>|SingletonFactoryTemplate<*>} registry
-         */
-        classId(registry: any | any): TypeClassId;
-        /**
-         * @param {BaseDataType} valueType
-         * @param {boolean=} includeEmptyValues
-         */
-        keyValueMap(valueType: BaseDataType, includeEmptyValues?: boolean | undefined): TypeKeyValueMap;
-        /**
-         * @param {Object<string, any>} values
-         */
-        enum(values: { [x: string]: any }): TypeEnum;
-        /**
-         * @param {FactoryTemplate<*>} registry
-         * @param {(GameRoot, any) => object=} resolver
-         */
-        obj(registry: any, resolver?: (GameRoot: any, any: any) => object): TypeClass;
-        /**
-         * @param {FactoryTemplate<*>} registry
-         */
-        objData(registry: any): TypeClassData;
-        /**
-         * @param {typeof BasicSerializableObject} cls
-         */
-        knownType(cls: typeof BasicSerializableObject): TypeFixedClass;
-        /**
-         * @param {BaseDataType} innerType
-         */
-        array(innerType: BaseDataType): TypeArray;
-        /**
-         * @param {BaseDataType} innerType
-         */
-        fixedSizeArray(innerType: BaseDataType): TypeArray;
-        /**
-         * @param {SingletonFactoryTemplate<*>} innerType
-         */
-        classRef(registry: any): TypeMetaClass;
-        /**
-         * @param {Object.<string, BaseDataType>} descriptor
-         */
-        structured(descriptor: { [x: string]: BaseDataType }): TypeStructuredObject;
-        /**
-         * @param {BaseDataType} a
-         * @param {BaseDataType} b
-         */
-        pair(a: BaseDataType, b: BaseDataType): TypePair;
-        /**
-         * @param {typeof BasicSerializableObject} classHandle
-         * @param {SingletonFactoryTemplate<*>} registry
-         */
-        classWithMetaclass(
-            classHandle: typeof BasicSerializableObject,
-            registry: any
-        ): TypeClassFromMetaclass;
-    };
-    export class BasicSerializableObject {
-        static getId(): void;
-        /**
-         * Should return the serialization schema
-         * @returns {Schema}
-         */
-        static getSchema(): Schema;
-        /** @returns {Schema} */
-        static getCachedSchema(): Schema;
-        /** @returns {string|void} */
-        static verify(data: any): string | void;
-        /**
-         * Fixes typeof DerivedComponent is not assignable to typeof Component, compiled out
-         * in non-dev builds
-         */
-        constructor(...args: any[]);
-        /** @returns {object | string | number} */
-        serialize(): object | string | number;
-        /**
-         * @param {any} data
-         * @param {import("shapez/savegame/savegame_serializer").GameRoot} root
-         * @returns {string|void}
-         */
-        deserialize(data: any, root?: import("shapez/savegame/savegame_serializer").GameRoot): string | void;
+declare module "shapez/game/hud/parts/statistics_handle" {
+    export type enumDisplayMode = string;
+    export namespace enumDisplayMode {
+        export const icons: string;
+        export const detailed: string;
     }
     /**
-     * A full schema declaration
+     * Stores how many seconds one unit is
+     * @type {Object<string, number>}
      */
-    export type Schema = any;
-    import { TypeInteger } from "shapez/savegame/serialization_data_types";
-    import { TypePositiveInteger } from "shapez/savegame/serialization_data_types";
-    import { TypeNumber } from "shapez/savegame/serialization_data_types";
-    import { TypePositiveNumber } from "shapez/savegame/serialization_data_types";
-    import { TypeString } from "shapez/savegame/serialization_data_types";
-    import { TypeEntity } from "shapez/savegame/serialization_data_types";
-    import { TypeEntityWeakref } from "shapez/savegame/serialization_data_types";
-    import { TypeVector } from "shapez/savegame/serialization_data_types";
-    import { TypeBoolean } from "shapez/savegame/serialization_data_types";
-    import { TypePositiveIntegerOrString } from "shapez/savegame/serialization_data_types";
-    import { BaseDataType } from "shapez/savegame/serialization_data_types";
-    import { TypeNullable } from "shapez/savegame/serialization_data_types";
-    import { TypeClassId } from "shapez/savegame/serialization_data_types";
-    import { TypeKeyValueMap } from "shapez/savegame/serialization_data_types";
-    import { TypeEnum } from "shapez/savegame/serialization_data_types";
-    import { TypeClass } from "shapez/savegame/serialization_data_types";
-    import { TypeClassData } from "shapez/savegame/serialization_data_types";
-    import { TypeFixedClass } from "shapez/savegame/serialization_data_types";
-    import { TypeArray } from "shapez/savegame/serialization_data_types";
-    import { TypeMetaClass } from "shapez/savegame/serialization_data_types";
-    import { TypeStructuredObject } from "shapez/savegame/serialization_data_types";
-    import { TypePair } from "shapez/savegame/serialization_data_types";
-    import { TypeClassFromMetaclass } from "shapez/savegame/serialization_data_types";
-}
-declare module "shapez/game/time/regular_game_speed" {
-    export class RegularGameSpeed extends BaseGameSpeed {
-        constructor(root: import("shapez/game/root").GameRoot);
-    }
-    import { BaseGameSpeed } from "shapez/game/time/base_game_speed";
-}
-declare module "shapez/game/time/paused_game_speed" {
-    export class PausedGameSpeed extends BaseGameSpeed {
-        constructor(root: import("shapez/game/root").GameRoot);
-    }
-    import { BaseGameSpeed } from "shapez/game/time/base_game_speed";
-}
-declare module "shapez/game/time/game_time" {
-    export class GameTime extends BasicSerializableObject {
-        static getId(): string;
-        static getSchema(): {
-            timeSeconds: import("shapez/savegame/serialization_data_types").TypeNumber;
-            speed: import("shapez/savegame/serialization_data_types").TypeClass;
-            realtimeSeconds: import("shapez/savegame/serialization_data_types").TypeNumber;
-        };
+    export const statisticsUnitsSeconds: {
+        [x: string]: number;
+    };
+    /**
+     * Simple wrapper for a shape definition within the shape statistics
+     */
+    export class HUDShapeStatisticsHandle {
         /**
          * @param {GameRoot} root
+         * @param {ShapeDefinition} definition
+         * @param {IntersectionObserver} intersectionObserver
          */
-        constructor(root: GameRoot);
+        constructor(root: GameRoot, definition: ShapeDefinition, intersectionObserver: IntersectionObserver);
+        definition: ShapeDefinition;
         root: GameRoot;
-        timeSeconds: number;
-        realtimeSeconds: any;
-        realtimeAdjust: any;
-        /** @type {BaseGameSpeed} */
-        speed: BaseGameSpeed;
-        logicTimeBudget: number;
+        intersectionObserver: IntersectionObserver;
+        visible: any;
+        initElement(): void;
+        element: HTMLDivElement;
+        counter: HTMLSpanElement;
         /**
-         * Fetches the new "real" time, called from the core once per frame, since performance now() is kinda slow
+         * Sets whether the shape handle is visible currently
+         * @param {boolean} visibility
          */
-        updateRealtimeNow(): void;
+        setVisible(visibility: boolean): void;
+        shapeCanvas: HTMLCanvasElement;
         /**
-         * Returns the ingame time in milliseconds
+         *
+         * @param {enumDisplayMode} displayMode
+         * @param {enumAnalyticsDataSource} dataSource
+         * @param {string} unit
+         * @param {boolean=} forced
          */
-        getTimeMs(): number;
+        update(
+            displayMode: enumDisplayMode,
+            dataSource: enumAnalyticsDataSource,
+            unit: string,
+            forced?: boolean | undefined
+        ): void;
+        graphCanvas: HTMLCanvasElement;
+        graphContext: CanvasRenderingContext2D;
         /**
-         * Returns how many seconds we are in the grace period
-         * @returns {number}
+         * Attaches the handle
+         * @param {HTMLElement} parent
          */
-        getRemainingGracePeriodSeconds(): number;
+        attach(parent: HTMLElement): void;
         /**
-         * Returns if we are currently in the grace period
+         * Detaches the handle
+         */
+        detach(): void;
+        /**
+         * Cleans up all child elements
+         */
+        cleanupChildElements(): void;
+        /**
+         * Destroys the handle
+         */
+        destroy(): void;
+    }
+    import { ShapeDefinition } from "shapez/game/shape_definition";
+    import { GameRoot } from "shapez/game/root";
+    import { enumAnalyticsDataSource } from "shapez/game/production_analytics";
+}
+declare module "shapez/game/hud/parts/statistics" {
+    export class HUDStatistics extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        background: HTMLDivElement;
+        dialogInner: HTMLDivElement;
+        title: HTMLDivElement;
+        closeButton: HTMLDivElement;
+        filterHeader: HTMLDivElement;
+        sourceExplanation: HTMLDivElement;
+        filtersDataSource: HTMLDivElement;
+        filtersDisplayMode: HTMLDivElement;
+        contentDiv: HTMLDivElement;
+        /**
+         * @param {enumAnalyticsDataSource} source
+         */
+        setDataSource(source: enumAnalyticsDataSource): void;
+        dataSource: string;
+        /**
+         * @param {enumDisplayMode} mode
+         */
+        setDisplayMode(mode: enumDisplayMode): void;
+        displayMode: string;
+        /**
+         * @param {boolean} sorted
+         */
+        setSorted(sorted: boolean): void;
+        sorted: boolean;
+        toggleSorted(): void;
+        /**
+         * Chooses the next unit
+         */
+        iterateUnit(): void;
+        currentUnit: any;
+        domAttach: DynamicDomAttach;
+        inputReciever: InputReceiver;
+        keyActionMapper: KeyActionMapper;
+        /** @type {Object.<string, HUDShapeStatisticsHandle>} */
+        activeHandles: {
+            [x: string]: HUDShapeStatisticsHandle;
+        };
+        intersectionObserver: IntersectionObserver;
+        lastFullRerender: number;
+        intersectionCallback(entries: any): void;
+        show(): void;
+        visible: boolean;
+        lastPartialRerender: number;
+        /**
+         * Performs a partial rerender, only updating graphs and counts
+         */
+        rerenderPartial(): void;
+        /**
+         * Performs a full rerender, regenerating everything
+         */
+        rerenderFull(): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { enumAnalyticsDataSource } from "shapez/game/production_analytics";
+    import { enumDisplayMode } from "shapez/game/hud/parts/statistics_handle";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { InputReceiver } from "shapez/core/input_receiver";
+    import { KeyActionMapper } from "shapez/game/key_action_mapper";
+    import { HUDShapeStatisticsHandle } from "shapez/game/hud/parts/statistics_handle";
+}
+declare module "shapez/game/hud/parts/wire_info" {
+    export class HUDWireInfo extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        spriteEmpty: import("shapez/core/sprites").AtlasSprite;
+        spriteConflict: import("shapez/core/sprites").AtlasSprite;
+        /**
+         *
+         *
+         * @param {import("shapez/core/draw_utils").DrawParameters} parameters
+         * @param {WireNetwork} network
+         */
+        drawHighlightedNetwork(
+            parameters: import("shapez/core/draw_utils").DrawParameters,
+            network: WireNetwork
+        ): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { WireNetwork } from "shapez/game/systems/wire";
+}
+declare module "shapez/game/hud/parts/lever_toggle" {
+    export class HUDLeverToggle extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        /**
+         * @param {Vector} pos
+         * @param {enumMouseButton} button
+         */
+        downPreHandler(pos: Vector, button: enumMouseButton): string;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Vector } from "shapez/core/vector";
+    import { enumMouseButton } from "shapez/game/camera";
+}
+declare module "shapez/game/hud/parts/pinned_shapes" {
+    /**
+     * Manages the pinned shapes on the left side of the screen
+     */
+    export class HUDPinnedShapes extends BaseHUDPart {
+        constructor(root: any);
+        /**
+         * Store a list of pinned shapes
+         * @type {Array<string>}
+         */
+        pinnedShapes: Array<string>;
+        /**
+         * Store handles to the currently rendered elements, so we can update them more
+         * convenient. Also allows for cleaning up handles.
+         * @type {Array<{
+         *  key: string,
+         *  definition: ShapeDefinition,
+         *  amountLabel: HTMLElement,
+         *  lastRenderedValue: string,
+         *  element: HTMLElement,
+         *  detector?: ClickDetector,
+         *  infoDetector?: ClickDetector,
+         *  throughputOnly?: boolean
+         * }>}
+         */
+        handles: {
+            key: string;
+            definition: ShapeDefinition;
+            amountLabel: HTMLElement;
+            lastRenderedValue: string;
+            element: HTMLElement;
+            detector?: ClickDetector;
+            infoDetector?: ClickDetector;
+            throughputOnly?: boolean;
+        }[];
+        element: HTMLDivElement;
+        /**
+         * Serializes the pinned shapes
+         */
+        serialize(): {
+            shapes: string[];
+        };
+        /**
+         * Deserializes the pinned shapes
+         * @param {{ shapes: Array<string>}} data
+         */
+        deserialize(data: { shapes: Array<string> }): string;
+        /**
+         * Updates all shapes after an upgrade has been purchased and removes the unused ones
+         */
+        updateShapesAfterUpgrade(): void;
+        /**
+         * Finds the current goal for the given key. If the key is the story goal, returns
+         * the story goal. If its the blueprint shape, no goal is returned. Otherwise
+         * it's searched for upgrades.
+         * @param {string} key
+         */
+        findGoalValueForShape(key: string): any;
+        /**
+         * Returns whether a given shape is currently pinned
+         * @param {string} key
+         */
+        isShapePinned(key: string): boolean;
+        /**
+         * Rerenders the whole component
+         */
+        rerenderFull(): void;
+        /**
+         * Pins a new shape
+         * @param {object} param0
+         * @param {string} param0.key
+         * @param {boolean=} param0.canUnpin
+         * @param {string=} param0.className
+         * @param {boolean=} param0.throughputOnly
+         */
+        internalPinShape({
+            key,
+            canUnpin,
+            className,
+            throughputOnly,
+        }: {
+            key: string;
+            canUnpin?: boolean | undefined;
+            className?: string | undefined;
+            throughputOnly?: boolean | undefined;
+        }): void;
+        /**
+         * Unpins a shape
+         * @param {string} key
+         */
+        unpinShape(key: string): void;
+        /**
+         * Requests to pin a new shape
+         * @param {ShapeDefinition} definition
+         */
+        pinNewShape(definition: ShapeDefinition): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { ShapeDefinition } from "shapez/game/shape_definition";
+    import { ClickDetector } from "shapez/core/click_detector";
+}
+declare module "shapez/game/hud/parts/screenshot_exporter" {
+    export class HUDScreenshotExporter extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        startExport(): void;
+        doExport(): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+}
+declare module "shapez/game/hud/parts/wires_overlay" {
+    export class HUDWiresOverlay extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        currentAlpha: any;
+        /**
+         * Switches between layers
+         */
+        switchLayers(): void;
+        /**
+         * Generates the background pattern for the wires overlay
+         */
+        generateTilePattern(): void;
+        tilePatternCanvas: HTMLCanvasElement;
+        /**
+         * Copies the wires value below the cursor
+         */
+        copyWireValue(): void;
+        cachedPatternBackground: CanvasPattern;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+}
+declare module "shapez/game/hud/parts/shape_viewer" {
+    export class HUDShapeViewer extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        background: HTMLDivElement;
+        dialogInner: HTMLDivElement;
+        title: HTMLDivElement;
+        closeButton: HTMLDivElement;
+        contentDiv: HTMLDivElement;
+        renderArea: HTMLDivElement;
+        infoArea: HTMLDivElement;
+        copyButton: HTMLButtonElement;
+        domAttach: DynamicDomAttach;
+        currentShapeKey: string;
+        inputReciever: InputReceiver;
+        keyActionMapper: KeyActionMapper;
+        /**
+         * Called when the copying of a key was requested
+         */
+        onCopyKeyRequested(): void;
+        visible: boolean;
+        /**
+         * Shows the viewer for a given definition
+         * @param {ShapeDefinition} definition
+         */
+        renderForShape(definition: ShapeDefinition): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { InputReceiver } from "shapez/core/input_receiver";
+    import { KeyActionMapper } from "shapez/game/key_action_mapper";
+    import { ShapeDefinition } from "shapez/game/shape_definition";
+}
+declare module "shapez/game/hud/parts/layer_preview" {
+    /**
+     * Helper class which allows peaking through to the wires layer
+     */
+    export class HUDLayerPreview extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        previewOverlay: import("shapez/core/sprites").AtlasSprite;
+        /**
+         * (re) initializes the canvas
+         */
+        initializeCanvas(): void;
+        previewSize: number;
+        canvas: HTMLCanvasElement;
+        context: CanvasRenderingContext2D;
+        /**
+         * Prepares the canvas to render at the given worldPos and the given camera scale
+         *
+         * @param {Vector} worldPos
+         * @param {number} scale 1 / zoomLevel
+         */
+        prepareCanvasForPreview(worldPos: Vector, scale: number): HTMLCanvasElement;
+        /**
+         * Renders the preview at the given position
+         * @param {import("shapez/core/draw_utils").DrawParameters} parameters
+         * @param {Vector} worldPos
+         * @param {number} scale 1 / zoomLevel
+         */
+        renderPreview(
+            parameters: import("shapez/core/draw_utils").DrawParameters,
+            worldPos: Vector,
+            scale: number
+        ): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Vector } from "shapez/core/vector";
+}
+declare module "shapez/game/hud/parts/tutorial_video_offer" {
+    /**
+     * Offers to open the tutorial video after completing a level
+     */
+    export class HUDTutorialVideoOffer extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+}
+declare module "shapez/game/hud/parts/miner_highlight" {
+    export class HUDMinerHighlight extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        /**
+         * Finds all connected miners to the given entity
+         * @param {Entity} entity
+         * @param {Set<number>} seenUids Which entities have already been processed
+         * @returns {Array<Entity>} The connected miners
+         */
+        findConnectedMiners(entity: Entity, seenUids?: Set<number>): Array<Entity>;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Entity } from "shapez/game/entity";
+}
+declare module "shapez/game/hud/parts/game_menu" {
+    export class HUDGameMenu extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        /** @type {Array<{
+         * badge: function,
+         * button: HTMLElement,
+         * badgeElement: HTMLElement,
+         * lastRenderAmount: number,
+         * condition?: function,
+         * notification: [string, enumNotificationType]
+         * }>} */
+        badgesToUpdate: {
+            badge: Function;
+            button: HTMLElement;
+            badgeElement: HTMLElement;
+            lastRenderAmount: number;
+            condition?: Function;
+            notification: [string, enumNotificationType];
+        }[];
+        /** @type {Array<{
+         * button: HTMLElement,
+         * condition: function,
+         * domAttach: DynamicDomAttach
+         * }>} */
+        visibilityToUpdate: {
+            button: HTMLElement;
+            condition: Function;
+            domAttach: DynamicDomAttach;
+        }[];
+        saveButton: HTMLDivElement;
+        settingsButton: HTMLDivElement;
+        trackedIsSaving: TrackedState;
+        onIsSavingChanged(isSaving: any): void;
+        onGameSaved(): void;
+        startSave(): void;
+        openSettings(): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { enumNotificationType } from "shapez/game/hud/parts/notifications";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { TrackedState } from "shapez/core/tracked_state";
+}
+declare module "shapez/game/hud/parts/constant_signal_edit" {
+    export class HUDConstantSignalEdit extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        /**
+         * @param {Vector} pos
+         * @param {enumMouseButton} button
+         */
+        downPreHandler(pos: Vector, button: enumMouseButton): string;
+        /**
+         * Asks the entity to enter a valid signal code
+         * @param {Entity} entity
+         * @param {object} param0
+         * @param {boolean=} param0.deleteOnCancel
+         */
+        editConstantSignal(
+            entity: Entity,
+            {
+                deleteOnCancel,
+            }: {
+                deleteOnCancel?: boolean | undefined;
+            }
+        ): void;
+        /**
+         * Tries to parse a signal code
+         * @param {Entity} entity
+         * @param {string} code
+         * @returns {BaseItem}
+         */
+        parseSignalCode(entity: Entity, code: string): BaseItem;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Vector } from "shapez/core/vector";
+    import { enumMouseButton } from "shapez/game/camera";
+    import { Entity } from "shapez/game/entity";
+    import { BaseItem } from "shapez/game/base_item";
+}
+declare module "shapez/game/hud/parts/keybinding_overlay" {
+    /**
+     * @typedef {{ keyCode: number }} KeyCode
+     */
+    /**
+     * @typedef {{
+     *   condition: () => boolean,
+     *   keys: Array<KeyCode|number|string>,
+     *   label: string,
+     *   cachedElement?: HTMLElement,
+     *   cachedVisibility?: boolean
+     * }} KeyBinding
+     */
+    export class HUDKeybindingOverlay extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        /**
+         * HELPER / Returns if there is a building selected for placement
          * @returns {boolean}
          */
-        getIsWithinGracePeriod(): boolean;
+        get buildingPlacementActive(): boolean;
         /**
-         * Internal method to generate new logic time budget
-         * @param {number} deltaMs
+         * HELPER / Returns if there is a building selected for placement and
+         * it supports the belt planner
+         * @returns {boolean}
          */
-        internalAddDeltaToBudget(deltaMs: number): void;
+        get buildingPlacementSupportsBeltPlanner(): boolean;
         /**
-         * Performs update ticks based on the queued logic budget
-         * @param {number} deltaMs
-         * @param {function():boolean} updateMethod
+         * HELPER / Returns if there is a building selected for placement and
+         * it has multiplace enabled by default
+         * @returns {boolean}
          */
-        performTicks(deltaMs: number, updateMethod: () => boolean): void;
+        get buildingPlacementStaysInPlacement(): boolean;
         /**
-         * Returns ingame time in seconds
-         * @returns {number} seconds
+         * HELPER / Returns if there is a blueprint selected for placement
+         * @returns {boolean}
          */
-        now(): number;
+        get blueprintPlacementActive(): boolean;
         /**
-         * Returns "real" time in seconds
-         * @returns {number} seconds
+         * HELPER / Returns if the belt planner is currently active
+         * @returns {boolean}
          */
-        realtimeNow(): number;
+        get beltPlannerActive(): boolean;
         /**
-         * Returns "real" time in seconds
-         * @returns {number} seconds
+         * HELPER / Returns if there is a last blueprint available
+         * @returns {boolean}
          */
-        systemNow(): number;
-        getIsPaused(): boolean;
-        getSpeed(): BaseGameSpeed;
-        setSpeed(speed: any): void;
+        get lastBlueprintAvailable(): boolean;
+        /**
+         * HELPER / Returns if there is anything selected on the map
+         * @returns {boolean}
+         */
+        get anythingSelectedOnMap(): boolean;
+        /**
+         * HELPER / Returns if there is a building or blueprint selected for placement
+         * @returns {boolean}
+         */
+        get anyPlacementActive(): boolean;
+        /**
+         * HELPER / Returns if the map overview is active
+         * @returns {boolean}
+         */
+        get mapOverviewActive(): boolean;
+        /** @type {Array<KeyBinding>} */
+        keybindings: Array<KeyBinding>;
+        element: HTMLDivElement;
+        domAttach: DynamicDomAttach;
     }
-    import { BasicSerializableObject } from "shapez/savegame/serialization";
-    import { GameRoot } from "shapez/game/root";
-    import { BaseGameSpeed } from "shapez/game/time/base_game_speed";
-}
-declare module "shapez/game/entity_manager" {
-    export class EntityManager extends BasicSerializableObject {
-        static getId(): string;
-        static getSchema(): {
-            nextUid: import("shapez/savegame/serialization_data_types").TypePositiveInteger;
-        };
-        constructor(root: any);
-        /** @type {GameRoot} */
-        root: GameRoot;
-        /** @type {Array<Entity>} */
-        entities: Array<Entity>;
-        /** @type {Array<Entity>} */
-        destroyList: Array<Entity>;
-        /** @type {Object.<string, Array<Entity>>} */
-        componentToEntity: {
-            [x: string]: Array<Entity>;
-        };
-        nextUid: number;
-        getStatsText(): string;
-        update(): void;
-        /**
-         * Registers a new entity
-         * @param {Entity} entity
-         * @param {number=} uid Optional predefined uid
-         */
-        registerEntity(entity: Entity, uid?: number | undefined): void;
-        /**
-         * Generates a new uid
-         * @returns {number}
-         */
-        generateUid(): number;
-        /**
-         * Call to attach a new component after the creation of the entity
-         * @param {Entity} entity
-         * @param {Component} component
-         */
-        attachDynamicComponent(entity: Entity, component: Component): void;
-        /**
-         * Call to remove a component after the creation of the entity
-         * @param {Entity} entity
-         * @param {typeof Component} component
-         */
-        removeDynamicComponent(entity: Entity, component: typeof Component): void;
-        /**
-         * Finds an entity buy its uid, kinda slow since it loops over all entities
-         * @param {number} uid
-         * @param {boolean=} errorWhenNotFound
-         * @returns {Entity}
-         */
-        findByUid(uid: number, errorWhenNotFound?: boolean | undefined): Entity;
-        /**
-         * Returns a map which gives a mapping from UID to Entity.
-         * This map is not updated.
-         *
-         * @returns {Map<number, Entity>}
-         */
-        getFrozenUidSearchMap(): Map<number, Entity>;
-        /**
-         * Returns all entities having the given component
-         * @param {typeof Component} componentHandle
-         * @returns {Array<Entity>} entities
-         */
-        getAllWithComponent(componentHandle: typeof Component): Array<Entity>;
-        /**
-         * Unregisters all components of an entity from the component to entity mapping
-         * @param {Entity} entity
-         */
-        unregisterEntityComponents(entity: Entity): void;
-        processDestroyList(): void;
-        /**
-         * Queues an entity for destruction
-         * @param {Entity} entity
-         */
-        destroyEntity(entity: Entity): void;
-    }
-    import { BasicSerializableObject } from "shapez/savegame/serialization";
-    import { GameRoot } from "shapez/game/root";
-    import { Entity } from "shapez/game/entity";
-    import { Component } from "shapez/game/component";
-}
-declare module "shapez/game/buildings/belt" {
-    export const arrayBeltVariantToRotation: string[];
-    export const beltOverlayMatrices: {
-        [x: string]: {
-            [x: number]: number[];
-        };
+    export type KeyCode = {
+        keyCode: number;
     };
-    export class MetaBeltBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-            rotationVariant: number;
-        }[];
+    export type KeyBinding = {
+        condition: () => boolean;
+        keys: Array<KeyCode | number | string>;
+        label: string;
+        cachedElement?: HTMLElement;
+        cachedVisibility?: boolean;
+    };
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+}
+declare module "shapez/game/hud/parts/watermark" {
+    export class HUDWatermark extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        linkElement: HTMLDivElement;
+        domAttach: DynamicDomAttach;
+        onWatermarkClick(): void;
     }
-    import { MetaBuilding } from "shapez/game/meta_building";
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+}
+declare module "shapez/game/hud/parts/standalone_advantages" {
+    export class HUDStandaloneAdvantages extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        background: HTMLDivElement;
+        dialogInner: HTMLDivElement;
+        title: HTMLDivElement;
+        contentDiv: HTMLDivElement;
+        domAttach: DynamicDomAttach;
+        inputReciever: InputReceiver;
+        lastShown: number;
+        show(): void;
+        visible: boolean;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { InputReceiver } from "shapez/core/input_receiver";
+}
+declare module "shapez/game/hud/parts/cat_memes" {
+    export class HUDCatMemes extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        domAttach: DynamicDomAttach;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+}
+declare module "shapez/game/hud/parts/tutorial_hints" {
+    export class HUDPartTutorialHints extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        videoElement: HTMLVideoElement;
+        videoAttach: DynamicDomAttach;
+        enlarged: boolean;
+        inputReciever: InputReceiver;
+        keyActionMapper: KeyActionMapper;
+        domAttach: DynamicDomAttach;
+        currentShownLevel: TrackedState;
+        updateVideoUrl(level: any): void;
+        show(): void;
+        toggleHintEnlarged(): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { InputReceiver } from "shapez/core/input_receiver";
+    import { KeyActionMapper } from "shapez/game/key_action_mapper";
+    import { TrackedState } from "shapez/core/tracked_state";
+}
+declare module "shapez/core/cachebust" {
+    /**
+     * Generates a cachebuster string. This only modifies the path in the browser version
+     * @param {string} path
+     */
+    export function cachebust(path: string): string;
+}
+declare module "shapez/game/hud/parts/interactive_tutorial" {
+    export class HUDInteractiveTutorial extends BaseHUDPart {
+        constructor(root: GameRoot);
+        element: HTMLDivElement;
+        elementDescription: HTMLDivElement;
+        elementGif: HTMLDivElement;
+        domAttach: DynamicDomAttach;
+        currentHintId: TrackedState;
+        onHintChanged(hintId: any): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { TrackedState } from "shapez/core/tracked_state";
+    import { GameRoot } from "shapez/game/root";
+}
+declare module "shapez/core/query_parameters" {
+    export namespace queryParamOptions {
+        export const embedProvider: any;
+        export const fullVersion: boolean;
+        export const sandboxMode: boolean;
+    }
+}
+declare module "shapez/game/hud/parts/sandbox_controller" {
+    export class HUDSandboxController extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        giveBlueprints(): void;
+        maxOutAll(): void;
+        modifyUpgrade(id: any, amount: any): void;
+        modifyLevel(amount: any): void;
+        visible: any;
+        domAttach: DynamicDomAttach;
+        toggle(): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+}
+declare module "shapez/game/modes/regular" {
+    /**
+     * Generates the level definitions
+     * @param {boolean} limitedVersion
+     */
+    export function generateLevelDefinitions(limitedVersion?: boolean): any;
+    /** @typedef {{
+     *   shape: string,
+     *   amount: number
+     * }} UpgradeRequirement */
+    /** @typedef {{
+     *   required: Array<UpgradeRequirement>
+     *   improvement?: number,
+     *   excludePrevious?: boolean
+     * }} TierRequirement */
+    /** @typedef {Array<TierRequirement>} UpgradeTiers */
+    /** @typedef {{
+     *   shape: string,
+     *   required: number,
+     *   reward: enumHubGoalRewards,
+     *   throughputOnly?: boolean
+     * }} LevelDefinition */
+    export const rocketShape: "CbCuCbCu:Sr------:--CrSrCr:CwCwCwCw";
+    export const finalGameShape: "RuCw--Cw:----Ru--";
+    export class RegularGameMode extends GameMode {
+        /** @param {GameRoot} root */
+        constructor(root: GameRoot);
+    }
+    export type UpgradeRequirement = {
+        shape: string;
+        amount: number;
+    };
+    export type TierRequirement = {
+        required: Array<UpgradeRequirement>;
+        improvement?: number;
+        excludePrevious?: boolean;
+    };
+    export type UpgradeTiers = {
+        required: Array<UpgradeRequirement>;
+        improvement?: number;
+        excludePrevious?: boolean;
+    }[];
+    export type LevelDefinition = {
+        shape: string;
+        required: number;
+        reward: enumHubGoalRewards;
+        throughputOnly?: boolean;
+    };
+    import { GameMode } from "shapez/game/game_mode";
+    import { GameRoot } from "shapez/game/root";
+    import { enumHubGoalRewards } from "shapez/game/tutorial_goals";
+}
+declare module "shapez/savegame/schemas/1009" {
+    export class SavegameInterface_V1009 extends SavegameInterface_V1008 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1008to1009(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1008 } from "shapez/savegame/schemas/1008";
+}
+declare module "shapez/savegame/schemas/1010" {
+    export class SavegameInterface_V1010 extends SavegameInterface_V1009 {
+        /**
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
+         */
+        static migrate1009to1010(data: import("shapez/savegame/savegame_typedefs").SavegameData): void;
+        constructor(data: any);
+    }
+    import { SavegameInterface_V1009 } from "shapez/savegame/schemas/1009";
+}
+declare module "shapez/savegame/savegame_interface_registry" {
+    /**
+     * Returns if the given savegame has any supported interface
+     * @param {any} savegame
+     * @returns {BaseSavegameInterface|null}
+     */
+    export function getSavegameInterface(savegame: any): BaseSavegameInterface | null;
+    /** @type {Object.<number, typeof BaseSavegameInterface>} */
+    export const savegameInterfaces: {
+        [x: number]: typeof BaseSavegameInterface;
+    };
+    import { BaseSavegameInterface } from "shapez/savegame/savegame_interface";
+}
+declare module "shapez/platform/browser/storage_indexed_db" {
+    export class StorageImplBrowserIndexedDB extends StorageInterface {
+        constructor(app: any);
+        currentBusyFilename: boolean;
+        /** @type {IDBDatabase} */
+        database: IDBDatabase;
+    }
+    import { StorageInterface } from "shapez/platform/storage";
+}
+declare module "shapez/platform/electron/storage" {
+    export class StorageImplElectron extends StorageInterface {
+        constructor(app: any);
+    }
+    import { StorageInterface } from "shapez/platform/storage";
+}
+declare module "shapez/mods/mod" {
+    export class Mod {
+        /**
+         * @param {object} param0
+         * @param {Application} param0.app
+         * @param {ModLoader} param0.modLoader
+         * @param {import("shapez/mods/modloader").ModMetadata} param0.meta
+         * @param {Object} param0.settings
+         * @param {() => Promise<void>} param0.saveSettings
+         */
+        constructor({
+            app,
+            modLoader,
+            meta,
+            settings,
+            saveSettings,
+        }: {
+            app: Application;
+            modLoader: ModLoader;
+            meta: import("shapez/mods/modloader").ModMetadata;
+            settings: any;
+            saveSettings: () => Promise<void>;
+        });
+        app: Application;
+        modLoader: ModLoader;
+        metadata: {
+            name: string;
+            version: string;
+            author: string;
+            website: string;
+            description: string;
+            id: string;
+            minimumGameVersion?: string;
+            settings: [];
+            doesNotAffectSavegame?: boolean;
+        };
+        signals: {
+            appBooted: import("shapez/core/signal").Signal;
+            modifyLevelDefinitions: any;
+            modifyUpgrades: any;
+            hudElementInitialized: any;
+            hudElementFinalized: any;
+            hudInitializer: any;
+            gameInitialized: any;
+            gameLoadingStageEntered: any;
+            gameStarted: any;
+            stateEntered: any;
+            gameSerialized: any;
+            gameDeserialized: any;
+        };
+        modInterface: import("shapez/mods/mod_interface").ModInterface;
+        settings: any;
+        saveSettings: () => Promise<void>;
+        init(): void;
+        get dialogs(): import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs;
+    }
+    import { Application } from "shapez/application";
+    import { ModLoader } from "shapez/mods/modloader";
 }
 declare module "shapez/game/systems/belt" {
     export const BELT_ANIM_COUNT: 14;
@@ -7868,1782 +9311,536 @@ declare module "shapez/game/game_system_manager" {
     import { GoalAcceptorSystem } from "shapez/game/systems/goal_acceptor";
     import { ZoneSystem } from "shapez/game/systems/zone";
 }
-declare module "shapez/game/achievement_proxy" {
-    export class AchievementProxy {
-        /** @param {GameRoot} root */
-        constructor(root: GameRoot);
-        root: GameRoot;
-        provider: import("shapez/platform/achievement_provider").AchievementProviderInterface;
-        disabled: boolean;
-        sliceTime: number;
-        onLoad(): void;
-        initialize(): void;
-        startSlice(): void;
-        update(): void;
-        /**
-         * @param {string} key
-         * @returns {boolean}
-         */
-        has(key: string): boolean;
-        /** @param {Entity} entity */
-        onEntityAdded(entity: Entity): void;
-        /** @param {number} level */
-        onStoryGoalCompleted(level: number): void;
-        onMamFailure(): void;
-    }
-    import { GameRoot } from "shapez/game/root";
-    import { Entity } from "shapez/game/entity";
-}
-declare module "shapez/core/error_handler" {
-    export let APPLICATION_ERROR_OCCURED: boolean;
-}
-declare module "shapez/core/state_manager" {
-    /**
-     * This is the main state machine which drives the game states.
-     */
-    export class StateManager {
-        /**
-         * @param {Application} app
-         */
-        constructor(app: Application);
+declare module "shapez/game/hud/parts/modal_dialogs" {
+    export class HUDModalDialogs extends BaseHUDPart {
+        constructor(root: any, app: any);
+        /** @type {Application} */
         app: Application;
-        /** @type {GameState} */
-        currentState: GameState;
-        /** @type {Object.<string, new() => GameState>} */
-        stateClasses: {
-            [x: string]: new () => GameState;
+        dialogParent: any;
+        dialogStack: any[];
+        domWatcher: DynamicDomAttach;
+        initializeToElement(element: any): void;
+        /**
+         * @param {string} title
+         * @param {string} text
+         * @param {Array<string>} buttons
+         */
+        showInfo(title: string, text: string, buttons?: Array<string>): {};
+        /**
+         * @param {string} title
+         * @param {string} text
+         * @param {Array<string>} buttons
+         */
+        showWarning(title: string, text: string, buttons?: Array<string>): {};
+        /**
+         * @param {string} feature
+         * @param {string} textPrefab
+         */
+        showFeatureRestrictionInfo(feature: string, textPrefab?: string): {};
+        showOptionChooser(title: any, options: any): {};
+        showLoadingDialog(text?: string): any;
+        internalShowDialog(dialog: any): void;
+        closeDialog(dialog: any): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Application } from "shapez/application";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+}
+declare module "shapez/mods/mod_meta_building" {
+    export class ModMetaBuilding extends MetaBuilding {
+        /**
+         * @returns {({
+         *  variant: string;
+         *  rotationVariant?: number;
+         *  name: string;
+         *  description: string;
+         *  blueprintImageBase64?: string;
+         *  regularImageBase64?: string;
+         *  tutorialImageBase64?: string;
+         * }[])}
+         */
+        static getAllVariantCombinations(): {
+            variant: string;
+            rotationVariant?: number;
+            name: string;
+            description: string;
+            blueprintImageBase64?: string;
+            regularImageBase64?: string;
+            tutorialImageBase64?: string;
+        }[];
+        constructor(id: string);
+    }
+    import { MetaBuilding } from "shapez/game/meta_building";
+}
+declare module "shapez/mods/mod_interface" {
+    /**
+     * @typedef {{new(...args: any[]): any, prototype: any}} constructable
+     */
+    /**
+     * @template {(...args: any) => any} F The function
+     * @template {object} T  The value of this
+     * @typedef {(this: T, ...args: Parameters<F>) => ReturnType<F>} bindThis
+     */
+    /**
+     * @template {(...args: any[]) => any} F
+     * @template P
+     * @typedef {(...args: [P, Parameters<F>]) => ReturnType<F>} beforePrams IMPORTANT: this puts the original parameters into an array
+     */
+    /**
+     * @template {(...args: any[]) => any} F
+     * @template P
+     * @typedef {(...args: [...Parameters<F>, P]) => ReturnType<F>} afterPrams
+     */
+    /**
+     * @template {(...args: any[]) => any} F
+     * @typedef {(...args: [...Parameters<F>, ...any]) => ReturnType<F>} extendsPrams
+     */
+    export class ModInterface {
+        /**
+         *
+         * @param {ModLoader} modLoader
+         */
+        constructor(modLoader: ModLoader);
+        modLoader: ModLoader;
+        registerCss(cssString: any): void;
+        registerSprite(spriteId: any, base64string: any): void;
+        /**
+         *
+         * @param {string} imageBase64
+         * @param {string} jsonTextData
+         */
+        registerAtlas(imageBase64: string, jsonTextData: string): void;
+        /**
+         *
+         * @param {object} param0
+         * @param {string} param0.id
+         * @param {string} param0.shortCode
+         * @param {(distanceToOriginInChunks: number) => number} param0.weightComputation
+         * @param {(options: import("shapez/game/shape_definition").SubShapeDrawOptions) => void} param0.draw
+         */
+        registerSubShapeType({
+            id,
+            shortCode,
+            weightComputation,
+            draw,
+        }: {
+            id: string;
+            shortCode: string;
+            weightComputation: (distanceToOriginInChunks: number) => number;
+            draw: (options: import("shapez/game/shape_definition").SubShapeDrawOptions) => void;
+        }): void;
+        registerTranslations(language: any, translations: any): void;
+        /**
+         * @param {typeof BaseItem} item
+         * @param {(itemData: any) => BaseItem} resolver
+         */
+        registerItem(item: typeof BaseItem, resolver: (itemData: any) => BaseItem): void;
+        /**
+         *
+         * @param {typeof Component} component
+         */
+        registerComponent(component: typeof Component): void;
+        /**
+         *
+         * @param {Object} param0
+         * @param {string} param0.id
+         * @param {new (any) => GameSystem} param0.systemClass
+         * @param {string=} param0.before
+         * @param {string[]=} param0.drawHooks
+         */
+        registerGameSystem({
+            id,
+            systemClass,
+            before,
+            drawHooks,
+        }: {
+            id: string;
+            systemClass: new (any: any) => GameSystem;
+            before?: string | undefined;
+            drawHooks?: string[] | undefined;
+        }): void;
+        /**
+         *
+         * @param {string} hookId
+         * @param {string} systemId
+         */
+        registerGameSystemDrawHook(hookId: string, systemId: string): void;
+        /**
+         *
+         * @param {object} param0
+         * @param {typeof ModMetaBuilding} param0.metaClass
+         * @param {string=} param0.buildingIconBase64
+         */
+        registerNewBuilding({
+            metaClass,
+            buildingIconBase64,
+        }: {
+            metaClass: typeof ModMetaBuilding;
+            buildingIconBase64?: string | undefined;
+        }): void;
+        /**
+         *
+         * @param {Object} param0
+         * @param {string} param0.id
+         * @param {number} param0.keyCode
+         * @param {string} param0.translation
+         * @param {boolean=} param0.repeated
+         * @param {((GameRoot) => void)=} param0.handler
+         * @param {{shift?: boolean; alt?: boolean; ctrl?: boolean}=} param0.modifiers
+         * @param {boolean=} param0.builtin
+         */
+        registerIngameKeybinding({
+            id,
+            keyCode,
+            translation,
+            modifiers,
+            repeated,
+            builtin,
+            handler,
+        }: {
+            id: string;
+            keyCode: number;
+            translation: string;
+            repeated?: boolean | undefined;
+            handler?: (GameRoot: any) => void;
+            modifiers?:
+                | {
+                      shift?: boolean;
+                      alt?: boolean;
+                      ctrl?: boolean;
+                  }
+                | undefined;
+            builtin?: boolean | undefined;
+        }): {
+            keyCode: number;
+            id: string;
+            repeated: boolean;
+            modifiers: {
+                shift?: boolean;
+                alt?: boolean;
+                ctrl?: boolean;
+            };
+            builtin: boolean;
         };
+        /**
+         * @returns {HUDModalDialogs}
+         */
+        get dialogs(): HUDModalDialogs;
+        setBuildingToolbarIcon(buildingId: any, iconBase64: any): void;
+        /**
+         *
+         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
+         * @param {*} variant
+         * @param {*} imageBase64
+         */
+        setBuildingTutorialImage(
+            buildingIdOrClass: string | (new () => MetaBuilding),
+            variant: any,
+            imageBase64: any
+        ): void;
+        /**
+         * @param {Object} param0
+         * @param {string} param0.id
+         * @param {string} param0.name
+         * @param {Object} param0.theme
+         */
+        registerGameTheme({ id, name, theme }: { id: string; name: string; theme: any }): void;
         /**
          * Registers a new state class, should be a GameState derived class
-         * @param {object} stateClass
+         * @param {typeof import("shapez/core/game_state").GameState} stateClass
          */
-        register(stateClass: object): void;
+        registerGameState(stateClass: typeof import("shapez/core/game_state").GameState): void;
         /**
-         * Constructs a new state or returns the instance from the cache
-         * @param {string} key
-         */
-        constructState(key: string): GameState;
-        /**
-         * Moves to a given state
-         * @param {string} key State Key
-         */
-        moveToState(key: string, payload?: {}): boolean;
-        /**
-         * Returns the current state
-         * @returns {GameState}
-         */
-        getCurrentState(): GameState;
-    }
-    import { Application } from "shapez/application";
-    import { GameState } from "shapez/core/game_state";
-}
-declare module "shapez/core/request_channel" {
-    export const PROMISE_ABORTED: "promise-aborted";
-    export class RequestChannel {
-        /** @type {Array<Promise>} */
-        pendingPromises: Array<Promise>;
-        /**
-         *
-         * @param {Promise<any>} promise
-         * @returns {Promise<any>}
-         */
-        watch(promise: Promise<any>): Promise<any>;
-        cancelAll(): void;
-    }
-}
-declare module "shapez/core/game_state" {
-    /**
-     * Basic state of the game state machine. This is the base of the whole game
-     */
-    export class GameState {
-        /**
-         * Constructs a new state with the given id
-         * @param {string} key The id of the state. We use ids to refer to states because otherwise we get
-         *                     circular references
-         */
-        constructor(key: string);
-        key: string;
-        /** @type {StateManager} */
-        stateManager: StateManager;
-        /** @type {Application} */
-        app: Application;
-        fadingOut: boolean;
-        /** @type {Array<ClickDetector>} */
-        clickDetectors: Array<ClickDetector>;
-        inputReciever: InputReceiver;
-        asyncChannel: RequestChannel;
-        /**
-         * Returns the states key
-         * @returns {string}
-         */
-        getKey(): string;
-        /**
-         * Returns the html element of the state
-         * @returns {HTMLElement}
-         */
-        getDivElement(): HTMLElement;
-        /**
-         * Transfers to a new state
-         * @param {string} stateKey The id of the new state
-         */
-        moveToState(stateKey: string, payload?: {}, skipFadeOut?: boolean): void;
-        /**
-         * Tracks clicks on a given element and calls the given callback *on this state*.
-         * If you want to call another function wrap it inside a lambda.
-         * @param {Element} element The element to track clicks on
-         * @param {function():void} handler The handler to call
-         * @param {import("shapez/core/click_detector").ClickDetectorConstructorArgs=} args Click detector arguments
-         */
-        trackClicks(
-            element: Element,
-            handler: () => void,
-            args?: import("shapez/core/click_detector").ClickDetectorConstructorArgs | undefined
-        ): void;
-        /**
-         * Cancels all promises on the api as well as our async channel
-         */
-        cancelAllAsyncOperations(): void;
-        /**
-         * Callback when entering the state, to be overriddemn
-         * @param {any} payload Arbitrary data passed from the state which we are transferring from
-         */
-        onEnter(payload: any): void;
-        /**
-         * Callback when leaving the state
-         */
-        onLeave(): void;
-        /**
-         * Callback before leaving the game state or when the page is unloaded
-         */
-        onBeforeExit(): void;
-        /**
-         * Callback when the app got paused (on android, this means in background)
-         */
-        onAppPause(): void;
-        /**
-         * Callback when the app got resumed (on android, this means in foreground again)
-         */
-        onAppResume(): void;
-        /**
-         * Render callback
-         * @param {number} dt Delta time in ms since last render
-         */
-        onRender(dt: number): void;
-        /**
-         * Background tick callback, called while the game is inactiev
-         * @param {number} dt Delta time in ms since last tick
-         */
-        onBackgroundTick(dt: number): void;
-        /**
-         * Called when the screen resized
-         * @param {number} w window/screen width
-         * @param {number} h window/screen height
-         */
-        onResized(w: number, h: number): void;
-        /**
-         * Internal backbutton handler, called when the hardware back button is pressed or
-         * the escape key is pressed
-         */
-        onBackButton(): void;
-        /**
-         * Should return how many mulliseconds to fade in / out the state. Not recommended to override!
-         * @returns {number} Time in milliseconds to fade out
-         */
-        getInOutFadeTime(): number;
-        /**
-         * Should return whether to fade in the game state. This will then apply the right css classes
-         * for the fadein.
-         * @returns {boolean}
-         */
-        getHasFadeIn(): boolean;
-        /**
-         * Should return whether to fade out the game state. This will then apply the right css classes
-         * for the fadeout and wait the delay before moving states
-         * @returns {boolean}
-         */
-        getHasFadeOut(): boolean;
-        /**
-         * Returns if this state should get paused if it does not have focus
-         * @returns {boolean} true to pause the updating of the game
-         */
-        getPauseOnFocusLost(): boolean;
-        /**
-         * Should return the html code of the state.
-         * @returns {string}
-         */
-        getInnerHTML(): string;
-        /**
-         * Returns if the state has an unload confirmation, this is the
-         * "Are you sure you want to leave the page" message.
-         */
-        getHasUnloadConfirmation(): boolean;
-        /**
-         * Should return the theme music for this state
-         * @returns {string|null}
-         */
-        getThemeMusic(): string | null;
-        /**
-         * Internal callback from the manager. Do not override!
-         * @param {StateManager} stateManager
-         */
-        internalRegisterCallback(stateManager: StateManager, app: any): void;
-        /**
-         * Internal callback when entering the state. Do not override!
-         * @param {any} payload Arbitrary data passed from the state which we are transferring from
-         * @param {boolean} callCallback Whether to call the onEnter callback
-         */
-        internalEnterCallback(payload: any, callCallback?: boolean): void;
-        htmlElement: HTMLElement;
-        /**
-         * Internal callback when the state is left. Do not override!
-         */
-        internalLeaveCallback(): void;
-        /**
-         * Internal callback *before* the state is left. Also is called on page unload
-         */
-        internalOnBeforeExitCallback(): void;
-        /**
-         * Internal app pause callback
-         */
-        internalOnAppPauseCallback(): void;
-        /**
-         * Internal app resume callback
-         */
-        internalOnAppResumeCallback(): void;
-        /**
-         * Cleans up all click detectors
-         */
-        internalCleanUpClickDetectors(): void;
-        /**
-         * Internal method to get the HTML of the game state.
-         * @returns {string}
-         */
-        internalGetFullHtml(): string;
-        /**
-         * Internal method to compute the time to fade in / out
-         * @returns {number} time to fade in / out in ms
-         */
-        internalGetFadeInOutTime(): number;
-    }
-    import { StateManager } from "shapez/core/state_manager";
-    import { Application } from "shapez/application";
-    import { ClickDetector } from "shapez/core/click_detector";
-    import { InputReceiver } from "shapez/core/input_receiver";
-    import { RequestChannel } from "shapez/core/request_channel";
-}
-declare module "shapez/game/game_loading_overlay" {
-    export class GameLoadingOverlay {
-        /**
-         *
-         * @param {Application} app
-         * @param {HTMLElement} parent
-         */
-        constructor(app: Application, parent: HTMLElement);
-        app: Application;
-        parent: HTMLElement;
-        /** @type {HTMLElement} */
-        element: HTMLElement;
-        /**
-         * Removes the overlay if its currently visible
-         */
-        removeIfAttached(): void;
-        /**
-         * Returns if the loading overlay is attached
-         */
-        isAttached(): HTMLElement;
-        /**
-         * Shows a super basic overlay
-         */
-        showBasic(): void;
-        /**
-         * Adds a text with 'loading' and a spinner
-         * @param {HTMLElement} element
-         */
-        internalAddSpinnerAndText(element: HTMLElement): void;
-        /**
-         * Adds a random hint
-         * @param {HTMLElement} element
-         */
-        internalAddHint(element: HTMLElement): void;
-    }
-    import { Application } from "shapez/application";
-}
-declare module "shapez/core/lzstring" {
-    export function compressU8(uncompressed: any): Uint8Array;
-    /**
-     * @param {string} uncompressed
-     * @param {number} header
-     */
-    export function compressU8WHeader(uncompressed: string, header: number): Uint8Array;
-    /**
-     *
-     * @param {Uint8Array} compressed
-     */
-    export function decompressU8WHeader(compressed: Uint8Array): string;
-    export function compressX64(input: any): string;
-    export function decompressX64(input: any): string;
-}
-declare module "shapez/core/sensitive_utils.encrypt" {
-    export function sha1(str: any): any;
-    export function getNameOfProvider(): any;
-    /**
-     * Computes the crc for a given string
-     * @param {string} str
-     */
-    export function computeCrc(str: string): string;
-    export const CRC_PREFIX: string;
-}
-declare module "shapez/platform/storage" {
-    export const FILE_NOT_FOUND: "file_not_found";
-    export class StorageInterface {
-        constructor(app: any);
-        /** @type {Application} */
-        app: Application;
-        /**
-         * Initializes the storage
-         * @returns {Promise<void>}
-         */
-        initialize(): Promise<void>;
-        /**
-         * Writes a string to a file asynchronously
-         * @param {string} filename
-         * @param {string} contents
-         * @returns {Promise<void>}
-         */
-        writeFileAsync(filename: string, contents: string): Promise<void>;
-        /**
-         * Reads a string asynchronously. Returns Promise<FILE_NOT_FOUND> if file was not found.
-         * @param {string} filename
-         * @returns {Promise<string>}
-         */
-        readFileAsync(filename: string): Promise<string>;
-        /**
-         * Tries to delete a file
-         * @param {string} filename
-         * @returns {Promise<void>}
-         */
-        deleteFileAsync(filename: string): Promise<void>;
-    }
-    import { Application } from "shapez/application";
-}
-declare module "shapez/savegame/savegame_compressor" {
-    /**
-     * @param {object} obj
-     */
-    export function compressObject(obj: object): {
-        keys: any[];
-        values: any[];
-        data: any;
-    };
-    /**
-     * @param {object} obj
-     */
-    export function decompressObject(obj: object): any;
-}
-declare module "shapez/webworkers/compression.worker" {
-    export {};
-}
-declare module "shapez/core/async_compression" {
-    export let compressionPrefix: string;
-    export const asyncCompressor: AsynCompression;
-    export type JobEntry = {
-        errorHandler: (arg0: any) => void;
-        resolver: (arg0: any) => void;
-        startTime: number;
-    };
-    /**
-     * @typedef {{
-     *   errorHandler: function(any) : void,
-     *   resolver: function(any) : void,
-     *   startTime: number
-     * }} JobEntry
-     */
-    class AsynCompression {
-        worker: any;
-        currentJobId: number;
-        /** @type {Object.<number, JobEntry>} */
-        currentJobs: {
-            [x: number]: JobEntry;
-        };
-        /**
-         * Compresses any object
-         * @param {any} obj
-         */
-        compressObjectAsync(obj: any): Promise<any>;
-        /**
-         * Queues a new job
-         * @param {string} job
-         * @param {any} data
-         * @returns {Promise<any>}
-         */
-        internalQueueJob(job: string, data: any): Promise<any>;
-    }
-    export {};
-}
-declare module "shapez/core/read_write_proxy" {
-    export class ReadWriteProxy {
-        /**
-         *
-         * @param {object} obj
-         */
-        static serializeObject(obj: object): string;
-        /**
-         *
-         * @param {object} text
-         */
-        static deserializeObject(text: object): any;
-        constructor(app: any, filename: any);
-        /** @type {Application} */
-        app: Application;
-        filename: any;
-        /** @type {object} */
-        currentData: object;
-        /**
-         * Store a debounced handler to prevent double writes
-         */
-        debouncedWrite: any;
-        /** @returns {ExplainedResult} */
-        verify(data: any): ExplainedResult;
-        getDefaultData(): {};
-        getCurrentVersion(): number;
-        /** @returns {ExplainedResult} */
-        migrate(data: any): ExplainedResult;
-        resetEverythingAsync(): Promise<void>;
-        /**
-         * Writes the data asychronously, fails if verify() fails.
-         * Debounces the operation by up to 50ms
-         * @returns {Promise<void>}
-         */
-        writeAsync(): Promise<void>;
-        /**
-         * Actually writes the data asychronously
-         * @returns {Promise<void>}
-         */
-        doWriteAsync(): Promise<void>;
-        readAsync(): Promise<any>;
-        /**
-         * Deletes the file
-         * @returns {Promise<void>}
-         */
-        deleteAsync(): Promise<void>;
-        /** @returns {ExplainedResult} */
-        internalVerifyBasicStructure(data: any): ExplainedResult;
-        /** @returns {ExplainedResult} */
-        internalVerifyEntry(data: any): ExplainedResult;
-    }
-    import { Application } from "shapez/application";
-    import { ExplainedResult } from "shapez/core/explained_result";
-}
-declare module "shapez/savegame/savegame_interface" {
-    export class BaseSavegameInterface {
-        /**
-         * Constructs an new interface for the given savegame
-         * @param {any} data
-         */
-        constructor(data: any);
-        /**
-         * Returns the interfaces version
-         */
-        getVersion(): void;
-        /**
-         * Returns the uncached json schema
-         * @returns {object}
-         */
-        getSchemaUncached(): object;
-        getValidator(): any;
-        data: any;
-        /**
-         * Validates the data
-         * @returns {boolean}
-         */
-        validate(): boolean;
-        /**
-         * Returns the time of last update
-         * @returns {number}
-         */
-        readLastUpdate(): number;
-        /**
-         * Returns the ingame time in seconds
-         * @returns {number}
-         */
-        readIngameTimeSeconds(): number;
-    }
-}
-declare module "shapez/savegame/schemas/1000" {
-    export class SavegameInterface_V1000 extends BaseSavegameInterface {
-        constructor(data: any);
-    }
-    import { BaseSavegameInterface } from "shapez/savegame/savegame_interface";
-}
-declare module "shapez/savegame/schemas/1001" {
-    export class SavegameInterface_V1001 extends SavegameInterface_V1000 {
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1000to1001(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1000 } from "shapez/savegame/schemas/1000";
-}
-declare module "shapez/savegame/schemas/1002" {
-    export class SavegameInterface_V1002 extends SavegameInterface_V1001 {
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1001to1002(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1001 } from "shapez/savegame/schemas/1001";
-}
-declare module "shapez/savegame/schemas/1003" {
-    export class SavegameInterface_V1003 extends SavegameInterface_V1002 {
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1002to1003(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1002 } from "shapez/savegame/schemas/1002";
-}
-declare module "shapez/savegame/schemas/1004" {
-    export class SavegameInterface_V1004 extends SavegameInterface_V1003 {
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1003to1004(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1003 } from "shapez/savegame/schemas/1003";
-}
-declare module "shapez/savegame/schemas/1005" {
-    export class SavegameInterface_V1005 extends SavegameInterface_V1004 {
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1004to1005(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1004 } from "shapez/savegame/schemas/1004";
-}
-declare module "shapez/game/buildings/balancer" {
-    export type enumBalancerVariants = string;
-    export namespace enumBalancerVariants {
-        export const merger: string;
-        export const mergerInverse: string;
-        export const splitter: string;
-        export const splitterInverse: string;
-    }
-    export class MetaBalancerBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/cutter" {
-    export type enumCutterVariants = string;
-    export namespace enumCutterVariants {
-        export const quad: string;
-    }
-    export class MetaCutterBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/miner" {
-    export type enumMinerVariants = string;
-    export namespace enumMinerVariants {
-        export const chainable: string;
-    }
-    export class MetaMinerBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/mixer" {
-    export class MetaMixerBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/painter" {
-    export type enumPainterVariants = string;
-    export namespace enumPainterVariants {
-        export const mirrored: string;
-        export const double: string;
-        export const quad: string;
-    }
-    export class MetaPainterBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/rotater" {
-    export type enumRotaterVariants = string;
-    export namespace enumRotaterVariants {
-        export const ccw: string;
-        export const rotate180: string;
-    }
-    export class MetaRotaterBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/stacker" {
-    export class MetaStackerBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/storage" {
-    export class MetaStorageBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/trash" {
-    export class MetaTrashBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-        addAchievementReceiver(entity: any): void;
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/underground_belt" {
-    export type arrayUndergroundRotationVariantToMode = string;
-    /** @enum {string} */
-    export const arrayUndergroundRotationVariantToMode: string[];
-    export type enumUndergroundBeltVariants = string;
-    export namespace enumUndergroundBeltVariants {
-        export const tier2: string;
-    }
-    export const enumUndergroundBeltVariantToTier: {
-        [x: string]: number;
-        default: number;
-    };
-    export class MetaUndergroundBeltBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-            rotationVariant: number;
-        }[];
-    }
-    import { defaultBuildingVariant } from "shapez/game/meta_building";
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/savegame/schemas/1006" {
-    export class SavegameInterface_V1006 extends SavegameInterface_V1005 {
-        static computeSpriteMapping(): {
-            "sprites/blueprints/belt_top.png": string | number;
-            "sprites/blueprints/belt_left.png": string | number;
-            "sprites/blueprints/belt_right.png": string | number;
-            "sprites/blueprints/splitter.png": string | number;
-            "sprites/blueprints/splitter-compact.png": string | number;
-            "sprites/blueprints/splitter-compact-inverse.png": string | number;
-            "sprites/blueprints/underground_belt_entry.png": string | number;
-            "sprites/blueprints/underground_belt_exit.png": string | number;
-            "sprites/blueprints/underground_belt_entry-tier2.png": string | number;
-            "sprites/blueprints/underground_belt_exit-tier2.png": string | number;
-            "sprites/blueprints/miner.png": string | number;
-            "sprites/blueprints/miner-chainable.png": string | number;
-            "sprites/blueprints/cutter.png": string | number;
-            "sprites/blueprints/cutter-quad.png": string | number;
-            "sprites/blueprints/rotater.png": string | number;
-            "sprites/blueprints/rotater-ccw.png": string | number;
-            "sprites/blueprints/stacker.png": string | number;
-            "sprites/blueprints/mixer.png": string | number;
-            "sprites/blueprints/painter.png": string | number;
-            "sprites/blueprints/painter-mirrored.png": string | number;
-            "sprites/blueprints/painter-double.png": string | number;
-            "sprites/blueprints/painter-quad.png": string | number;
-            "sprites/blueprints/trash.png": string | number;
-            "sprites/blueprints/trash-storage.png": string | number;
-        };
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1005to1006(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        /**
-         *
-         * @param {Entity} entity
-         */
-        static migrateStaticComp1005to1006(entity: Entity): void;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1005 } from "shapez/savegame/schemas/1005";
-    import { Entity } from "shapez/game/entity";
-}
-declare module "shapez/savegame/schemas/1007" {
-    export class SavegameInterface_V1007 extends SavegameInterface_V1006 {
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1006to1007(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1006 } from "shapez/savegame/schemas/1006";
-}
-declare module "shapez/savegame/schemas/1008" {
-    export class SavegameInterface_V1008 extends SavegameInterface_V1007 {
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1007to1008(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1007 } from "shapez/savegame/schemas/1007";
-}
-declare module "shapez/game/buildings/constant_producer" {
-    export class MetaConstantProducerBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/goal_acceptor" {
-    export class MetaGoalAcceptorBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/block" {
-    export class MetaBlockBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/hud/parts/base_toolbar" {
-    export class HUDBaseToolbar extends BaseHUDPart {
-        /**
-         * @param {GameRoot} root
          * @param {object} param0
-         * @param {Array<typeof MetaBuilding>} param0.primaryBuildings
-         * @param {Array<typeof MetaBuilding>=} param0.secondaryBuildings
-         * @param {function} param0.visibilityCondition
-         * @param {string} param0.htmlElementId
-         * @param {Layer=} param0.layer
+         * @param {"regular"|"wires"} param0.toolbar
+         * @param {"primary"|"secondary"} param0.location
+         * @param {typeof MetaBuilding} param0.metaClass
          */
-        constructor(
-            root: GameRoot,
-            {
-                primaryBuildings,
-                secondaryBuildings,
-                visibilityCondition,
-                htmlElementId,
-                layer,
-            }: {
-                primaryBuildings: Array<typeof MetaBuilding>;
-                secondaryBuildings?: Array<typeof MetaBuilding> | undefined;
-                visibilityCondition: Function;
-                htmlElementId: string;
-                layer?: any | undefined;
-            }
-        );
-        primaryBuildings: typeof MetaBuilding[];
-        secondaryBuildings: typeof MetaBuilding[];
-        visibilityCondition: Function;
-        htmlElementId: string;
-        layer: any;
-        /** @type {Object.<string, {
-         * metaBuilding: MetaBuilding,
-         * unlocked: boolean,
-         * selected: boolean,
-         * element: HTMLElement,
-         * index: number
-         * puzzleLocked: boolean;
-         * }>} */
-        buildingHandles: {
-            [x: string]: {
-                metaBuilding: MetaBuilding;
-                unlocked: boolean;
-                selected: boolean;
-                element: HTMLElement;
-                index: number;
-                puzzleLocked: boolean;
-            };
-        };
-        element: HTMLDivElement;
+        addNewBuildingToToolbar({
+            toolbar,
+            location,
+            metaClass,
+        }: {
+            toolbar: "regular" | "wires";
+            location: "primary" | "secondary";
+            metaClass: typeof MetaBuilding;
+        }): void;
         /**
-         * @param {Array<typeof MetaBuilding>} buildings
-         * @returns {Array<typeof MetaBuilding>}
+         * Patches a method on a given class
+         * @template {constructable} C  the class
+         * @template {C["prototype"]} P  the prototype of said class
+         * @template {keyof P} M  the name of the method we are overriding
+         * @template {extendsPrams<P[M]>} O the method that will override the old one
+         * @param {C} classHandle
+         * @param {M} methodName
+         * @param {bindThis<beforePrams<O, P[M]>, InstanceType<C>>} override
          */
-        filterBuildings(buildings: Array<typeof MetaBuilding>): Array<typeof MetaBuilding>;
-        /**
-         * Returns all buildings
-         * @returns {Array<typeof MetaBuilding>}
-         */
-        get allBuildings(): typeof MetaBuilding[];
-        secondaryDomAttach: DynamicDomAttach;
-        domAttach: DynamicDomAttach;
-        lastSelectedIndex: number;
-        /**
-         * Cycles through all buildings
-         */
-        cycleBuildings(): void;
-        /**
-         * Called when the selected building got changed
-         * @param {MetaBuilding} metaBuilding
-         */
-        onSelectedPlacementBuildingChanged(metaBuilding: MetaBuilding): void;
-        /**
-         * @param {MetaBuilding} metaBuilding
-         */
-        selectBuildingForPlacement(metaBuilding: MetaBuilding): string;
-        /**
-         * @param {MetaBuilding} metaBuilding
-         */
-        toggleBuildingLock(metaBuilding: MetaBuilding): string;
-        /**
-         * @param {MetaBuilding} metaBuilding
-         */
-        inRequiredBuildings(metaBuilding: MetaBuilding): boolean;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { MetaBuilding } from "shapez/game/meta_building";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { GameRoot } from "shapez/game/root";
-}
-declare module "shapez/game/buildings/constant_signal" {
-    export class MetaConstantSignalBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/logic_gate" {
-    export type enumLogicGateVariants = string;
-    export namespace enumLogicGateVariants {
-        export const not: string;
-        export const xor: string;
-        export const or: string;
-    }
-    export class MetaLogicGateBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    export type enumVariantToGate = string;
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/lever" {
-    export class MetaLeverBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/wire_tunnel" {
-    export class MetaWireTunnelBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/virtual_processor" {
-    export type enumVirtualProcessorVariants = string;
-    export namespace enumVirtualProcessorVariants {
-        export const rotater: string;
-        export const unstacker: string;
-        export const stacker: string;
-        export const painter: string;
-    }
-    export class MetaVirtualProcessorBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    export type enumVariantToGate = string;
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/transistor" {
-    export type enumTransistorVariants = string;
-    export namespace enumTransistorVariants {
-        export const mirrored: string;
-    }
-    export class MetaTransistorBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/analyzer" {
-    export class MetaAnalyzerBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/comparator" {
-    export class MetaComparatorBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/reader" {
-    export class MetaReaderBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/filter" {
-    export class MetaFilterBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/buildings/display" {
-    export class MetaDisplayBuilding extends MetaBuilding {
-        static getAllVariantCombinations(): {
-            internalId: number;
-            variant: string;
-        }[];
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/hud/parts/wires_toolbar" {
-    export class HUDWiresToolbar extends HUDBaseToolbar {
-        constructor(root: any);
-    }
-    import { HUDBaseToolbar } from "shapez/game/hud/parts/base_toolbar";
-}
-declare module "shapez/game/tutorial_goals_mappings" {
-    /**
-     * Stores which reward unlocks what
-     */
-    export type enumHubGoalRewardsToContentUnlocked = [typeof MetaBuilding, string][];
-    /**
-     * Stores which reward unlocks what
-     * @enum {TutorialGoalReward?}
-     */
-    export const enumHubGoalRewardsToContentUnlocked: {
-        [x: string]: [typeof MetaBuilding, string][];
-    };
-    export type TutorialGoalReward = [typeof MetaBuilding, string][];
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/game/hud/parts/unlock_notification" {
-    export class HUDUnlockNotification extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        visible: boolean;
-        domAttach: DynamicDomAttach;
-        buttonShowTimeout: NodeJS.Timeout;
-        inputReciever: InputReceiver;
-        element: HTMLDivElement;
-        elemTitle: HTMLDivElement;
-        elemSubTitle: HTMLDivElement;
-        elemContents: HTMLDivElement;
-        btnClose: HTMLButtonElement;
-        /**
-         * @param {number} level
-         * @param {enumHubGoalRewards} reward
-         */
-        showForLevel(level: number, reward: enumHubGoalRewards): void;
-        requestClose(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { InputReceiver } from "shapez/core/input_receiver";
-    import { enumHubGoalRewards } from "shapez/game/tutorial_goals";
-}
-declare module "shapez/game/blueprint" {
-    export class Blueprint {
-        /**
-         * Creates a new blueprint from the given entity uids
-         * @param {GameRoot} root
-         * @param {Array<number>} uids
-         */
-        static fromUids(root: GameRoot, uids: Array<number>): Blueprint;
-        /**
-         * @param {Array<Entity>} entities
-         */
-        constructor(entities: Array<Entity>);
-        entities: Entity[];
-        /**
-         * Returns the layer of this blueprint
-         * @returns {Layer}
-         */
-        get layer(): any;
-        /**
-         * Returns the cost of this blueprint in shapes
-         */
-        getCost(): number;
-        /**
-         * Draws the blueprint at the given origin
-         * @param {DrawParameters} parameters
-         */
-        draw(parameters: DrawParameters, tile: any): void;
-        /**
-         * Rotates the blueprint clockwise
-         */
-        rotateCw(): void;
-        /**
-         * Rotates the blueprint counter clock wise
-         */
-        rotateCcw(): void;
-        /**
-         * Checks if the blueprint can be placed at the given tile
-         * @param {GameRoot} root
-         * @param {Vector} tile
-         */
-        canPlace(root: GameRoot, tile: Vector): boolean;
-        /**
-         * @param {GameRoot} root
-         */
-        canAfford(root: GameRoot): boolean;
-        /**
-         * Attempts to place the blueprint at the given tile
-         * @param {GameRoot} root
-         * @param {Vector} tile
-         */
-        tryPlace(root: GameRoot, tile: Vector): any;
-    }
-    import { Entity } from "shapez/game/entity";
-    import { DrawParameters } from "shapez/core/draw_parameters";
-    import { GameRoot } from "shapez/game/root";
-    import { Vector } from "shapez/core/vector";
-}
-declare module "shapez/game/hud/parts/mass_selector" {
-    export class HUDMassSelector extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        currentSelectionStartWorld: Vector;
-        currentSelectionEnd: Vector;
-        selectedUids: Set<any>;
-        /**
-         * Handles the destroy callback and makes sure we clean our list
-         * @param {Entity} entity
-         */
-        onEntityDestroyed(entity: Entity): void;
-        /**
-         *
-         */
-        onBack(): string;
-        /**
-         * Clears the entire selection
-         */
-        clearSelection(): void;
-        confirmDelete(): void;
-        doDelete(): void;
-        startCopy(): void;
-        clearBelts(): void;
-        confirmCut(): void;
-        doCut(): void;
-        /**
-         * mouse down pre handler
-         * @param {Vector} pos
-         * @param {enumMouseButton} mouseButton
-         */
-        onMouseDown(pos: Vector, mouseButton: enumMouseButton): string;
-        /**
-         * mouse move pre handler
-         * @param {Vector} pos
-         */
-        onMouseMove(pos: Vector): void;
-        onMouseUp(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Vector } from "shapez/core/vector";
-    import { Entity } from "shapez/game/entity";
-    import { enumMouseButton } from "shapez/game/camera";
-}
-declare module "shapez/game/hud/parts/shop" {
-    export class HUDShop extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        background: HTMLDivElement;
-        dialogInner: HTMLDivElement;
-        title: HTMLDivElement;
-        closeButton: HTMLDivElement;
-        contentDiv: HTMLDivElement;
-        upgradeToElements: {};
-        rerenderFull(): void;
-        renderCountsAndStatus(): void;
-        domAttach: DynamicDomAttach;
-        inputReciever: InputReceiver;
-        keyActionMapper: KeyActionMapper;
-        show(): void;
-        visible: boolean;
-        tryUnlockNextTier(upgradeId: any): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { InputReceiver } from "shapez/core/input_receiver";
-    import { KeyActionMapper } from "shapez/game/key_action_mapper";
-}
-declare module "shapez/game/hud/parts/statistics_handle" {
-    export type enumDisplayMode = string;
-    export namespace enumDisplayMode {
-        export const icons: string;
-        export const detailed: string;
-    }
-    /**
-     * Stores how many seconds one unit is
-     * @type {Object<string, number>}
-     */
-    export const statisticsUnitsSeconds: {
-        [x: string]: number;
-    };
-    /**
-     * Simple wrapper for a shape definition within the shape statistics
-     */
-    export class HUDShapeStatisticsHandle {
-        /**
-         * @param {GameRoot} root
-         * @param {ShapeDefinition} definition
-         * @param {IntersectionObserver} intersectionObserver
-         */
-        constructor(root: GameRoot, definition: ShapeDefinition, intersectionObserver: IntersectionObserver);
-        definition: ShapeDefinition;
-        root: GameRoot;
-        intersectionObserver: IntersectionObserver;
-        visible: any;
-        initElement(): void;
-        element: HTMLDivElement;
-        counter: HTMLSpanElement;
-        /**
-         * Sets whether the shape handle is visible currently
-         * @param {boolean} visibility
-         */
-        setVisible(visibility: boolean): void;
-        shapeCanvas: HTMLCanvasElement;
-        /**
-         *
-         * @param {enumDisplayMode} displayMode
-         * @param {enumAnalyticsDataSource} dataSource
-         * @param {string} unit
-         * @param {boolean=} forced
-         */
-        update(
-            displayMode: enumDisplayMode,
-            dataSource: enumAnalyticsDataSource,
-            unit: string,
-            forced?: boolean | undefined
+        replaceMethod<
+            C extends {
+                new (...args: any[]): any;
+                prototype: any;
+            },
+            P extends C["prototype"],
+            M extends keyof P,
+            O extends (args_0: any, ...args_1: any[]) => ReturnType<P[M]>
+        >(
+            classHandle: C,
+            methodName: M,
+            override: (this: InstanceType<C>, args_0: P[M], args_1: Parameters<O>) => ReturnType<O>
         ): void;
-        graphCanvas: HTMLCanvasElement;
-        graphContext: CanvasRenderingContext2D;
         /**
-         * Attaches the handle
-         * @param {HTMLElement} parent
+         * Runs before a method on a given class
+         * @template {constructable} C  the class
+         * @template {C["prototype"]} P  the prototype of said class
+         * @template {keyof P} M  the name of the method we are overriding
+         * @template {extendsPrams<P[M]>} O the method that will run before the old one
+         * @param {C} classHandle
+         * @param {M} methodName
+         * @param {bindThis<O, InstanceType<C>>} executeBefore
          */
-        attach(parent: HTMLElement): void;
-        /**
-         * Detaches the handle
-         */
-        detach(): void;
-        /**
-         * Cleans up all child elements
-         */
-        cleanupChildElements(): void;
-        /**
-         * Destroys the handle
-         */
-        destroy(): void;
-    }
-    import { ShapeDefinition } from "shapez/game/shape_definition";
-    import { GameRoot } from "shapez/game/root";
-    import { enumAnalyticsDataSource } from "shapez/game/production_analytics";
-}
-declare module "shapez/game/hud/parts/statistics" {
-    export class HUDStatistics extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        background: HTMLDivElement;
-        dialogInner: HTMLDivElement;
-        title: HTMLDivElement;
-        closeButton: HTMLDivElement;
-        filterHeader: HTMLDivElement;
-        sourceExplanation: HTMLDivElement;
-        filtersDataSource: HTMLDivElement;
-        filtersDisplayMode: HTMLDivElement;
-        contentDiv: HTMLDivElement;
-        /**
-         * @param {enumAnalyticsDataSource} source
-         */
-        setDataSource(source: enumAnalyticsDataSource): void;
-        dataSource: string;
-        /**
-         * @param {enumDisplayMode} mode
-         */
-        setDisplayMode(mode: enumDisplayMode): void;
-        displayMode: string;
-        /**
-         * @param {boolean} sorted
-         */
-        setSorted(sorted: boolean): void;
-        sorted: boolean;
-        toggleSorted(): void;
-        /**
-         * Chooses the next unit
-         */
-        iterateUnit(): void;
-        currentUnit: any;
-        domAttach: DynamicDomAttach;
-        inputReciever: InputReceiver;
-        keyActionMapper: KeyActionMapper;
-        /** @type {Object.<string, HUDShapeStatisticsHandle>} */
-        activeHandles: {
-            [x: string]: HUDShapeStatisticsHandle;
-        };
-        intersectionObserver: IntersectionObserver;
-        lastFullRerender: number;
-        intersectionCallback(entries: any): void;
-        show(): void;
-        visible: boolean;
-        lastPartialRerender: number;
-        /**
-         * Performs a partial rerender, only updating graphs and counts
-         */
-        rerenderPartial(): void;
-        /**
-         * Performs a full rerender, regenerating everything
-         */
-        rerenderFull(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { enumAnalyticsDataSource } from "shapez/game/production_analytics";
-    import { enumDisplayMode } from "shapez/game/hud/parts/statistics_handle";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { InputReceiver } from "shapez/core/input_receiver";
-    import { KeyActionMapper } from "shapez/game/key_action_mapper";
-    import { HUDShapeStatisticsHandle } from "shapez/game/hud/parts/statistics_handle";
-}
-declare module "shapez/game/hud/parts/wire_info" {
-    export class HUDWireInfo extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        spriteEmpty: import("shapez/core/sprites").AtlasSprite;
-        spriteConflict: import("shapez/core/sprites").AtlasSprite;
-        /**
-         *
-         *
-         * @param {import("shapez/core/draw_utils").DrawParameters} parameters
-         * @param {WireNetwork} network
-         */
-        drawHighlightedNetwork(
-            parameters: import("shapez/core/draw_utils").DrawParameters,
-            network: WireNetwork
+        runBeforeMethod<
+            C_1 extends {
+                new (...args: any[]): any;
+                prototype: any;
+            },
+            P_1 extends C_1["prototype"],
+            M_1 extends keyof P_1,
+            O_1 extends (args_0: any, ...args_1: any[]) => ReturnType<P_1[M_1]>
+        >(
+            classHandle: C_1,
+            methodName: M_1,
+            executeBefore: (this: InstanceType<C_1>, ...args: Parameters<O_1>) => ReturnType<O_1>
         ): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { WireNetwork } from "shapez/game/systems/wire";
-}
-declare module "shapez/game/hud/parts/lever_toggle" {
-    export class HUDLeverToggle extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
         /**
-         * @param {Vector} pos
-         * @param {enumMouseButton} button
+         * Runs after a method on a given class
+         * @template {constructable} C  the class
+         * @template {C["prototype"]} P  the prototype of said class
+         * @template {keyof P} M  the name of the method we are overriding
+         * @template {extendsPrams<P[M]>} O the method that will run before the old one
+         * @param {C} classHandle
+         * @param {M} methodName
+         * @param {bindThis<O, InstanceType<C>>} executeAfter
          */
-        downPreHandler(pos: Vector, button: enumMouseButton): string;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Vector } from "shapez/core/vector";
-    import { enumMouseButton } from "shapez/game/camera";
-}
-declare module "shapez/game/hud/parts/screenshot_exporter" {
-    export class HUDScreenshotExporter extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        startExport(): void;
-        doExport(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-}
-declare module "shapez/game/hud/parts/wires_overlay" {
-    export class HUDWiresOverlay extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        currentAlpha: any;
-        /**
-         * Switches between layers
-         */
-        switchLayers(): void;
-        /**
-         * Generates the background pattern for the wires overlay
-         */
-        generateTilePattern(): void;
-        tilePatternCanvas: HTMLCanvasElement;
-        /**
-         * Copies the wires value below the cursor
-         */
-        copyWireValue(): void;
-        cachedPatternBackground: CanvasPattern;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-}
-declare module "shapez/game/hud/parts/shape_viewer" {
-    export class HUDShapeViewer extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        background: HTMLDivElement;
-        dialogInner: HTMLDivElement;
-        title: HTMLDivElement;
-        closeButton: HTMLDivElement;
-        contentDiv: HTMLDivElement;
-        renderArea: HTMLDivElement;
-        infoArea: HTMLDivElement;
-        copyButton: HTMLButtonElement;
-        domAttach: DynamicDomAttach;
-        currentShapeKey: string;
-        inputReciever: InputReceiver;
-        keyActionMapper: KeyActionMapper;
-        /**
-         * Called when the copying of a key was requested
-         */
-        onCopyKeyRequested(): void;
-        visible: boolean;
-        /**
-         * Shows the viewer for a given definition
-         * @param {ShapeDefinition} definition
-         */
-        renderForShape(definition: ShapeDefinition): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { InputReceiver } from "shapez/core/input_receiver";
-    import { KeyActionMapper } from "shapez/game/key_action_mapper";
-    import { ShapeDefinition } from "shapez/game/shape_definition";
-}
-declare module "shapez/game/hud/parts/layer_preview" {
-    /**
-     * Helper class which allows peaking through to the wires layer
-     */
-    export class HUDLayerPreview extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        previewOverlay: import("shapez/core/sprites").AtlasSprite;
-        /**
-         * (re) initializes the canvas
-         */
-        initializeCanvas(): void;
-        previewSize: number;
-        canvas: HTMLCanvasElement;
-        context: CanvasRenderingContext2D;
-        /**
-         * Prepares the canvas to render at the given worldPos and the given camera scale
-         *
-         * @param {Vector} worldPos
-         * @param {number} scale 1 / zoomLevel
-         */
-        prepareCanvasForPreview(worldPos: Vector, scale: number): HTMLCanvasElement;
-        /**
-         * Renders the preview at the given position
-         * @param {import("shapez/core/draw_utils").DrawParameters} parameters
-         * @param {Vector} worldPos
-         * @param {number} scale 1 / zoomLevel
-         */
-        renderPreview(
-            parameters: import("shapez/core/draw_utils").DrawParameters,
-            worldPos: Vector,
-            scale: number
+        runAfterMethod<
+            C_2 extends {
+                new (...args: any[]): any;
+                prototype: any;
+            },
+            P_2 extends C_2["prototype"],
+            M_2 extends keyof P_2,
+            O_2 extends (args_0: any, ...args_1: any[]) => ReturnType<P_2[M_2]>
+        >(
+            classHandle: C_2,
+            methodName: M_2,
+            executeAfter: (this: InstanceType<C_2>, ...args: Parameters<O_2>) => ReturnType<O_2>
         ): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Vector } from "shapez/core/vector";
-}
-declare module "shapez/game/hud/parts/tutorial_video_offer" {
-    /**
-     * Offers to open the tutorial video after completing a level
-     */
-    export class HUDTutorialVideoOffer extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-}
-declare module "shapez/game/hud/parts/miner_highlight" {
-    export class HUDMinerHighlight extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
         /**
-         * Finds all connected miners to the given entity
-         * @param {Entity} entity
-         * @param {Set<number>} seenUids Which entities have already been processed
-         * @returns {Array<Entity>} The connected miners
+         *
+         * @param {Object} prototype
+         * @param {({ $super, $old }) => any} extender
          */
-        findConnectedMiners(entity: Entity, seenUids?: Set<number>): Array<Entity>;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Entity } from "shapez/game/entity";
-}
-declare module "shapez/game/hud/parts/game_menu" {
-    export class HUDGameMenu extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        /** @type {Array<{
-         * badge: function,
-         * button: HTMLElement,
-         * badgeElement: HTMLElement,
-         * lastRenderAmount: number,
-         * condition?: function,
-         * notification: [string, enumNotificationType]
-         * }>} */
-        badgesToUpdate: {
-            badge: Function;
-            button: HTMLElement;
-            badgeElement: HTMLElement;
-            lastRenderAmount: number;
-            condition?: Function;
-            notification: [string, enumNotificationType];
-        }[];
-        /** @type {Array<{
-         * button: HTMLElement,
-         * condition: function,
-         * domAttach: DynamicDomAttach
-         * }>} */
-        visibilityToUpdate: {
-            button: HTMLElement;
-            condition: Function;
-            domAttach: DynamicDomAttach;
-        }[];
-        saveButton: HTMLDivElement;
-        settingsButton: HTMLDivElement;
-        trackedIsSaving: TrackedState;
-        onIsSavingChanged(isSaving: any): void;
-        onGameSaved(): void;
-        startSave(): void;
-        openSettings(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { enumNotificationType } from "shapez/game/hud/parts/notifications";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { TrackedState } from "shapez/core/tracked_state";
-}
-declare module "shapez/game/hud/parts/constant_signal_edit" {
-    export class HUDConstantSignalEdit extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
+        extendObject(prototype: any, extender: ({ $super, $old }: { $super: any; $old: any }) => any): void;
         /**
-         * @param {Vector} pos
-         * @param {enumMouseButton} button
+         *
+         * @param {Class} classHandle
+         * @param {({ $super, $old }) => any} extender
          */
-        downPreHandler(pos: Vector, button: enumMouseButton): string;
+        extendClass(classHandle: any, extender: ({ $super, $old }: { $super: any; $old: any }) => any): void;
         /**
-         * Asks the entity to enter a valid signal code
-         * @param {Entity} entity
+         *
+         * @param {string} id
+         * @param {new (...args) => BaseHUDPart} element
+         */
+        registerHudElement(id: string, element: new (...args: any[]) => BaseHUDPart): void;
+        /**
+         *
+         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
+         * @param {string} variant
          * @param {object} param0
-         * @param {boolean=} param0.deleteOnCancel
+         * @param {string} param0.name
+         * @param {string} param0.description
+         * @param {string=} param0.language
          */
-        editConstantSignal(
-            entity: Entity,
+        registerBuildingTranslation(
+            buildingIdOrClass: string | (new () => MetaBuilding),
+            variant: string,
             {
-                deleteOnCancel,
+                name,
+                description,
+                language,
             }: {
-                deleteOnCancel?: boolean | undefined;
+                name: string;
+                description: string;
+                language?: string | undefined;
             }
         ): void;
         /**
-         * Tries to parse a signal code
-         * @param {Entity} entity
-         * @param {string} code
-         * @returns {BaseItem}
+         *
+         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
+         * @param {string} variant
+         * @param {object} param2
+         * @param {string=} param2.regularBase64
+         * @param {string=} param2.blueprintBase64
          */
-        parseSignalCode(entity: Entity, code: string): BaseItem;
+        registerBuildingSprites(
+            buildingIdOrClass: string | (new () => MetaBuilding),
+            variant: string,
+            {
+                regularBase64,
+                blueprintBase64,
+            }: {
+                regularBase64?: string | undefined;
+                blueprintBase64?: string | undefined;
+            }
+        ): void;
+        /**
+         * @param {new () => MetaBuilding} metaClass
+         * @param {string} variant
+         * @param {object} payload
+         * @param {number[]=} payload.rotationVariants
+         * @param {string=} payload.tutorialImageBase64
+         * @param {string=} payload.regularSpriteBase64
+         * @param {string=} payload.blueprintSpriteBase64
+         * @param {string=} payload.name
+         * @param {string=} payload.description
+         * @param {Vector=} payload.dimensions
+         * @param {(root: GameRoot) => [string, string][]} payload.additionalStatistics
+         * @param {(root: GameRoot) => boolean[]} payload.isUnlocked
+         */
+        addVariantToExistingBuilding(
+            metaClass: new () => MetaBuilding,
+            variant: string,
+            payload: {
+                rotationVariants?: number[] | undefined;
+                tutorialImageBase64?: string | undefined;
+                regularSpriteBase64?: string | undefined;
+                blueprintSpriteBase64?: string | undefined;
+                name?: string | undefined;
+                description?: string | undefined;
+                dimensions?: Vector | undefined;
+                additionalStatistics: (root: GameRoot) => [string, string][];
+                isUnlocked: (root: GameRoot) => boolean[];
+            }
+        ): void;
     }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Vector } from "shapez/core/vector";
-    import { enumMouseButton } from "shapez/game/camera";
-    import { Entity } from "shapez/game/entity";
+    export type constructable = {
+        new (...args: any[]): any;
+        prototype: any;
+    };
+    export type bindThis<F extends (...args: any) => any, T extends unknown> = (
+        this: T,
+        ...args: Parameters<F>
+    ) => ReturnType<F>;
+    /**
+     * IMPORTANT: this puts the original parameters into an array
+     */
+    export type beforePrams<F extends (...args: any[]) => any, P> = (
+        args_0: P,
+        args_1: Parameters<F>
+    ) => ReturnType<F>;
+    export type afterPrams<F extends (...args: any[]) => any, P> = (args_0: any, args_1: P) => ReturnType<F>;
+    export type extendsPrams<F extends (...args: any[]) => any> = (
+        args_0: any,
+        ...args_1: any[]
+    ) => ReturnType<F>;
+    import { ModLoader } from "shapez/mods/modloader";
     import { BaseItem } from "shapez/game/base_item";
+    import { Component } from "shapez/game/component";
+    import { GameSystem } from "shapez/game/game_system";
+    import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
+    import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
+    import { MetaBuilding } from "shapez/game/meta_building";
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Vector } from "shapez/core/vector";
+    import { GameRoot } from "shapez/game/root";
 }
-declare module "shapez/game/hud/parts/keybinding_overlay" {
-    /**
-     * @typedef {{ keyCode: number }} KeyCode
-     */
+declare module "shapez/mods/modloader" {
     /**
      * @typedef {{
-     *   condition: () => boolean,
-     *   keys: Array<KeyCode|number|string>,
-     *   label: string,
-     *   cachedElement?: HTMLElement,
-     *   cachedVisibility?: boolean
-     * }} KeyBinding
+     *   name: string;
+     *   version: string;
+     *   author: string;
+     *   website: string;
+     *   description: string;
+     *   id: string;
+     *   minimumGameVersion?: string;
+     *   settings: [];
+     *   doesNotAffectSavegame?: boolean
+     * }} ModMetadata
      */
-    export class HUDKeybindingOverlay extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
+    export class ModLoader {
         /**
-         * HELPER / Returns if there is a building selected for placement
-         * @returns {boolean}
+         * @type {Application}
          */
-        get buildingPlacementActive(): boolean;
+        app: Application;
+        /** @type {Mod[]} */
+        mods: Mod[];
+        modInterface: ModInterface;
+        /** @type {({ meta: ModMetadata, modClass: typeof Mod})[]} */
+        modLoadQueue: {
+            meta: ModMetadata;
+            modClass: typeof Mod;
+        }[];
+        initialized: boolean;
+        signals: {
+            appBooted: import("shapez/core/signal").Signal;
+            modifyLevelDefinitions: any;
+            modifyUpgrades: any;
+            hudElementInitialized: any;
+            hudElementFinalized: any;
+            hudInitializer: any;
+            gameInitialized: any;
+            gameLoadingStageEntered: any;
+            gameStarted: any;
+            stateEntered: any;
+            gameSerialized: any;
+            gameDeserialized: any;
+        };
+        linkApp(app: any): void;
+        anyModsActive(): boolean;
         /**
-         * HELPER / Returns if there is a building selected for placement and
-         * it supports the belt planner
-         * @returns {boolean}
+         *
+         * @returns {import("shapez/savegame/savegame_typedefs").SavegameStoredMods}
          */
-        get buildingPlacementSupportsBeltPlanner(): boolean;
+        getModsListForSavegame(): import("shapez/savegame/savegame_typedefs").SavegameStoredMods;
         /**
-         * HELPER / Returns if there is a building selected for placement and
-         * it has multiplace enabled by default
-         * @returns {boolean}
+         *
+         * @param {import("shapez/savegame/savegame_typedefs").SavegameStoredMods} originalMods
          */
-        get buildingPlacementStaysInPlacement(): boolean;
-        /**
-         * HELPER / Returns if there is a blueprint selected for placement
-         * @returns {boolean}
-         */
-        get blueprintPlacementActive(): boolean;
-        /**
-         * HELPER / Returns if the belt planner is currently active
-         * @returns {boolean}
-         */
-        get beltPlannerActive(): boolean;
-        /**
-         * HELPER / Returns if there is a last blueprint available
-         * @returns {boolean}
-         */
-        get lastBlueprintAvailable(): boolean;
-        /**
-         * HELPER / Returns if there is anything selected on the map
-         * @returns {boolean}
-         */
-        get anythingSelectedOnMap(): boolean;
-        /**
-         * HELPER / Returns if there is a building or blueprint selected for placement
-         * @returns {boolean}
-         */
-        get anyPlacementActive(): boolean;
-        /**
-         * HELPER / Returns if the map overview is active
-         * @returns {boolean}
-         */
-        get mapOverviewActive(): boolean;
-        /** @type {Array<KeyBinding>} */
-        keybindings: Array<KeyBinding>;
-        element: HTMLDivElement;
-        domAttach: DynamicDomAttach;
+        computeModDifference(originalMods: import("shapez/savegame/savegame_typedefs").SavegameStoredMods): {
+            missing: {
+                id: string;
+                version: string;
+                website: string;
+                name: string;
+                author: string;
+            }[];
+            extra: {
+                id: string;
+                version: string;
+                website: string;
+                name: string;
+                author: string;
+            }[];
+        };
+        exposeExports(): void;
+        initMods(): Promise<void>;
     }
-    export type KeyCode = {
-        keyCode: number;
+    export const MODS: ModLoader;
+    export type ModMetadata = {
+        name: string;
+        version: string;
+        author: string;
+        website: string;
+        description: string;
+        id: string;
+        minimumGameVersion?: string;
+        settings: [];
+        doesNotAffectSavegame?: boolean;
     };
-    export type KeyBinding = {
-        condition: () => boolean;
-        keys: Array<KeyCode | number | string>;
-        label: string;
-        cachedElement?: HTMLElement;
-        cachedVisibility?: boolean;
-    };
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-}
-declare module "shapez/game/hud/parts/watermark" {
-    export class HUDWatermark extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        linkElement: HTMLDivElement;
-        domAttach: DynamicDomAttach;
-        onWatermarkClick(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-}
-declare module "shapez/game/hud/parts/standalone_advantages" {
-    export class HUDStandaloneAdvantages extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        background: HTMLDivElement;
-        dialogInner: HTMLDivElement;
-        title: HTMLDivElement;
-        contentDiv: HTMLDivElement;
-        domAttach: DynamicDomAttach;
-        inputReciever: InputReceiver;
-        lastShown: number;
-        show(): void;
-        visible: boolean;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { InputReceiver } from "shapez/core/input_receiver";
-}
-declare module "shapez/game/hud/parts/cat_memes" {
-    export class HUDCatMemes extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        domAttach: DynamicDomAttach;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-}
-declare module "shapez/game/hud/parts/tutorial_hints" {
-    export class HUDPartTutorialHints extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        videoElement: HTMLVideoElement;
-        videoAttach: DynamicDomAttach;
-        enlarged: boolean;
-        inputReciever: InputReceiver;
-        keyActionMapper: KeyActionMapper;
-        domAttach: DynamicDomAttach;
-        currentShownLevel: TrackedState;
-        updateVideoUrl(level: any): void;
-        show(): void;
-        toggleHintEnlarged(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { InputReceiver } from "shapez/core/input_receiver";
-    import { KeyActionMapper } from "shapez/game/key_action_mapper";
-    import { TrackedState } from "shapez/core/tracked_state";
-}
-declare module "shapez/core/cachebust" {
-    /**
-     * Generates a cachebuster string. This only modifies the path in the browser version
-     * @param {string} path
-     */
-    export function cachebust(path: string): string;
-}
-declare module "shapez/game/hud/parts/interactive_tutorial" {
-    export class HUDInteractiveTutorial extends BaseHUDPart {
-        constructor(root: GameRoot);
-        element: HTMLDivElement;
-        elementDescription: HTMLDivElement;
-        elementGif: HTMLDivElement;
-        domAttach: DynamicDomAttach;
-        currentHintId: TrackedState;
-        onHintChanged(hintId: any): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { TrackedState } from "shapez/core/tracked_state";
-    import { GameRoot } from "shapez/game/root";
-}
-declare module "shapez/core/query_parameters" {
-    export namespace queryParamOptions {
-        export const embedProvider: any;
-        export const fullVersion: boolean;
-        export const sandboxMode: boolean;
-    }
-}
-declare module "shapez/game/hud/parts/sandbox_controller" {
-    export class HUDSandboxController extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        giveBlueprints(): void;
-        maxOutAll(): void;
-        modifyUpgrade(id: any, amount: any): void;
-        modifyLevel(amount: any): void;
-        visible: any;
-        domAttach: DynamicDomAttach;
-        toggle(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-}
-declare module "shapez/game/modes/regular" {
-    /**
-     * Generates the level definitions
-     * @param {boolean} limitedVersion
-     */
-    export function generateLevelDefinitions(limitedVersion?: boolean): any;
-    /** @typedef {{
-     *   shape: string,
-     *   amount: number
-     * }} UpgradeRequirement */
-    /** @typedef {{
-     *   required: Array<UpgradeRequirement>
-     *   improvement?: number,
-     *   excludePrevious?: boolean
-     * }} TierRequirement */
-    /** @typedef {Array<TierRequirement>} UpgradeTiers */
-    /** @typedef {{
-     *   shape: string,
-     *   required: number,
-     *   reward: enumHubGoalRewards,
-     *   throughputOnly?: boolean
-     * }} LevelDefinition */
-    export const rocketShape: "CbCuCbCu:Sr------:--CrSrCr:CwCwCwCw";
-    export const finalGameShape: "RuCw--Cw:----Ru--";
-    export class RegularGameMode extends GameMode {
-        /** @param {GameRoot} root */
-        constructor(root: GameRoot);
-    }
-    export type UpgradeRequirement = {
-        shape: string;
-        amount: number;
-    };
-    export type TierRequirement = {
-        required: Array<UpgradeRequirement>;
-        improvement?: number;
-        excludePrevious?: boolean;
-    };
-    export type UpgradeTiers = {
-        required: Array<UpgradeRequirement>;
-        improvement?: number;
-        excludePrevious?: boolean;
-    }[];
-    export type LevelDefinition = {
-        shape: string;
-        required: number;
-        reward: enumHubGoalRewards;
-        throughputOnly?: boolean;
-    };
-    import { GameMode } from "shapez/game/game_mode";
-    import { GameRoot } from "shapez/game/root";
-    import { enumHubGoalRewards } from "shapez/game/tutorial_goals";
-}
-declare module "shapez/savegame/schemas/1009" {
-    export class SavegameInterface_V1009 extends SavegameInterface_V1008 {
-        /**
-         * @param {import("shapez/savegame/savegame_typedefs").SavegameData} data
-         */
-        static migrate1008to1009(data: import("shapez/savegame/savegame_typedefs").SavegameData): boolean;
-        constructor(data: any);
-    }
-    import { SavegameInterface_V1008 } from "shapez/savegame/schemas/1008";
-}
-declare module "shapez/savegame/savegame_interface_registry" {
-    /**
-     * Returns if the given savegame has any supported interface
-     * @param {any} savegame
-     * @returns {BaseSavegameInterface|null}
-     */
-    export function getSavegameInterface(savegame: any): BaseSavegameInterface | null;
-    /** @type {Object.<number, typeof BaseSavegameInterface>} */
-    export const savegameInterfaces: {
-        [x: number]: typeof BaseSavegameInterface;
-    };
-    import { BaseSavegameInterface } from "shapez/savegame/savegame_interface";
+    import { Application } from "shapez/application";
+    import { Mod } from "shapez/mods/mod";
+    import { ModInterface } from "shapez/mods/mod_interface";
 }
 declare module "shapez/savegame/savegame" {
     /**
@@ -9762,6 +9959,7 @@ declare module "shapez/savegame/savegame" {
             waypoints: any;
             entities: import("shapez/game/entity").Entity[];
             beltPaths: any[];
+            modExtraData: any;
         };
         stats: {
             failedMam: boolean;
@@ -9769,6 +9967,13 @@ declare module "shapez/savegame/savegame" {
             usedInverseRotater: boolean;
         };
         lastUpdate: number;
+        mods: {
+            id: string;
+            version: string;
+            website: string;
+            name: string;
+            author: string;
+        }[];
     };
     export type SavegameMetadata = {
         lastUpdate: number;
@@ -9793,6 +9998,7 @@ declare module "shapez/savegame/savegame" {
         waypoints: any;
         entities: import("shapez/game/entity").Entity[];
         beltPaths: any[];
+        modExtraData: any;
     };
     import { ReadWriteProxy } from "shapez/core/read_write_proxy";
     import { BaseSavegameInterface } from "shapez/savegame/savegame_interface";
@@ -9933,6 +10139,86 @@ declare module "shapez/game/dynamic_tickrate" {
         endTick(): void;
     }
     import { GameRoot } from "shapez/game/root";
+}
+declare module "shapez/game/entity_manager" {
+    export class EntityManager extends BasicSerializableObject {
+        static getId(): string;
+        static getSchema(): {
+            nextUid: import("shapez/savegame/serialization_data_types").TypePositiveInteger;
+        };
+        constructor(root: any);
+        /** @type {GameRoot} */
+        root: GameRoot;
+        /** @type {Array<Entity>} */
+        entities: Array<Entity>;
+        /** @type {Array<Entity>} */
+        destroyList: Array<Entity>;
+        /** @type {Object.<string, Array<Entity>>} */
+        componentToEntity: {
+            [x: string]: Array<Entity>;
+        };
+        nextUid: number;
+        getStatsText(): string;
+        update(): void;
+        /**
+         * Registers a new entity
+         * @param {Entity} entity
+         * @param {number=} uid Optional predefined uid
+         */
+        registerEntity(entity: Entity, uid?: number | undefined): void;
+        /**
+         * Generates a new uid
+         * @returns {number}
+         */
+        generateUid(): number;
+        /**
+         * Call to attach a new component after the creation of the entity
+         * @param {Entity} entity
+         * @param {Component} component
+         */
+        attachDynamicComponent(entity: Entity, component: Component): void;
+        /**
+         * Call to remove a component after the creation of the entity
+         * @param {Entity} entity
+         * @param {typeof Component} component
+         */
+        removeDynamicComponent(entity: Entity, component: typeof Component): void;
+        /**
+         * Finds an entity buy its uid, kinda slow since it loops over all entities
+         * @param {number} uid
+         * @param {boolean=} errorWhenNotFound
+         * @returns {Entity}
+         */
+        findByUid(uid: number, errorWhenNotFound?: boolean | undefined): Entity;
+        /**
+         * Returns a map which gives a mapping from UID to Entity.
+         * This map is not updated.
+         *
+         * @returns {Map<number, Entity>}
+         */
+        getFrozenUidSearchMap(): Map<number, Entity>;
+        /**
+         * Returns all entities having the given component
+         * @param {typeof Component} componentHandle
+         * @returns {Array<Entity>} entities
+         */
+        getAllWithComponent(componentHandle: typeof Component): Array<Entity>;
+        /**
+         * Unregisters all components of an entity from the component to entity mapping
+         * @param {Entity} entity
+         */
+        unregisterEntityComponents(entity: Entity): void;
+        processDestroyList(): void;
+        /**
+         * Queues an entity for destruction
+         * @param {Entity} entity
+         */
+        destroyEntity(entity: Entity): void;
+    }
+    import { BasicSerializableObject } from "shapez/savegame/serialization";
+    import { GameRoot } from "shapez/game/root";
+    import { Entity } from "shapez/game/entity";
+    import { Component } from "shapez/game/component";
 }
 declare module "shapez/game/hub_goals" {
     export const MOD_ITEM_PROCESSOR_SPEEDS: {};
@@ -10093,6 +10379,630 @@ declare module "shapez/game/hub_goals" {
     import { enumHubGoalRewards } from "shapez/game/tutorial_goals";
     import { RandomNumberGenerator } from "shapez/core/rng";
     import { enumItemProcessorTypes } from "shapez/game/components/item_processor";
+}
+declare module "shapez/game/hud/parts/beta_overlay" {
+    export class HUDBetaOverlay extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+}
+declare module "shapez/game/hud/parts/blueprint_placer" {
+    export class HUDBlueprintPlacer extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        costDisplayParent: HTMLDivElement;
+        costDisplayText: HTMLDivElement;
+        /** @type {TypedTrackedState<Blueprint?>} */
+        currentBlueprint: any;
+        /** @type {Blueprint?} */
+        lastBlueprintUsed: Blueprint | null;
+        domAttach: DynamicDomAttach;
+        trackedCanAfford: TrackedState;
+        getHasFreeCopyPaste(): boolean;
+        abortPlacement(): string;
+        /**
+         * Called when the layer was changed
+         * @param {Layer} layer
+         */
+        onEditModeChanged(layer: any): void;
+        /**
+         * Called when the blueprint is now affordable or not
+         * @param {boolean} canAfford
+         */
+        onCanAffordChanged(canAfford: boolean): void;
+        /**
+         * Called when the blueprint was changed
+         * @param {Blueprint} blueprint
+         */
+        onBlueprintChanged(blueprint: Blueprint): void;
+        /**
+         * mouse down pre handler
+         * @param {Vector} pos
+         * @param {enumMouseButton} button
+         */
+        onMouseDown(pos: Vector, button: enumMouseButton): string;
+        /**
+         * Mouse move handler
+         */
+        onMouseMove(): string;
+        /**
+         * Called when an array of bulidings was selected
+         * @param {Array<number>} uids
+         */
+        createBlueprintFromBuildings(uids: Array<number>): void;
+        /**
+         * Attempts to rotate the current blueprint
+         */
+        rotateBlueprint(): void;
+        /**
+         * Attempts to paste the last blueprint
+         */
+        pasteBlueprint(): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Blueprint } from "shapez/game/blueprint";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { TrackedState } from "shapez/core/tracked_state";
+    import { Vector } from "shapez/core/vector";
+    import { enumMouseButton } from "shapez/game/camera";
+}
+declare module "shapez/game/hud/parts/buildings_toolbar" {
+    export class HUDBuildingsToolbar extends HUDBaseToolbar {
+        constructor(root: any);
+    }
+    import { HUDBaseToolbar } from "shapez/game/hud/parts/base_toolbar";
+}
+declare module "shapez/game/hud/parts/building_placer_logic" {
+    /**
+     * Contains all logic for the building placer - this doesn't include the rendering
+     * of info boxes or drawing.
+     */
+    export class HUDBuildingPlacerLogic extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        /**
+         * We use a fake entity to get information about how a building will look
+         * once placed
+         * @type {Entity}
+         */
+        fakeEntity: Entity;
+        signals: {
+            variantChanged: Signal;
+            draggingStarted: Signal;
+        };
+        /**
+         * The current building
+         * @type {TypedTrackedState<MetaBuilding?>}
+         */
+        currentMetaBuilding: any;
+        /**
+         * The current rotation
+         * @type {number}
+         */
+        currentBaseRotationGeneral: number;
+        /**
+         * The current rotation preference for each building.
+         * @type{Object.<string,number>}
+         */
+        preferredBaseRotations: {
+            [x: string]: number;
+        };
+        /**
+         * Whether we are currently dragging
+         * @type {boolean}
+         */
+        currentlyDragging: boolean;
+        /**
+         * Current building variant
+         * @type {TypedTrackedState<string>}
+         */
+        currentVariant: any;
+        /**
+         * Whether we are currently drag-deleting
+         * @type {boolean}
+         */
+        currentlyDeleting: boolean;
+        /**
+         * Stores which variants for each building we prefer, this is based on what
+         * the user last selected
+         * @type {Object.<string, string>}
+         */
+        preferredVariants: {
+            [x: string]: string;
+        };
+        /**
+         * The tile we last dragged from
+         * @type {Vector}
+         */
+        lastDragTile: Vector;
+        /**
+         * The side for direction lock
+         * @type {number} (0|1)
+         */
+        currentDirectionLockSide: number;
+        /**
+         * Whether the side for direction lock has not yet been determined.
+         * @type {boolean}
+         */
+        currentDirectionLockSideIndeterminate: boolean;
+        /**
+         * Initializes all bindings
+         */
+        initializeBindings(): void;
+        /**
+         * Called when the edit mode got changed
+         * @param {Layer} layer
+         */
+        onEditModeChanged(layer: any): void;
+        /**
+         * Sets the base rotation for the current meta-building.
+         * @param {number} rotation The new rotation/angle.
+         */
+        set currentBaseRotation(arg: number);
+        /**
+         * Returns the current base rotation for the current meta-building.
+         * @returns {number}
+         */
+        get currentBaseRotation(): number;
+        /**
+         * Returns if the direction lock is currently active
+         * @returns {boolean}
+         */
+        get isDirectionLockActive(): boolean;
+        /**
+         * Returns the current direction lock corner, that is, the corner between
+         * mouse and original start point
+         * @returns {Vector|null}
+         */
+        get currentDirectionLockCorner(): Vector;
+        /**
+         * Aborts the placement
+         */
+        abortPlacement(): string;
+        /**
+         * Aborts any dragging
+         */
+        abortDragging(): void;
+        initialPlacementVector: any;
+        /**
+         * Tries to rotate the current building
+         */
+        tryRotate(): void;
+        /**
+         * Rotates the current building to the specified direction.
+         */
+        trySetRotate(): void;
+        /**
+         * Tries to delete the building under the mouse
+         */
+        deleteBelowCursor(): boolean;
+        /**
+         * Starts the pipette function
+         */
+        startPipette(): void;
+        /**
+         * Switches the side for the direction lock manually
+         */
+        switchDirectionLockSide(): void;
+        /**
+         * Checks if the direction lock key got released and if such, resets the placement
+         * @param {any} args
+         */
+        checkForDirectionLockSwitch({ keyCode }: any): void;
+        /**
+         * Tries to place the current building at the given tile
+         * @param {Vector} tile
+         */
+        tryPlaceCurrentBuildingAt(tile: Vector): boolean;
+        /**
+         * Cycles through the variants
+         */
+        cycleVariants(): void;
+        /**
+         * Sets the current variant to the given variant
+         * @param {string} variant
+         */
+        setVariant(variant: string): void;
+        /**
+         * Performs the direction locked placement between two points after
+         * releasing the mouse
+         */
+        executeDirectionLockedPlacement(): void;
+        /**
+         * Finds the path which the current direction lock will use
+         * @returns {Array<{ tile: Vector, rotation: number }>}
+         */
+        computeDirectionLockPath(): {
+            tile: Vector;
+            rotation: number;
+        }[];
+        /**
+         * Selects a given building
+         * @param {MetaBuilding} metaBuilding
+         */
+        startSelection(metaBuilding: MetaBuilding): void;
+        /**
+         * Called when the selected buildings changed
+         * @param {MetaBuilding} metaBuilding
+         */
+        onSelectedMetaBuildingChanged(metaBuilding: MetaBuilding): void;
+        /**
+         * mouse down pre handler
+         * @param {Vector} pos
+         * @param {enumMouseButton} button
+         */
+        onMouseDown(pos: Vector, button: enumMouseButton): string;
+        /**
+         * mouse move pre handler
+         * @param {Vector} pos
+         */
+        onMouseMove(pos: Vector): string;
+        /**
+         * Mouse up handler
+         */
+        onMouseUp(): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Entity } from "shapez/game/entity";
+    import { Signal } from "shapez/core/signal";
+    import { Vector } from "shapez/core/vector";
+    import { MetaBuilding } from "shapez/game/meta_building";
+    import { enumMouseButton } from "shapez/game/camera";
+}
+declare module "shapez/game/hud/parts/building_placer" {
+    export class HUDBuildingPlacer extends HUDBuildingPlacerLogic {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        buildingInfoElements: {};
+        variantsElement: HTMLDivElement;
+        domAttach: DynamicDomAttach;
+        variantsAttach: DynamicDomAttach;
+        currentInterpolatedCornerTile: Vector;
+        lockIndicatorSprites: {};
+        /**
+         * Stores the click detectors for the variants so we can clean them up later
+         * @type {Array<ClickDetector>}
+         */
+        variantClickDetectors: Array<ClickDetector>;
+        /**
+         * Makes the lock indicator sprite for the given layer
+         * @param {string} layer
+         */
+        makeLockIndicatorSprite(layer: string): HTMLCanvasElement;
+        /**
+         * Rerenders the building info dialog
+         */
+        rerenderInfoDialog(): void;
+        /**
+         * Cleans up all variant click detectors
+         */
+        cleanupVariantClickDetectors(): void;
+        /**
+         * Rerenders the variants displayed
+         */
+        rerenderVariants(): void;
+        /**
+         *
+         * @param {DrawParameters} parameters
+         */
+        drawLayerPeek(parameters: DrawParameters): void;
+        /**
+         * @param {DrawParameters} parameters
+         */
+        drawRegularPlacement(parameters: DrawParameters): void;
+        /**
+         * Checks if there are any entities in the way, returns true if there are
+         * @param {Vector} from
+         * @param {Vector} to
+         * @param {Vector[]=} ignorePositions
+         * @returns
+         */
+        checkForObstales(from: Vector, to: Vector, ignorePositions?: Vector[] | undefined): boolean;
+        /**
+         * @param {DrawParameters} parameters
+         */
+        drawDirectionLock(parameters: DrawParameters): void;
+        /**
+         * @param {DrawParameters} parameters
+         */
+        drawMatchingAcceptorsAndEjectors(parameters: DrawParameters): void;
+    }
+    import { HUDBuildingPlacerLogic } from "shapez/game/hud/parts/building_placer_logic";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { Vector } from "shapez/core/vector";
+    import { ClickDetector } from "shapez/core/click_detector";
+    import { DrawParameters } from "shapez/core/draw_parameters";
+}
+declare module "shapez/game/hud/parts/color_blind_helper" {
+    export class HUDColorBlindHelper extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        belowTileIndicator: HTMLDivElement;
+        trackedColorBelowTile: TrackedState;
+        /**
+         * Called when the color below the current tile changed
+         * @param {enumColors|null} color
+         */
+        onColorBelowTileChanged(color: enumColors | null): void;
+        /**
+         * Computes the color below the current tile
+         * @returns {enumColors}
+         */
+        computeColorBelowTile(): enumColors;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { TrackedState } from "shapez/core/tracked_state";
+    import { enumColors } from "shapez/game/colors";
+}
+declare module "shapez/game/hud/parts/debug_changes" {
+    /**
+     * @typedef {{
+     *    label: string,
+     *    area: Rectangle,
+     *    hideAt: number,
+     *    fillColor: string
+     * }} DebugChange
+     */
+    export class HUDChangesDebugger extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        /** @type {Array<DebugChange>} */
+        /** @type {Array<DebugChange>} */
+        changes: Array<DebugChange>;
+        /**
+         * Renders a new change
+         * @param {string} label Text to display
+         * @param {Rectangle} area Affected area world space
+         * @param {string} fillColor Color to display (Hex)
+         * @param {number=} timeToDisplay How long to display the change
+         */
+        renderChange(
+            label: string,
+            area: Rectangle,
+            fillColor: string,
+            timeToDisplay?: number | undefined
+        ): void;
+    }
+    export type DebugChange = {
+        label: string;
+        area: Rectangle;
+        hideAt: number;
+        fillColor: string;
+    };
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Rectangle } from "shapez/core/rectangle";
+}
+declare module "shapez/game/hud/parts/debug_info" {
+    export class HUDDebugInfo extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        trackedTickRate: TrackedState;
+        trackedTickDuration: TrackedState;
+        trackedFPS: TrackedState;
+        trackedMousePosition: TrackedState;
+        trackedCameraPosition: TrackedState;
+        versionElement: HTMLDivElement;
+        lastTick: number;
+        trackedMode: TrackedState;
+        domAttach: DynamicDomAttach;
+        /**
+         * Called when the mode changed
+         * @param {enumDebugOverlayMode} mode
+         */
+        onModeChanged(mode: enumDebugOverlayMode): void;
+        /**
+         * Updates the labels
+         */
+        updateLabels(): void;
+        /**
+         * Updates the detailed information
+         */
+        updateDetailedInformation(): void;
+        /**
+         * Cycles through the different modes
+         */
+        cycleModes(): void;
+    }
+    export type enumDebugOverlayMode = string;
+    /**
+     * Specifies which mode follows after which mode
+     */
+    export type enumDebugOverlayModeNext = string;
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { TrackedState } from "shapez/core/tracked_state";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    namespace enumDebugOverlayMode {
+        export const disabled: string;
+        export const regular: string;
+        export const detailed: string;
+    }
+    export {};
+}
+declare module "shapez/game/hud/parts/entity_debugger" {
+    /**
+     * Allows to inspect entities by pressing F8 while hovering them
+     */
+    export class HUDEntityDebugger extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+        componentsElem: Element;
+        /**
+         * The currently selected entity
+         * @type {Entity}
+         */
+        selectedEntity: Entity;
+        lastUpdate: number;
+        domAttach: DynamicDomAttach;
+        pickEntity(): void;
+        /**
+         *
+         * @param {string} name
+         * @param {any} val
+         * @param {number} indent
+         * @param {Array} recursion
+         */
+        propertyToHTML(name: string, val: any, indent?: number, recursion?: any[]): string;
+        /**
+         * Rerenders the whole container
+         * @param {Entity} entity
+         */
+        rerenderFull(entity: Entity): void;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Entity } from "shapez/game/entity";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+}
+declare module "shapez/game/hud/parts/settings_menu" {
+    export class HUDSettingsMenu extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        background: HTMLDivElement;
+        menuElement: HTMLDivElement;
+        statsElement: HTMLDivElement;
+        buttonContainer: HTMLDivElement;
+        returnToMenu(): void;
+        goToSettings(): void;
+        domAttach: DynamicDomAttach;
+        inputReciever: InputReceiver;
+        keyActionMapper: KeyActionMapper;
+        show(): void;
+        visible: boolean;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
+    import { InputReceiver } from "shapez/core/input_receiver";
+    import { KeyActionMapper } from "shapez/game/key_action_mapper";
+}
+declare module "shapez/game/hud/parts/shape_tooltip" {
+    export class HUDShapeTooltip extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        /** @type {Vector} */
+        currentTile: Vector;
+        /** @type {Entity} */
+        currentEntity: Entity;
+        isPlacingBuilding: any;
+        isActive(): boolean;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Vector } from "shapez/core/vector";
+    import { Entity } from "shapez/game/entity";
+}
+declare module "shapez/game/hud/parts/vignette_overlay" {
+    export class HUDVignetteOverlay extends BaseHUDPart {
+        constructor(root: import("shapez/game/root").GameRoot);
+        element: HTMLDivElement;
+    }
+    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+}
+declare module "shapez/game/hud/trailer_points" {
+    let _default: {
+        pos: {
+            x: number;
+            y: number;
+        };
+        zoom: number;
+        time: number;
+        wait: number;
+    }[];
+    export default _default;
+}
+declare module "shapez/game/hud/trailer_maker" {
+    export class TrailerMaker {
+        /**
+         *
+         * @param {GameRoot} root
+         */
+        constructor(root: GameRoot);
+        root: GameRoot;
+        markers: any[];
+        playbackMarkers: any[];
+        currentPlaybackOrigin: Vector;
+        currentPlaybackZoom: any;
+        update(): void;
+    }
+    import { GameRoot } from "shapez/game/root";
+    import { Vector } from "shapez/core/vector";
+}
+declare module "shapez/game/hud/hud" {
+    export class GameHUD {
+        /**
+         * @param {GameRoot} root
+         */
+        constructor(root: GameRoot);
+        root: GameRoot;
+        /**
+         * Initializes the hud parts
+         */
+        initialize(): void;
+        signals: {
+            buildingSelectedForPlacement: any;
+            selectedPlacementBuildingChanged: any;
+            shapePinRequested: any;
+            shapeUnpinRequested: any;
+            notification: any;
+            buildingsSelectedForCopy: any;
+            pasteBlueprintRequested: any;
+            viewShapeDetailsRequested: any;
+            unlockNotificationFinished: any;
+        };
+        parts: {
+            buildingsToolbar: HUDBuildingsToolbar;
+            blueprintPlacer: HUDBlueprintPlacer;
+            buildingPlacer: HUDBuildingPlacer;
+            shapeTooltip: HUDShapeTooltip;
+            settingsMenu: HUDSettingsMenu;
+            debugInfo: HUDDebugInfo;
+            dialogs: HUDModalDialogs;
+            /** @type {HUDChangesDebugger} */
+            changesDebugger: HUDChangesDebugger;
+        };
+        trailerMaker: TrailerMaker;
+        /**
+         * Attempts to close all overlays
+         */
+        closeAllOverlays(): void;
+        /**
+         * Returns true if the game logic should be paused
+         */
+        shouldPauseGame(): boolean;
+        /**
+         * Returns true if the rendering can be paused
+         */
+        shouldPauseRendering(): boolean;
+        /**
+         * Returns true if the rendering can be paused
+         */
+        hasBlockingOverlayOpen(): boolean;
+        /**
+         * Toggles the ui
+         */
+        toggleUi(): void;
+        /**
+         * Updates all parts
+         */
+        update(): void;
+        /**
+         * Draws all parts
+         * @param {DrawParameters} parameters
+         */
+        draw(parameters: DrawParameters): void;
+        /**
+         * Draws all part overlays
+         * @param {DrawParameters} parameters
+         */
+        drawOverlays(parameters: DrawParameters): void;
+        /**
+         * Cleans up everything
+         */
+        cleanup(): void;
+    }
+    import { GameRoot } from "shapez/game/root";
+    import { HUDBuildingsToolbar } from "shapez/game/hud/parts/buildings_toolbar";
+    import { HUDBlueprintPlacer } from "shapez/game/hud/parts/blueprint_placer";
+    import { HUDBuildingPlacer } from "shapez/game/hud/parts/building_placer";
+    import { HUDShapeTooltip } from "shapez/game/hud/parts/shape_tooltip";
+    import { HUDSettingsMenu } from "shapez/game/hud/parts/settings_menu";
+    import { HUDDebugInfo } from "shapez/game/hud/parts/debug_info";
+    import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
+    import { HUDChangesDebugger } from "shapez/game/hud/parts/debug_changes";
+    import { TrailerMaker } from "shapez/game/hud/trailer_maker";
+    import { DrawParameters } from "shapez/core/draw_parameters";
 }
 declare module "shapez/game/logic" {
     /**
@@ -10659,6 +11569,32 @@ declare module "shapez/game/shape_definition_manager" {
     import { enumColors } from "shapez/game/colors";
     import { enumSubShape } from "shapez/game/shape_definition";
 }
+declare module "shapez/game/achievement_proxy" {
+    export class AchievementProxy {
+        /** @param {GameRoot} root */
+        constructor(root: GameRoot);
+        root: GameRoot;
+        provider: import("shapez/platform/achievement_provider").AchievementProviderInterface;
+        disabled: boolean;
+        sliceTime: number;
+        onLoad(): void;
+        initialize(): void;
+        startSlice(): void;
+        update(): void;
+        /**
+         * @param {string} key
+         * @returns {boolean}
+         */
+        has(key: string): boolean;
+        /** @param {Entity} entity */
+        onEntityAdded(entity: Entity): void;
+        /** @param {number} level */
+        onStoryGoalCompleted(level: number): void;
+        onMamFailure(): void;
+    }
+    import { GameRoot } from "shapez/game/root";
+    import { Entity } from "shapez/game/entity";
+}
 declare module "shapez/game/sound_proxy" {
     export class SoundProxy {
         /**
@@ -10902,666 +11838,342 @@ declare module "shapez/mods/mod_signals" {
         export const gameLoadingStageEntered: any;
         export const gameStarted: any;
         export const stateEntered: any;
+        export const gameSerialized: any;
+        export const gameDeserialized: any;
     }
     import { Signal } from "shapez/core/signal";
 }
-declare module "shapez/game/hud/parts/beta_overlay" {
-    export class HUDBetaOverlay extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
+declare module "shapez/savegame/serializer_internal" {
+    export class SerializerInternal {
+        /**
+         * Serializes an array of entities
+         * @param {Array<Entity>} array
+         */
+        serializeEntityArray(array: Array<Entity>): any[];
+        /**
+         *
+         * @param {GameRoot} root
+         * @param {Array<Entity>} array
+         * @returns {string|void}
+         */
+        deserializeEntityArray(root: GameRoot, array: Array<Entity>): string | void;
+        /**
+         *
+         * @param {GameRoot} root
+         * @param {Entity} payload
+         */
+        deserializeEntity(root: GameRoot, payload: Entity): void;
+        /**
+         * Deserializes components of an entity
+         * @param {GameRoot} root
+         * @param {Entity} entity
+         * @param {Object.<string, any>} data
+         * @returns {string|void}
+         */
+        deserializeComponents(
+            root: GameRoot,
+            entity: Entity,
+            data: {
+                [x: string]: any;
+            }
+        ): string | void;
     }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
+    import { Entity } from "shapez/game/entity";
+    import { GameRoot } from "shapez/game/root";
 }
-declare module "shapez/game/hud/parts/blueprint_placer" {
-    export class HUDBlueprintPlacer extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        costDisplayParent: HTMLDivElement;
-        costDisplayText: HTMLDivElement;
-        /** @type {TypedTrackedState<Blueprint?>} */
-        currentBlueprint: any;
-        /** @type {Blueprint?} */
-        lastBlueprintUsed: Blueprint | null;
-        domAttach: DynamicDomAttach;
-        trackedCanAfford: TrackedState;
-        getHasFreeCopyPaste(): boolean;
-        abortPlacement(): string;
-        /**
-         * Called when the layer was changed
-         * @param {Layer} layer
-         */
-        onEditModeChanged(layer: any): void;
-        /**
-         * Called when the blueprint is now affordable or not
-         * @param {boolean} canAfford
-         */
-        onCanAffordChanged(canAfford: boolean): void;
-        /**
-         * Called when the blueprint was changed
-         * @param {Blueprint} blueprint
-         */
-        onBlueprintChanged(blueprint: Blueprint): void;
-        /**
-         * mouse down pre handler
-         * @param {Vector} pos
-         * @param {enumMouseButton} button
-         */
-        onMouseDown(pos: Vector, button: enumMouseButton): string;
-        /**
-         * Mouse move handler
-         */
-        onMouseMove(): string;
-        /**
-         * Called when an array of bulidings was selected
-         * @param {Array<number>} uids
-         */
-        createBlueprintFromBuildings(uids: Array<number>): void;
-        /**
-         * Attempts to rotate the current blueprint
-         */
-        rotateBlueprint(): void;
-        /**
-         * Attempts to paste the last blueprint
-         */
-        pasteBlueprint(): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Blueprint } from "shapez/game/blueprint";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { TrackedState } from "shapez/core/tracked_state";
-    import { Vector } from "shapez/core/vector";
-    import { enumMouseButton } from "shapez/game/camera";
-}
-declare module "shapez/game/hud/parts/buildings_toolbar" {
-    export class HUDBuildingsToolbar extends HUDBaseToolbar {
-        constructor(root: any);
-    }
-    import { HUDBaseToolbar } from "shapez/game/hud/parts/base_toolbar";
-}
-declare module "shapez/game/hud/parts/building_placer_logic" {
+declare module "shapez/savegame/savegame_serializer" {
     /**
-     * Contains all logic for the building placer - this doesn't include the rendering
-     * of info boxes or drawing.
+     * Serializes a savegame
      */
-    export class HUDBuildingPlacerLogic extends BaseHUDPart {
+    export class SavegameSerializer {
+        internal: SerializerInternal;
+        /**
+         * Serializes the game root into a dump
+         * @param {GameRoot} root
+         * @param {boolean=} sanityChecks Whether to check for validity
+         * @returns {object}
+         */
+        generateDumpFromGameRoot(root: GameRoot, sanityChecks?: boolean | undefined): object;
+        /**
+         * Verifies if there are logical errors in the savegame
+         * @param {SerializedGame} savegame
+         * @returns {ExplainedResult}
+         */
+        verifyLogicalErrors(savegame: SerializedGame): ExplainedResult;
+        /**
+         * Tries to load the savegame from a given dump
+         * @param {SerializedGame} savegame
+         * @param {GameRoot} root
+         * @returns {ExplainedResult}
+         */
+        deserialize(savegame: SerializedGame, root: GameRoot): ExplainedResult;
+    }
+    export type Component = import("shapez/game/component").Component;
+    export type StaticComponent = typeof import("shapez/game/component").Component;
+    export type Entity = import("shapez/game/entity").Entity;
+    export type GameRoot = import("shapez/game/root").GameRoot;
+    export type SerializedGame = {
+        camera: any;
+        time: any;
+        entityMgr: any;
+        map: any;
+        gameMode: any;
+        hubGoals: any;
+        pinnedShapes: any;
+        waypoints: any;
+        entities: import("shapez/game/entity").Entity[];
+        beltPaths: any[];
+        modExtraData: any;
+    };
+    import { SerializerInternal } from "shapez/savegame/serializer_internal";
+    import { ExplainedResult } from "shapez/core/explained_result";
+}
+declare module "shapez/savegame/serialization" {
+    /**
+     * Serializes an object using the given schema, mergin with the given properties
+     * @param {object} obj The object to serialize
+     * @param {Schema} schema The schema to use
+     * @param {object=} mergeWith Any additional properties to merge with the schema, useful for super calls
+     * @returns {object} Serialized data object
+     */
+    export function serializeSchema(obj: object, schema: Schema, mergeWith?: object | undefined): object;
+    /**
+     * Deserializes data into an object
+     * @param {object} obj The object to store the deserialized data into
+     * @param {Schema} schema The schema to use
+     * @param {object} data The serialized data
+     * @param {string|void|null=} baseclassErrorResult Convenience, if this is a string error code, do nothing and return it
+     * @param {import("shapez/game/root").GameRoot=} root Optional game root reference
+     * @returns {string|void} String error code or nothing on success
+     */
+    export function deserializeSchema(
+        obj: object,
+        schema: Schema,
+        data: object,
+        baseclassErrorResult?: (string | void | null) | undefined,
+        root?: import("shapez/game/root").GameRoot | undefined
+    ): string | void;
+    /**
+     * Verifies stored data using the given schema
+     * @param {Schema} schema The schema to use
+     * @param {object} data The data to verify
+     * @returns {string|void} String error code or nothing on success
+     */
+    export function verifySchema(schema: Schema, data: object): string | void;
+    /**
+     * Extends a schema by adding the properties from the new schema to the existing base schema
+     * @param {Schema} base
+     * @param {Schema} newOne
+     * @returns {Schema}
+     */
+    export function extendSchema(base: Schema, newOne: Schema): Schema;
+    export const types: {
+        int: TypeInteger;
+        uint: TypePositiveInteger;
+        float: TypeNumber;
+        ufloat: TypePositiveNumber;
+        string: TypeString;
+        entity: TypeEntity;
+        weakEntityRef: TypeEntityWeakref;
+        vector: TypeVector;
+        tileVector: TypeVector;
+        bool: TypeBoolean;
+        uintOrString: TypePositiveIntegerOrString;
+        /**
+         * @param {BaseDataType} wrapped
+         */
+        nullable(wrapped: BaseDataType): TypeNullable;
+        /**
+         * @param {FactoryTemplate<*>|SingletonFactoryTemplate<*>} registry
+         */
+        classId(registry: any | any): TypeClassId;
+        /**
+         * @param {BaseDataType} valueType
+         * @param {boolean=} includeEmptyValues
+         */
+        keyValueMap(valueType: BaseDataType, includeEmptyValues?: boolean | undefined): TypeKeyValueMap;
+        /**
+         * @param {Object<string, any>} values
+         */
+        enum(values: { [x: string]: any }): TypeEnum;
+        /**
+         * @param {FactoryTemplate<*>} registry
+         * @param {(GameRoot, any) => object=} resolver
+         */
+        obj(registry: any, resolver?: (GameRoot: any, any: any) => object): TypeClass;
+        /**
+         * @param {FactoryTemplate<*>} registry
+         */
+        objData(registry: any): TypeClassData;
+        /**
+         * @param {typeof BasicSerializableObject} cls
+         */
+        knownType(cls: typeof BasicSerializableObject): TypeFixedClass;
+        /**
+         * @param {BaseDataType} innerType
+         */
+        array(innerType: BaseDataType): TypeArray;
+        /**
+         * @param {BaseDataType} innerType
+         */
+        fixedSizeArray(innerType: BaseDataType): TypeArray;
+        /**
+         * @param {SingletonFactoryTemplate<*>} innerType
+         */
+        classRef(registry: any): TypeMetaClass;
+        /**
+         * @param {Object.<string, BaseDataType>} descriptor
+         */
+        structured(descriptor: { [x: string]: BaseDataType }): TypeStructuredObject;
+        /**
+         * @param {BaseDataType} a
+         * @param {BaseDataType} b
+         */
+        pair(a: BaseDataType, b: BaseDataType): TypePair;
+        /**
+         * @param {typeof BasicSerializableObject} classHandle
+         * @param {SingletonFactoryTemplate<*>} registry
+         */
+        classWithMetaclass(
+            classHandle: typeof BasicSerializableObject,
+            registry: any
+        ): TypeClassFromMetaclass;
+    };
+    export class BasicSerializableObject {
+        static getId(): void;
+        /**
+         * Should return the serialization schema
+         * @returns {Schema}
+         */
+        static getSchema(): Schema;
+        /** @returns {Schema} */
+        static getCachedSchema(): Schema;
+        /** @returns {string|void} */
+        static verify(data: any): string | void;
+        /**
+         * Fixes typeof DerivedComponent is not assignable to typeof Component, compiled out
+         * in non-dev builds
+         */
+        constructor(...args: any[]);
+        /** @returns {object | string | number} */
+        serialize(): object | string | number;
+        /**
+         * @param {any} data
+         * @param {import("shapez/savegame/savegame_serializer").GameRoot} root
+         * @returns {string|void}
+         */
+        deserialize(data: any, root?: import("shapez/savegame/savegame_serializer").GameRoot): string | void;
+    }
+    /**
+     * A full schema declaration
+     */
+    export type Schema = any;
+    import { TypeInteger } from "shapez/savegame/serialization_data_types";
+    import { TypePositiveInteger } from "shapez/savegame/serialization_data_types";
+    import { TypeNumber } from "shapez/savegame/serialization_data_types";
+    import { TypePositiveNumber } from "shapez/savegame/serialization_data_types";
+    import { TypeString } from "shapez/savegame/serialization_data_types";
+    import { TypeEntity } from "shapez/savegame/serialization_data_types";
+    import { TypeEntityWeakref } from "shapez/savegame/serialization_data_types";
+    import { TypeVector } from "shapez/savegame/serialization_data_types";
+    import { TypeBoolean } from "shapez/savegame/serialization_data_types";
+    import { TypePositiveIntegerOrString } from "shapez/savegame/serialization_data_types";
+    import { BaseDataType } from "shapez/savegame/serialization_data_types";
+    import { TypeNullable } from "shapez/savegame/serialization_data_types";
+    import { TypeClassId } from "shapez/savegame/serialization_data_types";
+    import { TypeKeyValueMap } from "shapez/savegame/serialization_data_types";
+    import { TypeEnum } from "shapez/savegame/serialization_data_types";
+    import { TypeClass } from "shapez/savegame/serialization_data_types";
+    import { TypeClassData } from "shapez/savegame/serialization_data_types";
+    import { TypeFixedClass } from "shapez/savegame/serialization_data_types";
+    import { TypeArray } from "shapez/savegame/serialization_data_types";
+    import { TypeMetaClass } from "shapez/savegame/serialization_data_types";
+    import { TypeStructuredObject } from "shapez/savegame/serialization_data_types";
+    import { TypePair } from "shapez/savegame/serialization_data_types";
+    import { TypeClassFromMetaclass } from "shapez/savegame/serialization_data_types";
+}
+declare module "shapez/game/time/regular_game_speed" {
+    export class RegularGameSpeed extends BaseGameSpeed {
         constructor(root: import("shapez/game/root").GameRoot);
-        /**
-         * We use a fake entity to get information about how a building will look
-         * once placed
-         * @type {Entity}
-         */
-        fakeEntity: Entity;
-        signals: {
-            variantChanged: Signal;
-            draggingStarted: Signal;
+    }
+    import { BaseGameSpeed } from "shapez/game/time/base_game_speed";
+}
+declare module "shapez/game/time/paused_game_speed" {
+    export class PausedGameSpeed extends BaseGameSpeed {
+        constructor(root: import("shapez/game/root").GameRoot);
+    }
+    import { BaseGameSpeed } from "shapez/game/time/base_game_speed";
+}
+declare module "shapez/game/time/game_time" {
+    export class GameTime extends BasicSerializableObject {
+        static getId(): string;
+        static getSchema(): {
+            timeSeconds: import("shapez/savegame/serialization_data_types").TypeNumber;
+            speed: import("shapez/savegame/serialization_data_types").TypeClass;
+            realtimeSeconds: import("shapez/savegame/serialization_data_types").TypeNumber;
         };
         /**
-         * The current building
-         * @type {TypedTrackedState<MetaBuilding?>}
+         * @param {GameRoot} root
          */
-        currentMetaBuilding: any;
+        constructor(root: GameRoot);
+        root: GameRoot;
+        timeSeconds: number;
+        realtimeSeconds: any;
+        realtimeAdjust: any;
+        /** @type {BaseGameSpeed} */
+        speed: BaseGameSpeed;
+        logicTimeBudget: number;
         /**
-         * The current rotation
-         * @type {number}
+         * Fetches the new "real" time, called from the core once per frame, since performance now() is kinda slow
          */
-        currentBaseRotationGeneral: number;
+        updateRealtimeNow(): void;
         /**
-         * The current rotation preference for each building.
-         * @type{Object.<string,number>}
+         * Returns the ingame time in milliseconds
          */
-        preferredBaseRotations: {
-            [x: string]: number;
-        };
+        getTimeMs(): number;
         /**
-         * Whether we are currently dragging
-         * @type {boolean}
-         */
-        currentlyDragging: boolean;
-        /**
-         * Current building variant
-         * @type {TypedTrackedState<string>}
-         */
-        currentVariant: any;
-        /**
-         * Whether we are currently drag-deleting
-         * @type {boolean}
-         */
-        currentlyDeleting: boolean;
-        /**
-         * Stores which variants for each building we prefer, this is based on what
-         * the user last selected
-         * @type {Object.<string, string>}
-         */
-        preferredVariants: {
-            [x: string]: string;
-        };
-        /**
-         * The tile we last dragged from
-         * @type {Vector}
-         */
-        lastDragTile: Vector;
-        /**
-         * The side for direction lock
-         * @type {number} (0|1)
-         */
-        currentDirectionLockSide: number;
-        /**
-         * Whether the side for direction lock has not yet been determined.
-         * @type {boolean}
-         */
-        currentDirectionLockSideIndeterminate: boolean;
-        /**
-         * Initializes all bindings
-         */
-        initializeBindings(): void;
-        /**
-         * Called when the edit mode got changed
-         * @param {Layer} layer
-         */
-        onEditModeChanged(layer: any): void;
-        /**
-         * Sets the base rotation for the current meta-building.
-         * @param {number} rotation The new rotation/angle.
-         */
-        set currentBaseRotation(arg: number);
-        /**
-         * Returns the current base rotation for the current meta-building.
+         * Returns how many seconds we are in the grace period
          * @returns {number}
          */
-        get currentBaseRotation(): number;
+        getRemainingGracePeriodSeconds(): number;
         /**
-         * Returns if the direction lock is currently active
+         * Returns if we are currently in the grace period
          * @returns {boolean}
          */
-        get isDirectionLockActive(): boolean;
+        getIsWithinGracePeriod(): boolean;
         /**
-         * Returns the current direction lock corner, that is, the corner between
-         * mouse and original start point
-         * @returns {Vector|null}
+         * Internal method to generate new logic time budget
+         * @param {number} deltaMs
          */
-        get currentDirectionLockCorner(): Vector;
+        internalAddDeltaToBudget(deltaMs: number): void;
         /**
-         * Aborts the placement
+         * Performs update ticks based on the queued logic budget
+         * @param {number} deltaMs
+         * @param {function():boolean} updateMethod
          */
-        abortPlacement(): string;
+        performTicks(deltaMs: number, updateMethod: () => boolean): void;
         /**
-         * Aborts any dragging
+         * Returns ingame time in seconds
+         * @returns {number} seconds
          */
-        abortDragging(): void;
-        initialPlacementVector: any;
+        now(): number;
         /**
-         * Tries to rotate the current building
+         * Returns "real" time in seconds
+         * @returns {number} seconds
          */
-        tryRotate(): void;
+        realtimeNow(): number;
         /**
-         * Rotates the current building to the specified direction.
+         * Returns "real" time in seconds
+         * @returns {number} seconds
          */
-        trySetRotate(): void;
-        /**
-         * Tries to delete the building under the mouse
-         */
-        deleteBelowCursor(): boolean;
-        /**
-         * Starts the pipette function
-         */
-        startPipette(): void;
-        /**
-         * Switches the side for the direction lock manually
-         */
-        switchDirectionLockSide(): void;
-        /**
-         * Checks if the direction lock key got released and if such, resets the placement
-         * @param {any} args
-         */
-        checkForDirectionLockSwitch({ keyCode }: any): void;
-        /**
-         * Tries to place the current building at the given tile
-         * @param {Vector} tile
-         */
-        tryPlaceCurrentBuildingAt(tile: Vector): boolean;
-        /**
-         * Cycles through the variants
-         */
-        cycleVariants(): void;
-        /**
-         * Sets the current variant to the given variant
-         * @param {string} variant
-         */
-        setVariant(variant: string): void;
-        /**
-         * Performs the direction locked placement between two points after
-         * releasing the mouse
-         */
-        executeDirectionLockedPlacement(): void;
-        /**
-         * Finds the path which the current direction lock will use
-         * @returns {Array<{ tile: Vector, rotation: number }>}
-         */
-        computeDirectionLockPath(): {
-            tile: Vector;
-            rotation: number;
-        }[];
-        /**
-         * Selects a given building
-         * @param {MetaBuilding} metaBuilding
-         */
-        startSelection(metaBuilding: MetaBuilding): void;
-        /**
-         * Called when the selected buildings changed
-         * @param {MetaBuilding} metaBuilding
-         */
-        onSelectedMetaBuildingChanged(metaBuilding: MetaBuilding): void;
-        /**
-         * mouse down pre handler
-         * @param {Vector} pos
-         * @param {enumMouseButton} button
-         */
-        onMouseDown(pos: Vector, button: enumMouseButton): string;
-        /**
-         * mouse move pre handler
-         * @param {Vector} pos
-         */
-        onMouseMove(pos: Vector): string;
-        /**
-         * Mouse up handler
-         */
-        onMouseUp(): void;
+        systemNow(): number;
+        getIsPaused(): boolean;
+        getSpeed(): BaseGameSpeed;
+        setSpeed(speed: any): void;
     }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Entity } from "shapez/game/entity";
-    import { Signal } from "shapez/core/signal";
-    import { Vector } from "shapez/core/vector";
-    import { MetaBuilding } from "shapez/game/meta_building";
-    import { enumMouseButton } from "shapez/game/camera";
-}
-declare module "shapez/game/hud/parts/building_placer" {
-    export class HUDBuildingPlacer extends HUDBuildingPlacerLogic {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        buildingInfoElements: {};
-        variantsElement: HTMLDivElement;
-        domAttach: DynamicDomAttach;
-        variantsAttach: DynamicDomAttach;
-        currentInterpolatedCornerTile: Vector;
-        lockIndicatorSprites: {};
-        /**
-         * Stores the click detectors for the variants so we can clean them up later
-         * @type {Array<ClickDetector>}
-         */
-        variantClickDetectors: Array<ClickDetector>;
-        /**
-         * Makes the lock indicator sprite for the given layer
-         * @param {string} layer
-         */
-        makeLockIndicatorSprite(layer: string): HTMLCanvasElement;
-        /**
-         * Rerenders the building info dialog
-         */
-        rerenderInfoDialog(): void;
-        /**
-         * Cleans up all variant click detectors
-         */
-        cleanupVariantClickDetectors(): void;
-        /**
-         * Rerenders the variants displayed
-         */
-        rerenderVariants(): void;
-        /**
-         *
-         * @param {DrawParameters} parameters
-         */
-        drawLayerPeek(parameters: DrawParameters): void;
-        /**
-         * @param {DrawParameters} parameters
-         */
-        drawRegularPlacement(parameters: DrawParameters): void;
-        /**
-         * Checks if there are any entities in the way, returns true if there are
-         * @param {Vector} from
-         * @param {Vector} to
-         * @returns
-         */
-        checkForObstales(from: Vector, to: Vector): boolean;
-        /**
-         * @param {DrawParameters} parameters
-         */
-        drawDirectionLock(parameters: DrawParameters): void;
-        /**
-         * @param {DrawParameters} parameters
-         */
-        drawMatchingAcceptorsAndEjectors(parameters: DrawParameters): void;
-    }
-    import { HUDBuildingPlacerLogic } from "shapez/game/hud/parts/building_placer_logic";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { Vector } from "shapez/core/vector";
-    import { ClickDetector } from "shapez/core/click_detector";
-    import { DrawParameters } from "shapez/core/draw_parameters";
-}
-declare module "shapez/game/hud/parts/color_blind_helper" {
-    export class HUDColorBlindHelper extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        belowTileIndicator: HTMLDivElement;
-        trackedColorBelowTile: TrackedState;
-        /**
-         * Called when the color below the current tile changed
-         * @param {enumColors|null} color
-         */
-        onColorBelowTileChanged(color: enumColors | null): void;
-        /**
-         * Computes the color below the current tile
-         * @returns {enumColors}
-         */
-        computeColorBelowTile(): enumColors;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { TrackedState } from "shapez/core/tracked_state";
-    import { enumColors } from "shapez/game/colors";
-}
-declare module "shapez/game/hud/parts/debug_changes" {
-    /**
-     * @typedef {{
-     *    label: string,
-     *    area: Rectangle,
-     *    hideAt: number,
-     *    fillColor: string
-     * }} DebugChange
-     */
-    export class HUDChangesDebugger extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        /** @type {Array<DebugChange>} */
-        /** @type {Array<DebugChange>} */
-        changes: Array<DebugChange>;
-        /**
-         * Renders a new change
-         * @param {string} label Text to display
-         * @param {Rectangle} area Affected area world space
-         * @param {string} fillColor Color to display (Hex)
-         * @param {number=} timeToDisplay How long to display the change
-         */
-        renderChange(
-            label: string,
-            area: Rectangle,
-            fillColor: string,
-            timeToDisplay?: number | undefined
-        ): void;
-    }
-    export type DebugChange = {
-        label: string;
-        area: Rectangle;
-        hideAt: number;
-        fillColor: string;
-    };
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Rectangle } from "shapez/core/rectangle";
-}
-declare module "shapez/game/hud/parts/debug_info" {
-    export class HUDDebugInfo extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        trackedTickRate: TrackedState;
-        trackedTickDuration: TrackedState;
-        trackedFPS: TrackedState;
-        trackedMousePosition: TrackedState;
-        trackedCameraPosition: TrackedState;
-        versionElement: HTMLDivElement;
-        lastTick: number;
-        trackedMode: TrackedState;
-        domAttach: DynamicDomAttach;
-        /**
-         * Called when the mode changed
-         * @param {enumDebugOverlayMode} mode
-         */
-        onModeChanged(mode: enumDebugOverlayMode): void;
-        /**
-         * Updates the labels
-         */
-        updateLabels(): void;
-        /**
-         * Updates the detailed information
-         */
-        updateDetailedInformation(): void;
-        /**
-         * Cycles through the different modes
-         */
-        cycleModes(): void;
-    }
-    export type enumDebugOverlayMode = string;
-    /**
-     * Specifies which mode follows after which mode
-     */
-    export type enumDebugOverlayModeNext = string;
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { TrackedState } from "shapez/core/tracked_state";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    namespace enumDebugOverlayMode {
-        export const disabled: string;
-        export const regular: string;
-        export const detailed: string;
-    }
-    export {};
-}
-declare module "shapez/game/hud/parts/entity_debugger" {
-    /**
-     * Allows to inspect entities by pressing F8 while hovering them
-     */
-    export class HUDEntityDebugger extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-        componentsElem: Element;
-        /**
-         * The currently selected entity
-         * @type {Entity}
-         */
-        selectedEntity: Entity;
-        lastUpdate: number;
-        domAttach: DynamicDomAttach;
-        pickEntity(): void;
-        /**
-         *
-         * @param {string} name
-         * @param {any} val
-         * @param {number} indent
-         * @param {Array} recursion
-         */
-        propertyToHTML(name: string, val: any, indent?: number, recursion?: any[]): string;
-        /**
-         * Rerenders the whole container
-         * @param {Entity} entity
-         */
-        rerenderFull(entity: Entity): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Entity } from "shapez/game/entity";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-}
-declare module "shapez/game/hud/parts/modal_dialogs" {
-    export class HUDModalDialogs extends BaseHUDPart {
-        constructor(root: any, app: any);
-        /** @type {Application} */
-        app: Application;
-        dialogParent: any;
-        dialogStack: any[];
-        domWatcher: DynamicDomAttach;
-        initializeToElement(element: any): void;
-        /**
-         * @param {string} title
-         * @param {string} text
-         * @param {Array<string>} buttons
-         */
-        showInfo(title: string, text: string, buttons?: Array<string>): {};
-        /**
-         * @param {string} title
-         * @param {string} text
-         * @param {Array<string>} buttons
-         */
-        showWarning(title: string, text: string, buttons?: Array<string>): {};
-        /**
-         * @param {string} feature
-         * @param {string} textPrefab
-         */
-        showFeatureRestrictionInfo(feature: string, textPrefab?: string): {};
-        showOptionChooser(title: any, options: any): {};
-        showLoadingDialog(text?: string): any;
-        internalShowDialog(dialog: any): void;
-        closeDialog(dialog: any): void;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Application } from "shapez/application";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-}
-declare module "shapez/game/hud/parts/settings_menu" {
-    export class HUDSettingsMenu extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        background: HTMLDivElement;
-        menuElement: HTMLDivElement;
-        statsElement: HTMLDivElement;
-        buttonContainer: HTMLDivElement;
-        returnToMenu(): void;
-        goToSettings(): void;
-        domAttach: DynamicDomAttach;
-        inputReciever: InputReceiver;
-        keyActionMapper: KeyActionMapper;
-        show(): void;
-        visible: boolean;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
-    import { InputReceiver } from "shapez/core/input_receiver";
-    import { KeyActionMapper } from "shapez/game/key_action_mapper";
-}
-declare module "shapez/game/hud/parts/shape_tooltip" {
-    export class HUDShapeTooltip extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        /** @type {Vector} */
-        currentTile: Vector;
-        /** @type {Entity} */
-        currentEntity: Entity;
-        isPlacingBuilding: any;
-        isActive(): boolean;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Vector } from "shapez/core/vector";
-    import { Entity } from "shapez/game/entity";
-}
-declare module "shapez/game/hud/parts/vignette_overlay" {
-    export class HUDVignetteOverlay extends BaseHUDPart {
-        constructor(root: import("shapez/game/root").GameRoot);
-        element: HTMLDivElement;
-    }
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-}
-declare module "shapez/game/hud/trailer_points" {
-    let _default: {
-        pos: {
-            x: number;
-            y: number;
-        };
-        zoom: number;
-        time: number;
-        wait: number;
-    }[];
-    export default _default;
-}
-declare module "shapez/game/hud/trailer_maker" {
-    export class TrailerMaker {
-        /**
-         *
-         * @param {GameRoot} root
-         */
-        constructor(root: GameRoot);
-        root: GameRoot;
-        markers: any[];
-        playbackMarkers: any[];
-        currentPlaybackOrigin: Vector;
-        currentPlaybackZoom: any;
-        update(): void;
-    }
+    import { BasicSerializableObject } from "shapez/savegame/serialization";
     import { GameRoot } from "shapez/game/root";
-    import { Vector } from "shapez/core/vector";
-}
-declare module "shapez/game/hud/hud" {
-    export class GameHUD {
-        /**
-         * @param {GameRoot} root
-         */
-        constructor(root: GameRoot);
-        root: GameRoot;
-        /**
-         * Initializes the hud parts
-         */
-        initialize(): void;
-        signals: {
-            buildingSelectedForPlacement: any;
-            selectedPlacementBuildingChanged: any;
-            shapePinRequested: any;
-            shapeUnpinRequested: any;
-            notification: any;
-            buildingsSelectedForCopy: any;
-            pasteBlueprintRequested: any;
-            viewShapeDetailsRequested: any;
-            unlockNotificationFinished: any;
-        };
-        parts: {
-            buildingsToolbar: HUDBuildingsToolbar;
-            blueprintPlacer: HUDBlueprintPlacer;
-            buildingPlacer: HUDBuildingPlacer;
-            shapeTooltip: HUDShapeTooltip;
-            settingsMenu: HUDSettingsMenu;
-            debugInfo: HUDDebugInfo;
-            dialogs: HUDModalDialogs;
-            /** @type {HUDChangesDebugger} */
-            changesDebugger: HUDChangesDebugger;
-        };
-        trailerMaker: TrailerMaker;
-        /**
-         * Attempts to close all overlays
-         */
-        closeAllOverlays(): void;
-        /**
-         * Returns true if the game logic should be paused
-         */
-        shouldPauseGame(): boolean;
-        /**
-         * Returns true if the rendering can be paused
-         */
-        shouldPauseRendering(): boolean;
-        /**
-         * Returns true if the rendering can be paused
-         */
-        hasBlockingOverlayOpen(): boolean;
-        /**
-         * Toggles the ui
-         */
-        toggleUi(): void;
-        /**
-         * Updates all parts
-         */
-        update(): void;
-        /**
-         * Draws all parts
-         * @param {DrawParameters} parameters
-         */
-        draw(parameters: DrawParameters): void;
-        /**
-         * Draws all part overlays
-         * @param {DrawParameters} parameters
-         */
-        drawOverlays(parameters: DrawParameters): void;
-        /**
-         * Cleans up everything
-         */
-        cleanup(): void;
-    }
-    import { GameRoot } from "shapez/game/root";
-    import { HUDBuildingsToolbar } from "shapez/game/hud/parts/buildings_toolbar";
-    import { HUDBlueprintPlacer } from "shapez/game/hud/parts/blueprint_placer";
-    import { HUDBuildingPlacer } from "shapez/game/hud/parts/building_placer";
-    import { HUDShapeTooltip } from "shapez/game/hud/parts/shape_tooltip";
-    import { HUDSettingsMenu } from "shapez/game/hud/parts/settings_menu";
-    import { HUDDebugInfo } from "shapez/game/hud/parts/debug_info";
-    import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
-    import { HUDChangesDebugger } from "shapez/game/hud/parts/debug_changes";
-    import { TrailerMaker } from "shapez/game/hud/trailer_maker";
-    import { DrawParameters } from "shapez/core/draw_parameters";
+    import { BaseGameSpeed } from "shapez/game/time/base_game_speed";
 }
 declare module "shapez/game/root" {
     /** @type {Array<Layer>} */
@@ -12082,544 +12694,6 @@ declare module "shapez/game/meta_building_registry" {
      */
     export function initBuildingCodesAfterResourcesLoaded(): void;
     import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/platform/browser/storage_indexed_db" {
-    export class StorageImplBrowserIndexedDB extends StorageInterface {
-        constructor(app: any);
-        currentBusyFilename: boolean;
-        /** @type {IDBDatabase} */
-        database: IDBDatabase;
-    }
-    import { StorageInterface } from "shapez/platform/storage";
-}
-declare module "shapez/platform/electron/storage" {
-    export class StorageImplElectron extends StorageInterface {
-        constructor(app: any);
-    }
-    import { StorageInterface } from "shapez/platform/storage";
-}
-declare module "shapez/mods/mod" {
-    export class Mod {
-        /**
-         * @param {object} param0
-         * @param {Application} param0.app
-         * @param {ModLoader} param0.modLoader
-         * @param {import("shapez/mods/modloader").ModMetadata} param0.meta
-         * @param {Object} param0.settings
-         * @param {() => Promise<void>} param0.saveSettings
-         */
-        constructor({
-            app,
-            modLoader,
-            meta,
-            settings,
-            saveSettings,
-        }: {
-            app: Application;
-            modLoader: ModLoader;
-            meta: import("shapez/mods/modloader").ModMetadata;
-            settings: any;
-            saveSettings: () => Promise<void>;
-        });
-        app: Application;
-        modLoader: ModLoader;
-        metadata: {
-            name: string;
-            version: string;
-            author: string;
-            website: string;
-            description: string;
-            id: string;
-            minimumGameVersion?: string;
-            settings: [];
-        };
-        signals: {
-            appBooted: import("shapez/core/signal").Signal;
-            modifyLevelDefinitions: any;
-            modifyUpgrades: any;
-            hudElementInitialized: any;
-            hudElementFinalized: any;
-            hudInitializer: any;
-            gameInitialized: any;
-            gameLoadingStageEntered: any;
-            gameStarted: any;
-            stateEntered: any;
-        };
-        modInterface: import("shapez/mods/mod_interface").ModInterface;
-        settings: any;
-        saveSettings: () => Promise<void>;
-        init(): void;
-        get dialogs(): import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs;
-    }
-    import { Application } from "shapez/application";
-    import { ModLoader } from "shapez/mods/modloader";
-}
-declare module "shapez/mods/mod_meta_building" {
-    export class ModMetaBuilding extends MetaBuilding {
-        /**
-         * @returns {({
-         *  variant: string;
-         *  rotationVariant?: number;
-         *  name: string;
-         *  description: string;
-         *  blueprintImageBase64?: string;
-         *  regularImageBase64?: string;
-         *  tutorialImageBase64?: string;
-         * }[])}
-         */
-        static getAllVariantCombinations(): {
-            variant: string;
-            rotationVariant?: number;
-            name: string;
-            description: string;
-            blueprintImageBase64?: string;
-            regularImageBase64?: string;
-            tutorialImageBase64?: string;
-        }[];
-        constructor(id: string);
-    }
-    import { MetaBuilding } from "shapez/game/meta_building";
-}
-declare module "shapez/mods/mod_interface" {
-    /**
-     * @typedef {{new(...args: any[]): any, prototype: any}} constructable
-     */
-    /**
-     * @template {(...args: any) => any} F The function
-     * @template {object} T  The value of this
-     * @typedef {(this: T, ...args: Parameters<F>) => ReturnType<F>} bindThis
-     */
-    /**
-     * @template {(...args: any[]) => any} F
-     * @template P
-     * @typedef {(...args: [P, Parameters<F>]) => ReturnType<F>} beforePrams IMPORTANT: this puts the original parameters into an array
-     */
-    /**
-     * @template {(...args: any[]) => any} F
-     * @template P
-     * @typedef {(...args: [...Parameters<F>, P]) => ReturnType<F>} afterPrams
-     */
-    /**
-     * @template {(...args: any[]) => any} F
-     * @typedef {(...args: [...Parameters<F>, ...any]) => ReturnType<F>} extendsPrams
-     */
-    export class ModInterface {
-        /**
-         *
-         * @param {ModLoader} modLoader
-         */
-        constructor(modLoader: ModLoader);
-        modLoader: ModLoader;
-        registerCss(cssString: any): void;
-        registerSprite(spriteId: any, base64string: any): void;
-        /**
-         *
-         * @param {string} imageBase64
-         * @param {string} jsonTextData
-         */
-        registerAtlas(imageBase64: string, jsonTextData: string): void;
-        /**
-         *
-         * @param {object} param0
-         * @param {string} param0.id
-         * @param {string} param0.shortCode
-         * @param {(distanceToOriginInChunks: number) => number} param0.weightComputation
-         * @param {(options: import("shapez/game/shape_definition").SubShapeDrawOptions) => void} param0.draw
-         */
-        registerSubShapeType({
-            id,
-            shortCode,
-            weightComputation,
-            draw,
-        }: {
-            id: string;
-            shortCode: string;
-            weightComputation: (distanceToOriginInChunks: number) => number;
-            draw: (options: import("shapez/game/shape_definition").SubShapeDrawOptions) => void;
-        }): void;
-        registerTranslations(language: any, translations: any): void;
-        /**
-         * @param {typeof BaseItem} item
-         * @param {(itemData: any) => BaseItem} resolver
-         */
-        registerItem(item: typeof BaseItem, resolver: (itemData: any) => BaseItem): void;
-        /**
-         *
-         * @param {typeof Component} component
-         */
-        registerComponent(component: typeof Component): void;
-        /**
-         *
-         * @param {Object} param0
-         * @param {string} param0.id
-         * @param {new (any) => GameSystem} param0.systemClass
-         * @param {string=} param0.before
-         * @param {string[]=} param0.drawHooks
-         */
-        registerGameSystem({
-            id,
-            systemClass,
-            before,
-            drawHooks,
-        }: {
-            id: string;
-            systemClass: new (any: any) => GameSystem;
-            before?: string | undefined;
-            drawHooks?: string[] | undefined;
-        }): void;
-        /**
-         *
-         * @param {string} hookId
-         * @param {string} systemId
-         */
-        registerGameSystemDrawHook(hookId: string, systemId: string): void;
-        /**
-         *
-         * @param {object} param0
-         * @param {typeof ModMetaBuilding} param0.metaClass
-         * @param {string=} param0.buildingIconBase64
-         */
-        registerNewBuilding({
-            metaClass,
-            buildingIconBase64,
-        }: {
-            metaClass: typeof ModMetaBuilding;
-            buildingIconBase64?: string | undefined;
-        }): void;
-        /**
-         *
-         * @param {Object} param0
-         * @param {string} param0.id
-         * @param {number} param0.keyCode
-         * @param {string} param0.translation
-         * @param {boolean=} param0.repeated
-         * @param {((GameRoot) => void)=} param0.handler
-         * @param {{shift?: boolean; alt?: boolean; ctrl?: boolean}=} param0.modifiers
-         * @param {boolean=} param0.builtin
-         */
-        registerIngameKeybinding({
-            id,
-            keyCode,
-            translation,
-            modifiers,
-            repeated,
-            builtin,
-            handler,
-        }: {
-            id: string;
-            keyCode: number;
-            translation: string;
-            repeated?: boolean | undefined;
-            handler?: (GameRoot: any) => void;
-            modifiers?:
-                | {
-                      shift?: boolean;
-                      alt?: boolean;
-                      ctrl?: boolean;
-                  }
-                | undefined;
-            builtin?: boolean | undefined;
-        }): {
-            keyCode: number;
-            id: string;
-            repeated: boolean;
-            modifiers: {
-                shift?: boolean;
-                alt?: boolean;
-                ctrl?: boolean;
-            };
-            builtin: boolean;
-        };
-        /**
-         * @returns {HUDModalDialogs}
-         */
-        get dialogs(): HUDModalDialogs;
-        setBuildingToolbarIcon(buildingId: any, iconBase64: any): void;
-        /**
-         *
-         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
-         * @param {*} variant
-         * @param {*} imageBase64
-         */
-        setBuildingTutorialImage(
-            buildingIdOrClass: string | (new () => MetaBuilding),
-            variant: any,
-            imageBase64: any
-        ): void;
-        /**
-         * @param {Object} param0
-         * @param {string} param0.id
-         * @param {string} param0.name
-         * @param {Object} param0.theme
-         */
-        registerGameTheme({ id, name, theme }: { id: string; name: string; theme: any }): void;
-        /**
-         * Registers a new state class, should be a GameState derived class
-         * @param {typeof import("shapez/core/game_state").GameState} stateClass
-         */
-        registerGameState(stateClass: typeof import("shapez/core/game_state").GameState): void;
-        /**
-         * @param {object} param0
-         * @param {"regular"|"wires"} param0.toolbar
-         * @param {"primary"|"secondary"} param0.location
-         * @param {typeof MetaBuilding} param0.metaClass
-         */
-        addNewBuildingToToolbar({
-            toolbar,
-            location,
-            metaClass,
-        }: {
-            toolbar: "regular" | "wires";
-            location: "primary" | "secondary";
-            metaClass: typeof MetaBuilding;
-        }): void;
-        /**
-         * Patches a method on a given class
-         * @template {constructable} C  the class
-         * @template {C["prototype"]} P  the prototype of said class
-         * @template {keyof P} M  the name of the method we are overriding
-         * @template {extendsPrams<P[M]>} O the method that will override the old one
-         * @param {C} classHandle
-         * @param {M} methodName
-         * @param {bindThis<beforePrams<O, P[M]>, InstanceType<C>>} override
-         */
-        replaceMethod<
-            C extends {
-                new (...args: any[]): any;
-                prototype: any;
-            },
-            P extends C["prototype"],
-            M extends keyof P,
-            O extends (args_0: any, ...args_1: any[]) => ReturnType<P[M]>
-        >(
-            classHandle: C,
-            methodName: M,
-            override: (this: InstanceType<C>, args_0: P[M], args_1: Parameters<O>) => ReturnType<O>
-        ): void;
-        /**
-         * Runs before a method on a given class
-         * @template {constructable} C  the class
-         * @template {C["prototype"]} P  the prototype of said class
-         * @template {keyof P} M  the name of the method we are overriding
-         * @template {extendsPrams<P[M]>} O the method that will run before the old one
-         * @param {C} classHandle
-         * @param {M} methodName
-         * @param {bindThis<O, InstanceType<C>>} executeBefore
-         */
-        runBeforeMethod<
-            C_1 extends {
-                new (...args: any[]): any;
-                prototype: any;
-            },
-            P_1 extends C_1["prototype"],
-            M_1 extends keyof P_1,
-            O_1 extends (args_0: any, ...args_1: any[]) => ReturnType<P_1[M_1]>
-        >(
-            classHandle: C_1,
-            methodName: M_1,
-            executeBefore: (this: InstanceType<C_1>, ...args: Parameters<O_1>) => ReturnType<O_1>
-        ): void;
-        /**
-         * Runs after a method on a given class
-         * @template {constructable} C  the class
-         * @template {C["prototype"]} P  the prototype of said class
-         * @template {keyof P} M  the name of the method we are overriding
-         * @template {extendsPrams<P[M]>} O the method that will run before the old one
-         * @param {C} classHandle
-         * @param {M} methodName
-         * @param {bindThis<O, InstanceType<C>>} executeAfter
-         */
-        runAfterMethod<
-            C_2 extends {
-                new (...args: any[]): any;
-                prototype: any;
-            },
-            P_2 extends C_2["prototype"],
-            M_2 extends keyof P_2,
-            O_2 extends (args_0: any, ...args_1: any[]) => ReturnType<P_2[M_2]>
-        >(
-            classHandle: C_2,
-            methodName: M_2,
-            executeAfter: (this: InstanceType<C_2>, ...args: Parameters<O_2>) => ReturnType<O_2>
-        ): void;
-        /**
-         *
-         * @param {Object} prototype
-         * @param {({ $super, $old }) => any} extender
-         */
-        extendObject(prototype: any, extender: ({ $super, $old }: { $super: any; $old: any }) => any): void;
-        /**
-         *
-         * @param {Class} classHandle
-         * @param {({ $super, $old }) => any} extender
-         */
-        extendClass(classHandle: any, extender: ({ $super, $old }: { $super: any; $old: any }) => any): void;
-        /**
-         *
-         * @param {string} id
-         * @param {new (...args) => BaseHUDPart} element
-         */
-        registerHudElement(id: string, element: new (...args: any[]) => BaseHUDPart): void;
-        /**
-         *
-         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
-         * @param {string} variant
-         * @param {object} param0
-         * @param {string} param0.name
-         * @param {string} param0.description
-         * @param {string=} param0.language
-         */
-        registerBuildingTranslation(
-            buildingIdOrClass: string | (new () => MetaBuilding),
-            variant: string,
-            {
-                name,
-                description,
-                language,
-            }: {
-                name: string;
-                description: string;
-                language?: string | undefined;
-            }
-        ): void;
-        /**
-         *
-         * @param {string | (new () => MetaBuilding)} buildingIdOrClass
-         * @param {string} variant
-         * @param {object} param2
-         * @param {string=} param2.regularBase64
-         * @param {string=} param2.blueprintBase64
-         */
-        registerBuildingSprites(
-            buildingIdOrClass: string | (new () => MetaBuilding),
-            variant: string,
-            {
-                regularBase64,
-                blueprintBase64,
-            }: {
-                regularBase64?: string | undefined;
-                blueprintBase64?: string | undefined;
-            }
-        ): void;
-        /**
-         * @param {new () => MetaBuilding} metaClass
-         * @param {string} variant
-         * @param {object} payload
-         * @param {number[]=} payload.rotationVariants
-         * @param {string=} payload.tutorialImageBase64
-         * @param {string=} payload.regularSpriteBase64
-         * @param {string=} payload.blueprintSpriteBase64
-         * @param {string=} payload.name
-         * @param {string=} payload.description
-         * @param {Vector=} payload.dimensions
-         * @param {(root: GameRoot) => [string, string][]} payload.additionalStatistics
-         * @param {(root: GameRoot) => boolean[]} payload.isUnlocked
-         */
-        addVariantToExistingBuilding(
-            metaClass: new () => MetaBuilding,
-            variant: string,
-            payload: {
-                rotationVariants?: number[] | undefined;
-                tutorialImageBase64?: string | undefined;
-                regularSpriteBase64?: string | undefined;
-                blueprintSpriteBase64?: string | undefined;
-                name?: string | undefined;
-                description?: string | undefined;
-                dimensions?: Vector | undefined;
-                additionalStatistics: (root: GameRoot) => [string, string][];
-                isUnlocked: (root: GameRoot) => boolean[];
-            }
-        ): void;
-    }
-    export type constructable = {
-        new (...args: any[]): any;
-        prototype: any;
-    };
-    export type bindThis<F extends (...args: any) => any, T extends unknown> = (
-        this: T,
-        ...args: Parameters<F>
-    ) => ReturnType<F>;
-    /**
-     * IMPORTANT: this puts the original parameters into an array
-     */
-    export type beforePrams<F extends (...args: any[]) => any, P> = (
-        args_0: P,
-        args_1: Parameters<F>
-    ) => ReturnType<F>;
-    export type afterPrams<F extends (...args: any[]) => any, P> = (args_0: any, args_1: P) => ReturnType<F>;
-    export type extendsPrams<F extends (...args: any[]) => any> = (
-        args_0: any,
-        ...args_1: any[]
-    ) => ReturnType<F>;
-    import { ModLoader } from "shapez/mods/modloader";
-    import { BaseItem } from "shapez/game/base_item";
-    import { Component } from "shapez/game/component";
-    import { GameSystem } from "shapez/game/game_system";
-    import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
-    import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
-    import { MetaBuilding } from "shapez/game/meta_building";
-    import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
-    import { Vector } from "shapez/core/vector";
-    import { GameRoot } from "shapez/game/root";
-}
-declare module "shapez/mods/modloader" {
-    /**
-     * @typedef {{
-     *   name: string;
-     *   version: string;
-     *   author: string;
-     *   website: string;
-     *   description: string;
-     *   id: string;
-     *   minimumGameVersion?: string;
-     *   settings: []
-     * }} ModMetadata
-     */
-    export class ModLoader {
-        /**
-         * @type {Application}
-         */
-        app: Application;
-        /** @type {Mod[]} */
-        mods: Mod[];
-        modInterface: ModInterface;
-        /** @type {({ meta: ModMetadata, modClass: typeof Mod})[]} */
-        modLoadQueue: {
-            meta: ModMetadata;
-            modClass: typeof Mod;
-        }[];
-        initialized: boolean;
-        signals: {
-            appBooted: import("shapez/core/signal").Signal;
-            modifyLevelDefinitions: any;
-            modifyUpgrades: any;
-            hudElementInitialized: any;
-            hudElementFinalized: any;
-            hudInitializer: any;
-            gameInitialized: any;
-            gameLoadingStageEntered: any;
-            gameStarted: any;
-            stateEntered: any;
-        };
-        linkApp(app: any): void;
-        anyModsActive(): boolean;
-        exposeExports(): void;
-        initMods(): Promise<void>;
-    }
-    export const MODS: ModLoader;
-    export type ModMetadata = {
-        name: string;
-        version: string;
-        author: string;
-        website: string;
-        description: string;
-        id: string;
-        minimumGameVersion?: string;
-        settings: [];
-    };
-    import { Application } from "shapez/application";
-    import { Mod } from "shapez/mods/mod";
-    import { ModInterface } from "shapez/mods/mod_interface";
 }
 declare module "shapez/core/background_resources_loader" {
     export function getLogoSprite(): "logo_wegame.png" | "logo_cn.png" | "logo.png";
@@ -13299,9 +13373,6 @@ declare module "shapez/savegame/savegame_manager" {
     }
     export type SavegamesData = {
         version: number;
-        /**
-         * @returns {SavegamesData}
-         */
         savegames: {
             lastUpdate: number;
             version: number;
@@ -13431,6 +13502,10 @@ declare module "shapez/states/main_menu" {
          */
         resumeGame(game: SavegameMetadata): void;
         /**
+         * @param {Savegame} savegame
+         */
+        checkForModDifferences(savegame: Savegame): Promise<any>;
+        /**
          * @param {SavegameMetadata} game
          */
         deleteGame(game: SavegameMetadata): void;
@@ -13459,6 +13534,7 @@ declare module "shapez/states/main_menu" {
     export type EnumSetting = import("shapez/profile/setting_types").EnumSetting;
     import { GameState } from "shapez/core/game_state";
     import { HUDModalDialogs } from "shapez/game/hud/parts/modal_dialogs";
+    import { Savegame } from "shapez/savegame/savegame";
 }
 declare module "shapez/states/mobile_warning" {
     export class MobileWarningState extends GameState {}

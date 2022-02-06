@@ -178,6 +178,38 @@ export function setupCooler() {
                     return true;
                 },
         },
+        {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.travertine],
+            fluid: MAGMA_SINGLETONS[enumMagmaTypes.cleaned_marble_magma],
+            fluidCost: 20,
+            minPressure: 60,
+            shape:
+                /**
+                 * @param {ShapeDefinition} shapeDefinition
+                 */
+                shapeDefinition => {
+                    const newLayers = shapeDefinition.getClonedLayers();
+                    for (let i = 0; i < newLayers.length; i++) {
+                        const layer = newLayers[i];
+
+                        const tr = layer[TOP_RIGHT];
+                        const br = layer[BOTTOM_RIGHT];
+                        const bl = layer[BOTTOM_LEFT];
+                        const tl = layer[TOP_LEFT];
+
+                        if (
+                            tr.subShape !== enumSubShape.rect ||
+                            br.subShape !== enumSubShape.rect ||
+                            bl.subShape !== enumSubShape.rect ||
+                            tl.subShape !== enumSubShape.rect
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+        },
     ];
     enumItemProcessorTypes["cooler"] = "cooler";
     /**
@@ -201,7 +233,7 @@ export function setupCooler() {
 
                 // Output
                 if (
-                    pinsComp.slots[0].linkedNetwork.currentVolume > recipe.fluidCost &&
+                    pinsComp.getLocalVolume(this.root, entity, pinsComp.slots[0]) > recipe.fluidCost &&
                     pinsComp.getLocalPressure(this.root, entity, pinsComp.slots[0]) > recipe.minPressure
                 ) {
                     outItems.push({

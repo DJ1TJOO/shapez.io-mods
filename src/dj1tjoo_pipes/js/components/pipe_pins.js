@@ -82,6 +82,41 @@ export class PipedPinsComponent extends Component {
      * @param {PipePinSlot} slot
      * @returns {number}
      */
+    getLocalVolume(root, entity, slot) {
+        const pipe = this.getConnectedPipe(root, entity, slot);
+
+        if (pipe) {
+            if (pipe.components.Pipe) {
+                // @ts-ignore
+                return pipe.components.Pipe.volume;
+            } else if (pipe.components.PipedPins) {
+                // Get correct slot
+                const pipePinsComp = pipe.components.PipedPins;
+                const pipeStaticComp = pipe.components.StaticMapEntity;
+
+                for (let i = 0; i < pipePinsComp.slots.length; i++) {
+                    const currentSlot = pipePinsComp.slots[i];
+                    if (
+                        pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
+                        enumInvertedDirections[
+                            entity.components.StaticMapEntity.localDirectionToWorld(slot.direction)
+                        ]
+                    ) {
+                        return currentSlot.linkedNetwork.currentVolume;
+                    }
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param {GameRoot} root
+     * @param {Entity} entity
+     * @param {PipePinSlot} slot
+     * @returns {number}
+     */
     getLocalPressure(root, entity, slot) {
         // If ejector the local pressure is the one generated
         if (slot.type === enumPinSlotType.logicalEjector) {

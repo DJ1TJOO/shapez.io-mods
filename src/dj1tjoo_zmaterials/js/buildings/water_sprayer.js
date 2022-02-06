@@ -276,7 +276,7 @@ export function setupWaterSprayer() {
 
                 // Output
                 if (
-                    pinsComp.slots[0].linkedNetwork.currentVolume > recipe.fluidCost &&
+                    pinsComp.getLocalVolume(this.root, entity, pinsComp.slots[0]) > recipe.fluidCost &&
                     pinsComp.getLocalPressure(this.root, entity, pinsComp.slots[0]) > recipe.minPressure
                 ) {
                     outItems.push({

@@ -131,6 +131,15 @@ export function setupHeater() {
                     }
                 }
                 break;
+            case enumStoneType.clean_marble:
+                if (pinsComp) {
+                    pinsComp.slots[0].pressure = 100;
+                    pinsComp.slots[0].fluid = MAGMA_SINGLETONS[enumMagmaTypes.cleaned_marble_magma];
+                    if (pinsComp.slots[0].linkedNetwork) {
+                        pinsComp.slots[0].linkedNetwork.currentVolume += 10;
+                    }
+                }
+                break;
 
             default:
                 break;

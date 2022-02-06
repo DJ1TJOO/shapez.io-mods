@@ -169,7 +169,7 @@ class ModImpl extends Mod {
                                 return false;
                             }
 
-                            if (pipeComp.linkedNetwork && pipesComp.linkedNetwork) {
+                            if (!!pipeComp.linkedNetwork && !!pipesComp.linkedNetwork) {
                                 if (pipesComp.linkedNetwork.uid !== pipeComp.linkedNetwork.uid) {
                                     return false;
                                 }
@@ -269,13 +269,33 @@ class ModImpl extends Mod {
     computeOptimalDirectionAndRotationVariantAtTile({ root, tile, pipeVariant, rotation }) {
         const connections = {
             // @ts-ignore
-            top: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.top }),
+            top: root.logic.computePipeEdgeStatus({
+                tile,
+                pipeVariant,
+                edge: enumDirection.top,
+                checkNetwork: true,
+            }),
             // @ts-ignore
-            right: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.right }),
+            right: root.logic.computePipeEdgeStatus({
+                tile,
+                pipeVariant,
+                edge: enumDirection.right,
+                checkNetwork: true,
+            }),
             // @ts-ignore
-            bottom: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.bottom }),
+            bottom: root.logic.computePipeEdgeStatus({
+                tile,
+                pipeVariant,
+                edge: enumDirection.bottom,
+                checkNetwork: true,
+            }),
             // @ts-ignore
-            left: root.logic.computePipeEdgeStatus({ tile, pipeVariant, edge: enumDirection.left }),
+            left: root.logic.computePipeEdgeStatus({
+                tile,
+                pipeVariant,
+                edge: enumDirection.left,
+                checkNetwork: true,
+            }),
         };
 
         let flag = 0;

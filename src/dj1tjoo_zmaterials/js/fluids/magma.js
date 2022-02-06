@@ -5,11 +5,13 @@ import { types } from "shapez/savegame/serialization";
 export const enumMagmaTypes = {
     stone_magma: "stone_magma",
     basalt_magma: "basalt_magma",
+    cleaned_marble_magma: "cleaned_marble_magma",
 };
 
 export const magmaColors = {
     [enumMagmaTypes.stone_magma]: "#e5541e",
     [enumMagmaTypes.basalt_magma]: "#5D3C4E",
+    [enumMagmaTypes.cleaned_marble_magma]: "#eb8660",
 };
 // Call on init
 export function registerMagma() {

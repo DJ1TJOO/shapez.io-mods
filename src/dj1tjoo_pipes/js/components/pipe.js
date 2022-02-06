@@ -1,6 +1,7 @@
 import { Component } from "shapez/game/component";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { types } from "shapez/savegame/serialization";
+import { typeFluidSingleton } from "../base_fluid";
 
 /**
  * @param {String} color
@@ -46,6 +47,7 @@ export class PipeComponent extends Component {
     static getSchema() {
         return {
             volume: types.uint,
+            fluid: types.nullable(typeFluidSingleton),
         };
     }
 
@@ -82,6 +84,7 @@ export class PipeComponent extends Component {
         this.maxPressure = maxPressure;
         this.maxVolume = maxVolume;
         this.volume = 0;
+        this.fluid = null;
 
         this.distance = [];
     }

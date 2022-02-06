@@ -107,6 +107,7 @@ export class PipeSystem extends GameSystem {
         this.root.signals.entityAdded.add(this.queueRecomputeIfPipe, this);
 
         this.needsRecompute = true;
+        this.recomputeArea = null;
         this.isFirstRecompute = true;
 
         this.staleArea = new StaleAreaDetector({
@@ -132,6 +133,8 @@ export class PipeSystem extends GameSystem {
 
         if (this.isEntityRelevantForPipes(entity)) {
             this.needsRecompute = true;
+            this.recomputeArea =
+                entity.components.StaticMapEntity.getTileSpaceBounds().expandedInAllDirections(1);
             this.networks = [];
         }
     }
@@ -193,13 +196,9 @@ export class PipeSystem extends GameSystem {
             );
         }
 
-        for (let i = 0; i < pipeEntities.length; i++) {
-            /** @type { PipeComponent } */
-            // @ts-ignore
-            const pipeComp = pipeEntities[i].components.Pipe;
-            if (pipeComp.linkedNetwork) continue;
-
-            pipeComp.volume = 0;
+        if (this.recomputeArea) {
+            this.updateSurroundingPipePlacement(this.recomputeArea);
+            this.recomputeArea = null;
         }
     }
 
@@ -266,6 +265,12 @@ export class PipeSystem extends GameSystem {
                 if (!pipeComp.linkedNetwork) {
                     if (variantMask && pipeComp.variant !== variantMask) {
                         // Mismatching variant
+                    } else if (
+                        pipeComp.volume > 0 &&
+                        pipeComp.fluid !== null &&
+                        pipeComp.fluid !== currentNetwork.provider.slot.fluid
+                    ) {
+                        // Already filled
                     } else {
                         // This one is new! :D
                         VERBOSE_PIPES && logger.log("  Visited new pipe:", staticComp.origin.toString());
@@ -273,6 +278,7 @@ export class PipeSystem extends GameSystem {
 
                         distance.push(pipeComp.pressureFriction);
                         pipeComp.distance = distance;
+                        pipeComp.fluid = currentNetwork.provider.slot.fluid;
 
                         currentNetwork.pipes.push(nextEntity);
                         currentNetwork.currentVolume += pipeComp.volume;
