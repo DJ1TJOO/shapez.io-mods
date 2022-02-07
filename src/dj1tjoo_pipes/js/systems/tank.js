@@ -27,28 +27,31 @@ export class TankSystem extends GameSystemWithFilter {
             // @ts-ignore
             const pinsComp = entity.components.PipedPins;
 
+            const log = staticComp.origin.x === 8 && staticComp.origin.y === 4;
+
             if (pinsComp) {
                 const acceptors = pinsComp.slots.filter(x => x.type === enumPinSlotType.logicalAcceptor);
                 const ejector = pinsComp.slots.filter(x => x.type === enumPinSlotType.logicalEjector)[0];
 
-                /**
-                 * @TODO clean up
-                 * @TODO fix direct
-                 * */
                 let fluid = tankComp.fluid;
                 let pressures = [];
                 let volumes = [];
                 for (let i = 0; i < acceptors.length; i++) {
                     const acceptor = acceptors[i];
+
+                    // Get fluid
                     if (!acceptor.fluid) {
                         continue;
                     } else if (!fluid) {
+                        // Set fluid
                         fluid = acceptor.fluid;
                     } else if (fluid !== acceptor.fluid) {
+                        // Fluid conflict
                         fluid = null;
                         break;
                     }
 
+                    // Get local pressure on pin
                     const pressure = pinsComp.getLocalPressure(this.root, entity, acceptor);
                     if (pressure > 0) {
                         pressures.push(pressure);
@@ -57,8 +60,11 @@ export class TankSystem extends GameSystemWithFilter {
                     if (doTransfer) {
                         if (acceptor.linkedNetwork) {
                             const pipe = pinsComp.getConnectedPipe(this.root, entity, acceptor);
+
+                            // Get volume
                             let volume = 0;
                             if (pipe.components.Pipe) {
+                                // Get max volume of pipe
                                 volume = pipe.components.Pipe.maxVolume;
                             } else if (pipe.components.PipedPins) {
                                 // Get correct slot
@@ -73,12 +79,11 @@ export class TankSystem extends GameSystemWithFilter {
                                             staticComp.localDirectionToWorld(acceptor.direction)
                                         ]
                                     ) {
-                                        volume = currentSlot.volume;
+                                        // Defaults to max volume of 50 when no pipes
+                                        volume = currentSlot.linkedNetwork.maxVolume;
                                         break;
                                     }
                                 }
-
-                                volume = 0;
                             }
 
                             volumes.push({
@@ -91,16 +96,20 @@ export class TankSystem extends GameSystemWithFilter {
 
                 ejector.fluid = fluid;
                 if (fluid) {
-                    let pressure =
-                        pressures.length > 0
-                            ? Math.round(pressures.reduce((prev, curr) => prev + curr, 0) / pressures.length)
-                            : 0;
+                    let pressure = 0;
+
+                    if (pressures.length > 0) {
+                        const totalPressure = pressures.reduce((prev, curr) => prev + curr, 0);
+                        pressure = Math.round(totalPressure / pressures.length);
+                    }
+
                     if (pressure <= 0 && tankComp.pressure > 0) {
                         ejector.pressure = tankComp.pressure;
                     } else {
                         ejector.pressure = pressure;
                         tankComp.pressure = pressure;
                     }
+
                     tankComp.fluid = fluid;
 
                     if (doTransfer) {
@@ -117,7 +126,6 @@ export class TankSystem extends GameSystemWithFilter {
                             if (volume.network.currentVolume - volumeToMove < 0) {
                                 volumeToMove = volume.network.currentVolume;
                             }
-
                             // Remove from network
                             volume.network.currentVolume -= volumeToMove;
 
@@ -145,7 +153,7 @@ export class TankSystem extends GameSystemWithFilter {
                                             staticComp.localDirectionToWorld(ejector.direction)
                                         ]
                                     ) {
-                                        volumeToMove = currentSlot.linkedNetwork.currentVolume;
+                                        volumeToMove = currentSlot.linkedNetwork.maxVolume;
                                         break;
                                     }
                                 }

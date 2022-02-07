@@ -188,9 +188,7 @@ export function setupPump() {
         const staticComp = entity.components.StaticMapEntity;
 
         /**
-         * @TODO clean up
          * @TODO sprite for pressure pump
-         * @TODO fix direct
          * */
         const newLayers = shapeDefinition.getClonedLayers();
         let allowed = true;
@@ -222,6 +220,7 @@ export function setupPump() {
         if (acceptor.linkedNetwork) {
             const pipe = pinsComp.getConnectedPipe(this.root, entity, acceptor);
             if (pipe.components.Pipe) {
+                // Get max volume of pipe
                 volume = pipe.components.Pipe.maxVolume;
             } else if (pipe.components.PipedPins) {
                 // Get correct slot
@@ -234,7 +233,8 @@ export function setupPump() {
                         pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
                         enumInvertedDirections[staticComp.localDirectionToWorld(acceptor.direction)]
                     ) {
-                        volume = currentSlot.linkedNetwork.currentVolume;
+                        // Defaults to max volume of 50 when no pipes
+                        volume = currentSlot.linkedNetwork.maxVolume;
                         break;
                     }
                 }
