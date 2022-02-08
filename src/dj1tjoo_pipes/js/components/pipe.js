@@ -46,7 +46,7 @@ export class PipeComponent extends Component {
 
     static getSchema() {
         return {
-            volume: types.uint,
+            volume: types.ufloat,
             fluid: types.nullable(typeFluidSingleton),
         };
     }
@@ -82,7 +82,7 @@ export class PipeComponent extends Component {
 
         this.pressureFriction = pressureFriction;
         this.maxPressure = maxPressure;
-        this.maxVolume = maxVolume;
+        this.pipeMaxVolume = maxVolume;
         this.volume = 0;
         this.fluid = null;
 
@@ -100,6 +100,23 @@ export class PipeComponent extends Component {
         }
 
         return 0;
+    }
+
+    get pressurePercentage() {
+        let maxPressure = this.maxPressure;
+        if (
+            this.linkedNetwork &&
+            this.linkedNetwork.currentPressure > 0 &&
+            this.linkedNetwork.currentPressure < maxPressure
+        ) {
+            maxPressure = this.linkedNetwork.currentPressure;
+        }
+
+        return this.localPressure / maxPressure;
+    }
+
+    get maxVolume() {
+        return Math.floor(this.pipeMaxVolume * this.pressurePercentage);
     }
 
     localFluidColor(fluid) {

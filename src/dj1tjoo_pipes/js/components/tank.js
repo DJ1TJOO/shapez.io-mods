@@ -9,10 +9,10 @@ export class TankComponent extends Component {
 
     static getSchema() {
         return {
-            volume: types.uint,
-            pressure: types.uint,
+            volume: types.ufloat,
+            pressure: types.ufloat,
             fluid: types.nullable(typeFluidSingleton),
-            maxVolume: types.uint,
+            maxVolume: types.ufloat,
         };
     }
 

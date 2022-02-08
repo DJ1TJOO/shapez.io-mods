@@ -142,6 +142,8 @@ export class DefaultPipeRendererSystem extends GameSystem {
                         pipeComp.localPressure > 0 &&
                         pipeComp.volume > 0
                     ) {
+                        const pipeIndex = network.pipes.findIndex(x => x.uid === entity.uid);
+
                         /** @TODO gradients */
                         parameters.context.fillStyle = pipeComp.localFluidColor(network.currentFluid);
                         const size =
@@ -152,13 +154,13 @@ export class DefaultPipeRendererSystem extends GameSystem {
                         switch (pipeType) {
                             case enumPipeType.forward:
                                 if (staticComp.rotation % 180 === 0) {
-                                    // parameters.context.fillStyle = this.getGradient(
-                                    //     parameters,
-                                    //     entity,
-                                    //     staticComp.rotation % 360 === 0
-                                    //         ? enumDirection.top
-                                    //         : enumDirection.bottom
-                                    // );
+                                    parameters.context.fillStyle = this.getGradient(
+                                        parameters,
+                                        entity,
+                                        staticComp.rotation % 360 === 0
+                                            ? enumDirection.top
+                                            : enumDirection.bottom
+                                    );
                                     parameters.context.fillRect(
                                         (staticComp.origin.x + 0.5) * globalConfig.tileSize - size / 2,
                                         staticComp.origin.y * globalConfig.tileSize - 0.1,
@@ -166,12 +168,41 @@ export class DefaultPipeRendererSystem extends GameSystem {
                                         globalConfig.tileSize + 0.2
                                     );
                                 } else {
-                                    // parameters.context.fillStyle = this.getGradient(
-                                    //     parameters,
-                                    //     entity,
-                                    //     staticComp.rotation % 270 === 0
-                                    //         ? enumDirection.left
-                                    //         : enumDirection.right
+                                    const nextPipe = network.pipes[pipeIndex + 1];
+                                    const prevPipe = network.pipes[pipeIndex - 1];
+
+                                    let direction = enumDirection.right;
+                                    if (nextPipe) {
+                                        if (
+                                            nextPipe.components.StaticMapEntity.origin.x > staticComp.origin.x
+                                        ) {
+                                            direction = enumDirection.left;
+                                        }
+                                    } else if (prevPipe) {
+                                        if (
+                                            prevPipe.components.StaticMapEntity.origin.x < staticComp.origin.x
+                                        ) {
+                                            direction = enumDirection.left;
+                                        }
+                                    }
+                                    parameters.context.fillStyle = this.getGradient(
+                                        parameters,
+                                        entity,
+                                        direction
+                                    );
+
+                                    // const offset =
+                                    //     direction === enumDirection.left
+                                    //         ? 0
+                                    //         : (globalConfig.tileSize + 0.2) *
+                                    //           (pipeComp.volume / pipeComp.maxVolume);
+                                    // parameters.context.fillRect(
+                                    //     offset + staticComp.origin.x * globalConfig.tileSize - 0.1,
+                                    //     (staticComp.origin.y + 0.5) * globalConfig.tileSize - size / 2,
+                                    //     (globalConfig.tileSize + 0.2) *
+                                    //         (pipeComp.volume / pipeComp.maxVolume) -
+                                    //         offset,
+                                    //     size
                                     // );
                                     parameters.context.fillRect(
                                         staticComp.origin.x * globalConfig.tileSize - 0.1,

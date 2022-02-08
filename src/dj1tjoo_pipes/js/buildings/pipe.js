@@ -179,7 +179,7 @@ export class MetaPipeBuilding extends ModMetaBuilding {
         // @ts-ignore
         entity.components.Pipe.pressureFriction = enumPipeVariantToPressureFriction[variant];
         // @ts-ignore
-        entity.components.Pipe.maxVolume = enumPipeVariantToVolume[variant];
+        entity.components.Pipe.pipeMaxVolume = enumPipeVariantToVolume[variant];
         // @ts-ignore
         entity.components.Pipe.maxPressure = enumPipeVariantToPressure[variant];
     }

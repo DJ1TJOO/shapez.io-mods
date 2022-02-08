@@ -38,7 +38,7 @@ export class PipedPinsComponent extends Component {
         return {
             slots: types.fixedSizeArray(
                 types.structured({
-                    pressure: types.uint,
+                    pressure: types.ufloat,
                     fluid: types.nullable(typeFluidSingleton),
                 })
             ),

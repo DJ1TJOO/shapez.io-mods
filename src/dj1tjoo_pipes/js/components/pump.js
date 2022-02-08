@@ -9,7 +9,7 @@ export class PumpComponent extends Component {
 
     static getSchema() {
         return {
-            pressure: types.uint,
+            pressure: types.ufloat,
             fluid: types.nullable(typeFluidSingleton),
         };
     }

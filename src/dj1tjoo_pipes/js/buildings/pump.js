@@ -234,7 +234,9 @@ export function setupPump() {
                         enumInvertedDirections[staticComp.localDirectionToWorld(acceptor.direction)]
                     ) {
                         // Defaults to max volume of 50 when no pipes
-                        volume = currentSlot.linkedNetwork.maxVolume;
+                        if (currentSlot.linkedNetwork) {
+                            volume = currentSlot.linkedNetwork.maxVolume;
+                        }
                         break;
                     }
                 }
@@ -243,7 +245,7 @@ export function setupPump() {
 
         // Delete inputted shape. @TODO: maybe nicer as item acceptor filter
         if (allowed) {
-            ejector.pressure = Math.floor(pinsComp.getLocalPressure(this.root, entity, acceptor) * 1.3);
+            ejector.pressure = Math.round(pinsComp.getLocalPressure(this.root, entity, acceptor) * 1.3);
             ejector.fluid = acceptor.fluid;
 
             let volumeToMove = volume;

@@ -1,4 +1,5 @@
 import { globalConfig } from "shapez/core/config";
+import { clamp } from "shapez/core/utils";
 import { enumInvertedDirections } from "shapez/core/vector";
 import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
 import { MapChunkView } from "shapez/game/map_chunk_view";
@@ -14,7 +15,7 @@ export class TankSystem extends GameSystemWithFilter {
 
     update() {
         // Transfer every second
-        const doTransfer = Date.now() - this.transferVolume > 1000;
+        const transferRate = (Date.now() - this.transferVolume) / 1000;
 
         // Set signals
         for (let i = 0; i < this.allEntities.length; ++i) {
@@ -26,8 +27,6 @@ export class TankSystem extends GameSystemWithFilter {
             /**  @type {PipedPinsComponent} */
             // @ts-ignore
             const pinsComp = entity.components.PipedPins;
-
-            const log = staticComp.origin.x === 8 && staticComp.origin.y === 4;
 
             if (pinsComp) {
                 const acceptors = pinsComp.slots.filter(x => x.type === enumPinSlotType.logicalAcceptor);
@@ -57,40 +56,40 @@ export class TankSystem extends GameSystemWithFilter {
                         pressures.push(pressure);
                     }
 
-                    if (doTransfer) {
-                        if (acceptor.linkedNetwork) {
-                            const pipe = pinsComp.getConnectedPipe(this.root, entity, acceptor);
+                    if (acceptor.linkedNetwork) {
+                        const pipe = pinsComp.getConnectedPipe(this.root, entity, acceptor);
 
-                            // Get volume
-                            let volume = 0;
-                            if (pipe.components.Pipe) {
-                                // Get max volume of pipe
-                                volume = pipe.components.Pipe.maxVolume;
-                            } else if (pipe.components.PipedPins) {
-                                // Get correct slot
-                                const pipePinsComp = pipe.components.PipedPins;
-                                const pipeStaticComp = pipe.components.StaticMapEntity;
+                        // Get volume
+                        let volume = 0;
+                        if (pipe.components.Pipe) {
+                            // Get max volume of pipe
+                            volume = pipe.components.Pipe.maxVolume;
+                        } else if (pipe.components.PipedPins) {
+                            // Get correct slot
+                            const pipePinsComp = pipe.components.PipedPins;
+                            const pipeStaticComp = pipe.components.StaticMapEntity;
 
-                                for (let i = 0; i < pipePinsComp.slots.length; i++) {
-                                    const currentSlot = pipePinsComp.slots[i];
-                                    if (
-                                        pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
-                                        enumInvertedDirections[
-                                            staticComp.localDirectionToWorld(acceptor.direction)
-                                        ]
-                                    ) {
-                                        // Defaults to max volume of 50 when no pipes
+                            for (let i = 0; i < pipePinsComp.slots.length; i++) {
+                                const currentSlot = pipePinsComp.slots[i];
+                                if (
+                                    pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
+                                    enumInvertedDirections[
+                                        staticComp.localDirectionToWorld(acceptor.direction)
+                                    ]
+                                ) {
+                                    // Defaults to max volume of 50 when no pipes
+                                    if (currentSlot.linkedNetwork) {
                                         volume = currentSlot.linkedNetwork.maxVolume;
-                                        break;
                                     }
+                                    break;
                                 }
                             }
-
-                            volumes.push({
-                                volume: volume,
-                                network: acceptor.linkedNetwork,
-                            });
                         }
+
+                        volumes.push({
+                            volume: volume,
+                            network: acceptor.linkedNetwork,
+                        });
                     }
                 }
 
@@ -112,87 +111,94 @@ export class TankSystem extends GameSystemWithFilter {
 
                     tankComp.fluid = fluid;
 
-                    if (doTransfer) {
-                        for (let i = 0; i < volumes.length; i++) {
-                            const volume = volumes[i];
+                    for (let i = 0; i < volumes.length; i++) {
+                        const volume = volumes[i];
 
-                            let volumeToMove = 0;
-                            if (tankComp.volume + volume.volume < tankComp.maxVolume) {
-                                volumeToMove = volume.volume;
-                            } else {
-                                volumeToMove = tankComp.maxVolume - tankComp.volume;
-                            }
-
-                            if (volume.network.currentVolume - volumeToMove < 0) {
-                                volumeToMove = volume.network.currentVolume;
-                            }
-                            // Remove from network
-                            volume.network.currentVolume -= volumeToMove;
-
-                            // Add to tank
-                            tankComp.volume += volumeToMove;
+                        let volumeToMove = 0;
+                        if (tankComp.volume + volume.volume < tankComp.maxVolume) {
+                            volumeToMove = volume.volume;
+                        } else {
+                            volumeToMove = tankComp.maxVolume - tankComp.volume;
                         }
 
-                        if (ejector.linkedNetwork) {
-                            // Can only eject into pipes
-                            const pipe = pinsComp.getConnectedPipe(this.root, entity, ejector);
+                        if (volume.network.currentVolume - volumeToMove < 0) {
+                            volumeToMove = volume.network.currentVolume;
+                        }
 
-                            let volumeToMove = 0;
-                            if (pipe.components.Pipe) {
-                                volumeToMove = pipe.components.Pipe.maxVolume;
-                            } else if (pipe.components.PipedPins) {
-                                // Get correct slot
-                                const pipePinsComp = pipe.components.PipedPins;
-                                const pipeStaticComp = pipe.components.StaticMapEntity;
+                        const maxRate = Math.round(volume.volume * transferRate);
+                        if (volumeToMove > maxRate) {
+                            volumeToMove = maxRate;
+                        }
 
-                                for (let i = 0; i < pipePinsComp.slots.length; i++) {
-                                    const currentSlot = pipePinsComp.slots[i];
-                                    if (
-                                        pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
-                                        enumInvertedDirections[
-                                            staticComp.localDirectionToWorld(ejector.direction)
-                                        ]
-                                    ) {
+                        // Remove from network
+                        volume.network.currentVolume -= volumeToMove;
+
+                        // Add to tank
+                        tankComp.volume += volumeToMove;
+                    }
+
+                    if (ejector.linkedNetwork) {
+                        // Can only eject into pipes
+                        const pipe = pinsComp.getConnectedPipe(this.root, entity, ejector);
+
+                        let volumeToMove = 0;
+                        if (pipe.components.Pipe) {
+                            volumeToMove = pipe.components.Pipe.maxVolume;
+                        } else if (pipe.components.PipedPins) {
+                            // Get correct slot
+                            const pipePinsComp = pipe.components.PipedPins;
+                            const pipeStaticComp = pipe.components.StaticMapEntity;
+
+                            for (let i = 0; i < pipePinsComp.slots.length; i++) {
+                                const currentSlot = pipePinsComp.slots[i];
+                                if (
+                                    pipeStaticComp.localDirectionToWorld(currentSlot.direction) ===
+                                    enumInvertedDirections[
+                                        staticComp.localDirectionToWorld(ejector.direction)
+                                    ]
+                                ) {
+                                    if (currentSlot.linkedNetwork) {
                                         volumeToMove = currentSlot.linkedNetwork.maxVolume;
-                                        break;
                                     }
+                                    break;
                                 }
                             }
-
-                            if (tankComp.volume < volumeToMove) {
-                                volumeToMove = tankComp.volume;
-                            }
-
-                            if (
-                                ejector.linkedNetwork.currentVolume + volumeToMove >=
-                                ejector.linkedNetwork.maxVolume
-                            ) {
-                                volumeToMove =
-                                    ejector.linkedNetwork.maxVolume - ejector.linkedNetwork.currentVolume;
-                            }
-
-                            // Remove from tank
-                            tankComp.volume -= volumeToMove;
-
-                            // Add to ejector
-                            ejector.linkedNetwork.currentVolume += volumeToMove;
                         }
 
-                        if (tankComp.volume <= 0) {
-                            tankComp.pressure = 0;
-                            tankComp.fluid = null;
+                        const maxRate = Math.round(volumeToMove * transferRate);
+
+                        if (tankComp.volume < volumeToMove) {
+                            volumeToMove = tankComp.volume;
                         }
+
+                        if (
+                            ejector.linkedNetwork.currentVolume + volumeToMove >=
+                            ejector.linkedNetwork.maxVolume
+                        ) {
+                            volumeToMove =
+                                ejector.linkedNetwork.maxVolume - ejector.linkedNetwork.currentVolume;
+                        }
+
+                        if (volumeToMove > maxRate) {
+                            volumeToMove = maxRate;
+                        }
+
+                        // Remove from tank
+                        tankComp.volume -= volumeToMove;
+
+                        // Add to ejector
+                        ejector.linkedNetwork.currentVolume += volumeToMove;
                     }
-                } else {
-                    ejector.pressure = 0;
-                    tankComp.pressure = 0;
+
+                    if (tankComp.volume <= 0) {
+                        tankComp.pressure = 0;
+                        tankComp.fluid = null;
+                    }
                 }
             }
         }
 
-        if (doTransfer) {
-            this.transferVolume = Date.now();
-        }
+        this.transferVolume = Date.now();
     }
 
     /**
@@ -213,34 +219,36 @@ export class TankSystem extends GameSystemWithFilter {
                     const tankComp = entity.components.Tank;
                     const staticComp = entity.components.StaticMapEntity;
 
-                    if (tankComp.fluid && tankComp.volume > 0) {
-                        parameters.context.strokeStyle = tankComp.fluid.getBackgroundColorAsResource();
+                    if (tankComp.fluid) {
+                        if (tankComp.volume > 0) {
+                            parameters.context.strokeStyle = tankComp.fluid.getBackgroundColorAsResource();
 
-                        let rotated = false;
+                            let rotated = false;
 
-                        if (staticComp.rotation % 360 === 0) {
-                            rotated = false;
-                        } else if (staticComp.rotation % 270 === 0) {
-                            rotated = true;
-                        } else if (staticComp.rotation % 180 === 0) {
-                            rotated = false;
-                        } else if (staticComp.rotation % 90 === 0) {
-                            rotated = true;
+                            if (staticComp.rotation % 360 === 0) {
+                                rotated = false;
+                            } else if (staticComp.rotation % 270 === 0) {
+                                rotated = true;
+                            } else if (staticComp.rotation % 180 === 0) {
+                                rotated = false;
+                            } else if (staticComp.rotation % 90 === 0) {
+                                rotated = true;
+                            }
+
+                            parameters.context.beginPath();
+                            parameters.context.ellipse(
+                                (staticComp.origin.x + 0.5) * globalConfig.tileSize - 0.1,
+                                (staticComp.origin.y + 0.5) * globalConfig.tileSize,
+                                rotated ? 10.5 : 11.1,
+                                rotated ? 11.1 : 10.5,
+                                0,
+                                0,
+                                (tankComp.volume / tankComp.maxVolume) * 2 * Math.PI
+                            );
+                            parameters.context.lineWidth = 1.7;
+                            parameters.context.lineCap = "round";
+                            parameters.context.stroke();
                         }
-
-                        parameters.context.beginPath();
-                        parameters.context.ellipse(
-                            (staticComp.origin.x + 0.5) * globalConfig.tileSize - 0.1,
-                            (staticComp.origin.y + 0.5) * globalConfig.tileSize,
-                            rotated ? 10.5 : 11.1,
-                            rotated ? 11.1 : 10.5,
-                            0,
-                            0,
-                            (tankComp.volume / tankComp.maxVolume) * 2 * Math.PI
-                        );
-                        parameters.context.lineWidth = 1.7;
-                        parameters.context.lineCap = "round";
-                        parameters.context.stroke();
 
                         tankComp.fluid.drawItemCenteredClipped(
                             (staticComp.origin.x + 0.5) * globalConfig.tileSize,

@@ -107,7 +107,7 @@ export class PipeSystem extends GameSystem {
         this.root.signals.entityAdded.add(this.queueRecomputeIfPipe, this);
 
         this.needsRecompute = true;
-        this.recomputeArea = null;
+        this.recomputeAreas = [];
         this.isFirstRecompute = true;
 
         this.staleArea = new StaleAreaDetector({
@@ -133,8 +133,9 @@ export class PipeSystem extends GameSystem {
 
         if (this.isEntityRelevantForPipes(entity)) {
             this.needsRecompute = true;
-            this.recomputeArea =
-                entity.components.StaticMapEntity.getTileSpaceBounds().expandedInAllDirections(1);
+            this.recomputeAreas.push(
+                entity.components.StaticMapEntity.getTileSpaceBounds().expandedInAllDirections(1)
+            );
             this.networks = [];
         }
     }
@@ -196,9 +197,11 @@ export class PipeSystem extends GameSystem {
             );
         }
 
-        if (this.recomputeArea) {
-            this.updateSurroundingPipePlacement(this.recomputeArea);
-            this.recomputeArea = null;
+        if (this.recomputeAreas.length > 0) {
+            for (let i = 0; i < this.recomputeAreas.length; i++) {
+                this.updateSurroundingPipePlacement(this.recomputeAreas[i]);
+            }
+            this.recomputeArea = [];
         }
     }
 
@@ -523,26 +526,27 @@ export class PipeSystem extends GameSystem {
             }
 
             // Assign value
+            network.currentPressure = pressure;
             if (network.currentVolume <= 0) {
-                network.currentPressure = 0;
                 network.currentFluid = null;
             } else {
-                network.currentPressure = pressure;
                 network.currentFluid = fluid;
             }
 
-            network.maxVolume = network.pipes
-                //@ts-ignore
-                .map(x => x.components.Pipe.maxVolume)
-                .reduce((volume, currentVolume) => (volume += currentVolume), 0);
-
             if (network.pipes.length <= 0) {
                 network.maxVolume = 50;
+            } else {
+                network.maxVolume = network.pipes
+                    //@ts-ignore
+                    .map(x => x.components.Pipe.maxVolume)
+                    .reduce((volume, currentVolume) => (volume += currentVolume), 0);
             }
 
             if (network.currentVolume > network.maxVolume) {
                 network.currentVolume = network.maxVolume;
             }
+
+            const delta = network.maxVolume > 0 ? network.currentVolume / network.maxVolume : 0;
 
             let volumeLeft = network.currentVolume;
             for (let i = 0; i < network.pipes.length; i++) {
@@ -551,12 +555,15 @@ export class PipeSystem extends GameSystem {
                 //@ts-ignore
                 const pipeComp = pipe.components.Pipe;
 
+                const pipeDelta = delta;
                 if (volumeLeft >= pipeComp.maxVolume) {
-                    pipeComp.volume = pipeComp.maxVolume;
-                    volumeLeft -= pipeComp.maxVolume;
+                    const transferVolume = Math.floor(pipeComp.maxVolume * pipeDelta);
+                    pipeComp.volume = transferVolume;
+                    volumeLeft -= transferVolume;
                 } else if (volumeLeft > 0) {
-                    pipeComp.volume = volumeLeft;
-                    volumeLeft = 0;
+                    const transferVolume = Math.floor(volumeLeft * pipeDelta);
+                    pipeComp.volume = transferVolume;
+                    volumeLeft -= transferVolume;
                 } else {
                     pipeComp.volume = 0;
                 }
