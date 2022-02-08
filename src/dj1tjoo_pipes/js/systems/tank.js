@@ -125,7 +125,10 @@ export class TankSystem extends GameSystemWithFilter {
                             volumeToMove = volume.network.currentVolume;
                         }
 
-                        const maxRate = Math.round(volume.volume * transferRate);
+                        const maxRate =
+                            volume.volume * transferRate > 1
+                                ? Math.round(volume.volume * transferRate)
+                                : volume.volume;
                         if (volumeToMove > maxRate) {
                             volumeToMove = maxRate;
                         }
@@ -165,7 +168,10 @@ export class TankSystem extends GameSystemWithFilter {
                             }
                         }
 
-                        const maxRate = Math.round(volumeToMove * transferRate);
+                        const maxRate =
+                            volumeToMove * transferRate > 1
+                                ? Math.round(volumeToMove * transferRate)
+                                : volumeToMove;
 
                         if (tankComp.volume < volumeToMove) {
                             volumeToMove = tankComp.volume;
@@ -237,10 +243,10 @@ export class TankSystem extends GameSystemWithFilter {
 
                             parameters.context.beginPath();
                             parameters.context.ellipse(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize - 0.1,
+                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
                                 (staticComp.origin.y + 0.5) * globalConfig.tileSize,
-                                rotated ? 10.5 : 11.1,
-                                rotated ? 11.1 : 10.5,
+                                11.1,
+                                11.1,
                                 0,
                                 0,
                                 (tankComp.volume / tankComp.maxVolume) * 2 * Math.PI

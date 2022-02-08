@@ -146,20 +146,42 @@ export class DefaultPipeRendererSystem extends GameSystem {
 
                         /** @TODO gradients */
                         parameters.context.fillStyle = pipeComp.localFluidColor(network.currentFluid);
-                        const size =
+                        let size =
                             enumPipeVariant.pipe === enumPipeVariantToVariant[staticComp.getVariant()]
-                                ? 3
+                                ? 5
                                 : 8;
+
+                        const colorPercentage =
+                            pipeComp.pressurePercentage * (pipeComp.volume / pipeComp.maxVolume);
+                        if (colorPercentage < 0.5) {
+                            size *= colorPercentage + 0.5;
+                        }
 
                         switch (pipeType) {
                             case enumPipeType.forward:
                                 if (staticComp.rotation % 180 === 0) {
+                                    const nextPipe = network.pipes[pipeIndex + 1];
+                                    const prevPipe = network.pipes[pipeIndex - 1];
+
+                                    let direction = enumDirection.top;
+                                    if (nextPipe) {
+                                        if (
+                                            nextPipe.components.StaticMapEntity.origin.y > staticComp.origin.y
+                                        ) {
+                                            direction = enumDirection.bottom;
+                                        }
+                                    } else if (prevPipe) {
+                                        if (
+                                            prevPipe.components.StaticMapEntity.origin.y < staticComp.origin.y
+                                        ) {
+                                            direction = enumDirection.bottom;
+                                        }
+                                    }
+
                                     parameters.context.fillStyle = this.getGradient(
                                         parameters,
                                         entity,
-                                        staticComp.rotation % 360 === 0
-                                            ? enumDirection.top
-                                            : enumDirection.bottom
+                                        direction
                                     );
                                     parameters.context.fillRect(
                                         (staticComp.origin.x + 0.5) * globalConfig.tileSize - size / 2,
@@ -191,19 +213,6 @@ export class DefaultPipeRendererSystem extends GameSystem {
                                         direction
                                     );
 
-                                    // const offset =
-                                    //     direction === enumDirection.left
-                                    //         ? 0
-                                    //         : (globalConfig.tileSize + 0.2) *
-                                    //           (pipeComp.volume / pipeComp.maxVolume);
-                                    // parameters.context.fillRect(
-                                    //     offset + staticComp.origin.x * globalConfig.tileSize - 0.1,
-                                    //     (staticComp.origin.y + 0.5) * globalConfig.tileSize - size / 2,
-                                    //     (globalConfig.tileSize + 0.2) *
-                                    //         (pipeComp.volume / pipeComp.maxVolume) -
-                                    //         offset,
-                                    //     size
-                                    // );
                                     parameters.context.fillRect(
                                         staticComp.origin.x * globalConfig.tileSize - 0.1,
                                         (staticComp.origin.y + 0.5) * globalConfig.tileSize - size / 2,

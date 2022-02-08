@@ -24,7 +24,7 @@ export const arrayPipeRotationVariantToType = [
     enumPipeType.cross,
 ];
 
-const renderPipesInfo = BUILD_OPTIONS.IS_DEV && true;
+const renderPipesInfo = BUILD_OPTIONS.IS_DEV && false;
 
 const logger = createLogger("pipes");
 let networkUidCounter = 0;
