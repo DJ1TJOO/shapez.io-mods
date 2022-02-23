@@ -3,7 +3,11 @@ import { formatItemsPerSecond } from "shapez/core/utils";
 import { Vector, enumDirection } from "shapez/core/vector";
 import { ItemAcceptorComponent } from "shapez/game/components/item_acceptor";
 import { ItemEjectorComponent } from "shapez/game/components/item_ejector";
-import { enumItemProcessorTypes, ItemProcessorComponent } from "shapez/game/components/item_processor";
+import {
+    enumItemProcessorRequirements,
+    enumItemProcessorTypes,
+    ItemProcessorComponent,
+} from "shapez/game/components/item_processor";
 import { MOD_ITEM_PROCESSOR_SPEEDS } from "shapez/game/hub_goals";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
@@ -15,7 +19,12 @@ import {
     TOP_LEFT,
     TOP_RIGHT,
 } from "shapez/game/shape_definition";
-import { ItemProcessorSystem, MOD_ITEM_PROCESSOR_HANDLERS } from "shapez/game/systems/item_processor";
+import {
+    ItemProcessorSystem,
+    MODS_CAN_PROCESS,
+    MODS_PROCESSING_REQUIREMENTS,
+    MOD_ITEM_PROCESSOR_HANDLERS,
+} from "shapez/game/systems/item_processor";
 import { Mod } from "shapez/mods/mod";
 import { MODS } from "shapez/mods/modloader";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
@@ -78,6 +87,7 @@ export class MetaHeaterBuilding extends ModMetaBuilding {
             new ItemProcessorComponent({
                 inputsPerCharge: 1,
                 processorType: enumItemProcessorTypes["heater"],
+                processingRequirement: enumItemProcessorRequirements["heater"],
             })
         );
 
@@ -102,6 +112,48 @@ export function setupHeater() {
     // @ts-ignore
     const MAGMA_SINGLETONS = this.MAGMA_SINGLETONS;
     enumItemProcessorTypes["heater"] = "heater";
+    enumItemProcessorRequirements["heater"] = "heater";
+
+    const heaterRecipes = [
+        {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.stone],
+            fluid: MAGMA_SINGLETONS[enumMagmaTypes.stone_magma],
+            fluidAdded: 10,
+            pressure: 100,
+        },
+        {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.basalt],
+            fluid: MAGMA_SINGLETONS[enumMagmaTypes.basalt_magma],
+            fluidAdded: 10,
+            pressure: 100,
+        },
+        {
+            item: STONE_ITEM_SINGLETONS[enumStoneType.clean_marble],
+            fluid: MAGMA_SINGLETONS[enumMagmaTypes.cleaned_marble_magma],
+            fluidAdded: 10,
+            pressure: 100,
+        },
+    ];
+
+    MODS_CAN_PROCESS[enumItemProcessorRequirements["heater"]] = function ({ entity }) {
+        // @ts-ignore
+        const pinsComp = entity.components.PipedPins;
+
+        if (!pinsComp) return false;
+        if (!pinsComp.slots[0].linkedNetwork) return false;
+
+        const processorComp = entity.components.ItemProcessor;
+        return processorComp.inputCount >= processorComp.inputsPerCharge;
+    };
+
+    MODS_PROCESSING_REQUIREMENTS[enumItemProcessorRequirements["heater"]] = function ({
+        entity,
+        item,
+        slotIndex,
+    }) {
+        const recipe = heaterRecipes.find(x => x.item === item);
+        return !!recipe;
+    };
     /**
      * @this {ItemProcessorSystem}
      */
@@ -112,37 +164,13 @@ export function setupHeater() {
         /** @type {StoneItem} */
         const stone = items.get(0);
 
-        switch (stone.stoneType) {
-            case enumStoneType.stone:
-                if (pinsComp) {
-                    pinsComp.slots[0].pressure = 100;
-                    pinsComp.slots[0].fluid = MAGMA_SINGLETONS[enumMagmaTypes.stone_magma];
-                    if (pinsComp.slots[0].linkedNetwork) {
-                        pinsComp.slots[0].linkedNetwork.currentVolume += 10;
-                    }
-                }
-                break;
-            case enumStoneType.basalt:
-                if (pinsComp) {
-                    pinsComp.slots[0].pressure = 100;
-                    pinsComp.slots[0].fluid = MAGMA_SINGLETONS[enumMagmaTypes.basalt_magma];
-                    if (pinsComp.slots[0].linkedNetwork) {
-                        pinsComp.slots[0].linkedNetwork.currentVolume += 5;
-                    }
-                }
-                break;
-            case enumStoneType.clean_marble:
-                if (pinsComp) {
-                    pinsComp.slots[0].pressure = 100;
-                    pinsComp.slots[0].fluid = MAGMA_SINGLETONS[enumMagmaTypes.cleaned_marble_magma];
-                    if (pinsComp.slots[0].linkedNetwork) {
-                        pinsComp.slots[0].linkedNetwork.currentVolume += 10;
-                    }
-                }
-                break;
-
-            default:
-                break;
+        const recipe = heaterRecipes.find(x => x.item === stone);
+        if (pinsComp) {
+            pinsComp.slots[0].pressure = recipe.pressure;
+            pinsComp.slots[0].fluid = recipe.fluid;
+            if (pinsComp.slots[0].linkedNetwork) {
+                pinsComp.slots[0].linkedNetwork.currentVolume += recipe.fluidAdded;
+            }
         }
     };
 

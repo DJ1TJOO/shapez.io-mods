@@ -58,7 +58,7 @@ class ModImpl extends Mod {
              * @this { SerializerInternal }
              */
             function (root, entity, data) {
-                handleComponents(entity, root);
+                if (root.gameState.isMultiplayer()) handleComponents(entity, root);
             }
         );
 

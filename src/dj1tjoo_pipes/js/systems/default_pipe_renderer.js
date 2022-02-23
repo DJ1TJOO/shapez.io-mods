@@ -144,7 +144,6 @@ export class DefaultPipeRendererSystem extends GameSystem {
                     ) {
                         const pipeIndex = network.pipes.findIndex(x => x.uid === entity.uid);
 
-                        /** @TODO gradients */
                         parameters.context.fillStyle = pipeComp.localFluidColor(network.currentFluid);
                         let size =
                             enumPipeVariant.pipe === enumPipeVariantToVariant[staticComp.getVariant()]

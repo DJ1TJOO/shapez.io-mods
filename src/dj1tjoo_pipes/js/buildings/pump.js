@@ -2,7 +2,11 @@ import { globalConfig } from "shapez/core/config";
 import { generateMatrixRotations } from "shapez/core/utils";
 import { Vector, enumDirection, enumInvertedDirections } from "shapez/core/vector";
 import { ItemAcceptorComponent } from "shapez/game/components/item_acceptor";
-import { ItemProcessorComponent, enumItemProcessorTypes } from "shapez/game/components/item_processor";
+import {
+    ItemProcessorComponent,
+    enumItemProcessorTypes,
+    enumItemProcessorRequirements,
+} from "shapez/game/components/item_processor";
 import { MOD_ITEM_PROCESSOR_SPEEDS } from "shapez/game/hub_goals";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import {
@@ -13,7 +17,12 @@ import {
     TOP_LEFT,
     enumSubShape,
 } from "shapez/game/shape_definition";
-import { ItemProcessorSystem, MOD_ITEM_PROCESSOR_HANDLERS } from "shapez/game/systems/item_processor";
+import {
+    ItemProcessorSystem,
+    MODS_CAN_PROCESS,
+    MODS_PROCESSING_REQUIREMENTS,
+    MOD_ITEM_PROCESSOR_HANDLERS,
+} from "shapez/game/systems/item_processor";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { BaseFluid } from "../base_fluid";
 import { enumPinSlotType, PipedPinsComponent } from "../components/pipe_pins";
@@ -179,17 +188,20 @@ export class MetaPumpBuilding extends ModMetaBuilding {
  */
 export function setupPump() {
     enumItemProcessorTypes["pump"] = "pump";
-    /**
-     * @this {ItemProcessorSystem}
-     */
-    MOD_ITEM_PROCESSOR_HANDLERS[enumItemProcessorTypes["pump"]] = function ({ entity, items }) {
-        /** @type {ShapeDefinition} */
-        const shapeDefinition = items.get(0).definition;
-        const staticComp = entity.components.StaticMapEntity;
+    enumItemProcessorRequirements["pump"] = "pump";
 
-        /**
-         * @TODO sprite for pressure pump
-         * */
+    MODS_CAN_PROCESS[enumItemProcessorRequirements["pump"]] = function ({ entity }) {
+        return true;
+    };
+
+    MODS_PROCESSING_REQUIREMENTS[enumItemProcessorRequirements["pump"]] = function ({
+        entity,
+        item,
+        slotIndex,
+    }) {
+        /** @type {ShapeDefinition} */
+        const shapeDefinition = item.definition;
+
         const newLayers = shapeDefinition.getClonedLayers();
         let allowed = true;
         for (let i = 0; i < newLayers.length; i++) {
@@ -210,6 +222,31 @@ export function setupPump() {
                 break;
             }
         }
+
+        if (!allowed) {
+            /** @type {PipedPinsComponent} */
+            const pinsComp = entity.components.PipedPins;
+            const ejector = pinsComp.slots.find(x => x.type === enumPinSlotType.logicalEjector);
+            const acceptor = pinsComp.slots.find(x => x.type === enumPinSlotType.logicalAcceptor);
+
+            ejector.pressure = acceptor.pressure;
+            ejector.fluid = acceptor.fluid;
+
+            return false;
+        }
+
+        return true;
+    };
+
+    /**
+     * @this {ItemProcessorSystem}
+     */
+    MOD_ITEM_PROCESSOR_HANDLERS[enumItemProcessorTypes["pump"]] = function ({ entity, items }) {
+        const staticComp = entity.components.StaticMapEntity;
+
+        /**
+         * @TODO sprite for pressure pump
+         * */
 
         /** @type {PipedPinsComponent} */
         const pinsComp = entity.components.PipedPins;
@@ -243,27 +280,21 @@ export function setupPump() {
             }
         }
 
-        // Delete inputted shape. @TODO: maybe nicer as item acceptor filter
-        if (allowed) {
-            ejector.pressure = Math.round(pinsComp.getLocalPressure(this.root, entity, acceptor) * 1.3);
-            ejector.fluid = acceptor.fluid;
+        ejector.pressure = Math.round(pinsComp.getLocalPressure(this.root, entity, acceptor) * 1.3);
+        ejector.fluid = acceptor.fluid;
 
-            let volumeToMove = volume;
-            if (ejector.linkedNetwork && acceptor.linkedNetwork) {
-                if (ejector.linkedNetwork.currentVolume + volumeToMove >= ejector.linkedNetwork.maxVolume) {
-                    volumeToMove = ejector.linkedNetwork.maxVolume - ejector.linkedNetwork.currentVolume;
-                }
-
-                if (acceptor.linkedNetwork.currentVolume - volumeToMove < 0) {
-                    volumeToMove = acceptor.linkedNetwork.currentVolume;
-                }
-
-                ejector.linkedNetwork.currentVolume += volumeToMove;
-                acceptor.linkedNetwork.currentVolume -= volumeToMove;
+        let volumeToMove = volume;
+        if (ejector.linkedNetwork && acceptor.linkedNetwork) {
+            if (ejector.linkedNetwork.currentVolume + volumeToMove >= ejector.linkedNetwork.maxVolume) {
+                volumeToMove = ejector.linkedNetwork.maxVolume - ejector.linkedNetwork.currentVolume;
             }
-        } else {
-            ejector.pressure = acceptor.pressure;
-            ejector.fluid = acceptor.fluid;
+
+            if (acceptor.linkedNetwork.currentVolume - volumeToMove < 0) {
+                volumeToMove = acceptor.linkedNetwork.currentVolume;
+            }
+
+            ejector.linkedNetwork.currentVolume += volumeToMove;
+            acceptor.linkedNetwork.currentVolume -= volumeToMove;
         }
     };
 

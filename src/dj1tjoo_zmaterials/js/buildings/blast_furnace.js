@@ -3,7 +3,11 @@ import { formatItemsPerSecond } from "shapez/core/utils";
 import { Vector, enumDirection } from "shapez/core/vector";
 import { ItemAcceptorComponent } from "shapez/game/components/item_acceptor";
 import { ItemEjectorComponent } from "shapez/game/components/item_ejector";
-import { enumItemProcessorTypes, ItemProcessorComponent } from "shapez/game/components/item_processor";
+import {
+    enumItemProcessorRequirements,
+    enumItemProcessorTypes,
+    ItemProcessorComponent,
+} from "shapez/game/components/item_processor";
 import { MOD_ITEM_PROCESSOR_SPEEDS } from "shapez/game/hub_goals";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
@@ -15,7 +19,12 @@ import {
     TOP_LEFT,
     TOP_RIGHT,
 } from "shapez/game/shape_definition";
-import { ItemProcessorSystem, MOD_ITEM_PROCESSOR_HANDLERS } from "shapez/game/systems/item_processor";
+import {
+    ItemProcessorSystem,
+    MODS_CAN_PROCESS,
+    MODS_PROCESSING_REQUIREMENTS,
+    MOD_ITEM_PROCESSOR_HANDLERS,
+} from "shapez/game/systems/item_processor";
 import { Mod } from "shapez/mods/mod";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { T } from "shapez/translations";
@@ -72,6 +81,7 @@ export class MetaBlastFurnaceBuilding extends ModMetaBuilding {
             new ItemProcessorComponent({
                 inputsPerCharge: 1,
                 processorType: enumItemProcessorTypes["blast_furnace"],
+                processingRequirement: enumItemProcessorRequirements["blast_furnace"],
             })
         );
 
@@ -119,6 +129,23 @@ export function setupBlastFurnace() {
         },
     ];
     enumItemProcessorTypes["blast_furnace"] = "blast_furnace";
+    enumItemProcessorRequirements["blast_furnace"] = "blast_furnace";
+
+    MODS_CAN_PROCESS[enumItemProcessorRequirements["blast_furnace"]] = function ({ entity }) {
+        const processorComp = entity.components.ItemProcessor;
+        return processorComp.inputCount >= processorComp.inputsPerCharge;
+    };
+
+    MODS_PROCESSING_REQUIREMENTS[enumItemProcessorRequirements["blast_furnace"]] = function ({
+        entity,
+        item,
+        slotIndex,
+    }) {
+        if (!item || !item.definition) return false;
+        const recipe = blastFurnaceRecipes.find(x => x.shape(item.definition));
+        return !!recipe;
+    };
+
     /**
      * @this {ItemProcessorSystem}
      */
@@ -128,13 +155,6 @@ export function setupBlastFurnace() {
         outItems,
     }) {
         const recipe = blastFurnaceRecipes.find(x => x.shape(items.get(0).definition));
-
-        if (!recipe) {
-            // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
-            return outItems.push({
-                item: items.get(0),
-            });
-        }
 
         // Output
         outItems.push({

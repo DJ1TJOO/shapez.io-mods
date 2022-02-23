@@ -4,7 +4,11 @@ import { Vector, enumDirection } from "shapez/core/vector";
 import { enumColors } from "shapez/game/colors";
 import { ItemAcceptorComponent } from "shapez/game/components/item_acceptor";
 import { ItemEjectorComponent } from "shapez/game/components/item_ejector";
-import { enumItemProcessorTypes, ItemProcessorComponent } from "shapez/game/components/item_processor";
+import {
+    enumItemProcessorRequirements,
+    enumItemProcessorTypes,
+    ItemProcessorComponent,
+} from "shapez/game/components/item_processor";
 import { MOD_ITEM_PROCESSOR_SPEEDS } from "shapez/game/hub_goals";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
@@ -16,7 +20,12 @@ import {
     TOP_LEFT,
     TOP_RIGHT,
 } from "shapez/game/shape_definition";
-import { ItemProcessorSystem, MOD_ITEM_PROCESSOR_HANDLERS } from "shapez/game/systems/item_processor";
+import {
+    ItemProcessorSystem,
+    MODS_CAN_PROCESS,
+    MODS_PROCESSING_REQUIREMENTS,
+    MOD_ITEM_PROCESSOR_HANDLERS,
+} from "shapez/game/systems/item_processor";
 import { Mod } from "shapez/mods/mod";
 import { MODS } from "shapez/mods/modloader";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
@@ -91,6 +100,7 @@ export class MetaCoolerBuilding extends ModMetaBuilding {
             new ItemProcessorComponent({
                 inputsPerCharge: 1,
                 processorType: enumItemProcessorTypes["cooler"],
+                processingRequirement: enumItemProcessorRequirements["cooler"],
             })
         );
 
@@ -212,6 +222,37 @@ export function setupCooler() {
         },
     ];
     enumItemProcessorTypes["cooler"] = "cooler";
+    enumItemProcessorRequirements["cooler"] = "cooler";
+
+    MODS_CAN_PROCESS[enumItemProcessorRequirements["cooler"]] = function ({ entity }) {
+        // @ts-ignore
+        const pinsComp = entity.components.PipedPins;
+
+        if (!pinsComp) return false;
+        if (!pinsComp.slots[0].linkedNetwork) return false;
+        if (!pinsComp.slots[0].linkedNetwork.currentFluid) return false;
+
+        const processorComp = entity.components.ItemProcessor;
+        return processorComp.inputCount >= processorComp.inputsPerCharge;
+    };
+
+    MODS_PROCESSING_REQUIREMENTS[enumItemProcessorRequirements["cooler"]] = function ({
+        entity,
+        item,
+        slotIndex,
+    }) {
+        // @ts-ignore
+        const pinsComp = entity.components.PipedPins;
+
+        if (!pinsComp) return false;
+        if (!pinsComp.slots[0].linkedNetwork) return false;
+        if (!pinsComp.slots[0].linkedNetwork.currentFluid) return false;
+
+        if (!item || !item.definition) return false;
+        const recipe = coolerRecipes.find(x => x.shape(item.definition));
+        return !!recipe;
+    };
+
     /**
      * @this {ItemProcessorSystem}
      */

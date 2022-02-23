@@ -7,9 +7,9 @@ const { DefinePlugin } = require("webpack");
 const { CreateAtlas } = require("./atlas");
 const { SourceMapDevToolPlugin } = require("webpack");
 
-function getModFolder(filePath) {
+function getModFolder(filePath, mods) {
     const dirs = path.dirname(filePath).replace(/\\/g, "/").split("/");
-    return dirs[dirs.indexOf("src") + 1];
+    return mods.find(x => x.folder === dirs[dirs.indexOf("src") + 1]);
 }
 
 module.exports = async ({ watch = false }) => {
@@ -37,11 +37,21 @@ module.exports = async ({ watch = false }) => {
                 fs.mkdirSync(path.join("../src", modFolder, "themes"));
             }
             const mod = JSON.parse(fs.readFileSync(path.join("../src", modFolder, "mod.json")));
-            mods.push({ folder: modFolder, ...mod });
+            if (!mod.disabled) mods.push({ folder: modFolder, ...mod });
         } catch (error) {
             console.log(`Could not find mod.json for '${modFolder}'`);
         }
     }
+
+    mods.sort((a, b) => {
+        if (a.id < b.id) {
+            return -1;
+        }
+        if (a.id > b.id) {
+            return 1;
+        }
+        return 0;
+    });
 
     // Update shapez config
     const externalMods = [];
@@ -119,7 +129,7 @@ module.exports = async ({ watch = false }) => {
                 ? [
                       new SourceMapDevToolPlugin({
                           filename: "[file].map",
-                          publicPath: "http://localhost:3010/[name]/",
+                          publicPath: "http://localhost:3010/",
                       }),
                   ]
                 : []),
@@ -194,7 +204,7 @@ module.exports = async ({ watch = false }) => {
                                         ),
                                     ];
 
-                                    const modFolder = getModFolder(this.resourcePath);
+                                    const modFolder = getModFolder(this.resourcePath, mods);
 
                                     if (matches.length > 0) {
                                         let variableName;
@@ -205,7 +215,13 @@ module.exports = async ({ watch = false }) => {
                                         // Get mod info from package.json
                                         const json = JSON.parse(
                                             fs.readFileSync(
-                                                path.resolve(__dirname, "..", "src", modFolder, "mod.json"),
+                                                path.resolve(
+                                                    __dirname,
+                                                    "..",
+                                                    "src",
+                                                    modFolder.folder,
+                                                    "mod.json"
+                                                ),
                                                 {
                                                     encoding: "utf-8",
                                                 }
@@ -253,14 +269,13 @@ module.exports = async ({ watch = false }) => {
                                     {
                                         pattern: /extends[\s]*?Mod[\s]*?{[^]*?init[^]*?\([^]*?\)[^]*?{/gms,
                                         replacement(match) {
-                                            const modFolder = getModFolder(this.resourcePath);
+                                            const modFolder = getModFolder(this.resourcePath, mods);
                                             if (
                                                 !fs.existsSync(
                                                     path.join(
                                                         "..",
                                                         "build",
-                                                        modFolder,
-                                                        "atlases",
+                                                        modFolder.id + "_atlases",
                                                         "atlas0_hq.png"
                                                     )
                                                 )
@@ -269,16 +284,16 @@ module.exports = async ({ watch = false }) => {
                                             }
 
                                             const atlases = `this.modInterface.registerAtlas(
-                                                            require("../../../build/${modFolder}/atlases/atlas0_hq.png"),
-                                                            JSON.stringify(require("../../../build/${modFolder}/atlases/atlas0_hq.json"))
+                                                            require("../../../build/${modFolder.id}_atlases/atlas0_hq.png"),
+                                                            JSON.stringify(require("../../../build/${modFolder.id}_atlases/atlas0_hq.json"))
                                                         );
                                                         this.modInterface.registerAtlas(
-                                                            require("../../../build/${modFolder}/atlases/atlas0_mq.png"),
-                                                            JSON.stringify(require("../../../build/${modFolder}/atlases/atlas0_mq.json"))
+                                                            require("../../../build/${modFolder.id}_atlases/atlas0_mq.png"),
+                                                            JSON.stringify(require("../../../build/${modFolder.id}_atlases/atlas0_mq.json"))
                                                         );
                                                         this.modInterface.registerAtlas(
-                                                            require("../../../build/${modFolder}/atlases/atlas0_lq.png"),
-                                                            JSON.stringify(require("../../../build/${modFolder}/atlases/atlas0_lq.json"))
+                                                            require("../../../build/${modFolder.id}_atlases/atlas0_lq.png"),
+                                                            JSON.stringify(require("../../../build/${modFolder.id}_atlases/atlas0_lq.json"))
                                                         );`;
                                             return `${match}\n${atlases}`;
                                         },
@@ -286,14 +301,14 @@ module.exports = async ({ watch = false }) => {
                                     {
                                         pattern: /extends[\s]*?Mod[\s]*?{[^]*?init[^]*?\([^]*?\)[^]*?{/gms,
                                         replacement(match) {
-                                            const modFolder = getModFolder(this.resourcePath);
+                                            const modFolder = getModFolder(this.resourcePath, mods);
 
                                             const files = fs.readdirSync(
                                                 path.resolve(
                                                     __dirname,
                                                     "..",
                                                     "src",
-                                                    modFolder,
+                                                    modFolder.folder,
                                                     "translations"
                                                 )
                                             );
@@ -314,10 +329,16 @@ module.exports = async ({ watch = false }) => {
                                     {
                                         pattern: /extends[\s]*?Mod[\s]*?{[^]*?init[^]*?\([^]*?\)[^]*?{/gms,
                                         replacement(match) {
-                                            const modFolder = getModFolder(this.resourcePath);
+                                            const modFolder = getModFolder(this.resourcePath, mods);
 
                                             const files = fs.readdirSync(
-                                                path.resolve(__dirname, "..", "src", modFolder, "themes")
+                                                path.resolve(
+                                                    __dirname,
+                                                    "..",
+                                                    "src",
+                                                    modFolder.folder,
+                                                    "themes"
+                                                )
                                             );
 
                                             let themes = "";

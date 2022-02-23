@@ -4,7 +4,11 @@ import { Vector, enumDirection } from "shapez/core/vector";
 import { enumColors } from "shapez/game/colors";
 import { ItemAcceptorComponent } from "shapez/game/components/item_acceptor";
 import { ItemEjectorComponent } from "shapez/game/components/item_ejector";
-import { enumItemProcessorTypes, ItemProcessorComponent } from "shapez/game/components/item_processor";
+import {
+    enumItemProcessorRequirements,
+    enumItemProcessorTypes,
+    ItemProcessorComponent,
+} from "shapez/game/components/item_processor";
 import { MOD_ITEM_PROCESSOR_SPEEDS } from "shapez/game/hub_goals";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { GameRoot } from "shapez/game/root";
@@ -16,7 +20,12 @@ import {
     TOP_LEFT,
     TOP_RIGHT,
 } from "shapez/game/shape_definition";
-import { ItemProcessorSystem, MOD_ITEM_PROCESSOR_HANDLERS } from "shapez/game/systems/item_processor";
+import {
+    ItemProcessorSystem,
+    MODS_CAN_PROCESS,
+    MODS_PROCESSING_REQUIREMENTS,
+    MOD_ITEM_PROCESSOR_HANDLERS,
+} from "shapez/game/systems/item_processor";
 import { Mod } from "shapez/mods/mod";
 import { MODS } from "shapez/mods/modloader";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
@@ -97,6 +106,7 @@ export class MetaWaterSprayerBuilding extends ModMetaBuilding {
             new ItemProcessorComponent({
                 inputsPerCharge: 2,
                 processorType: enumItemProcessorTypes["water_sprayer"],
+                processingRequirement: enumItemProcessorRequirements["water_sprayer"],
             })
         );
 
@@ -250,6 +260,35 @@ export function setupWaterSprayer() {
         },
     ];
     enumItemProcessorTypes["water_sprayer"] = "water_sprayer";
+    enumItemProcessorRequirements["water_sprayer"] = "water_sprayer";
+    MODS_CAN_PROCESS[enumItemProcessorRequirements["water_sprayer"]] = function ({ entity }) {
+        // @ts-ignore
+        const pinsComp = entity.components.PipedPins;
+
+        if (!pinsComp) return false;
+        if (!pinsComp.slots[0].linkedNetwork) return false;
+        if (!pinsComp.slots[0].linkedNetwork.currentFluid) return false;
+        if (pinsComp.slots[0].linkedNetwork.currentFluid !== WATER_SINGLETON) return false;
+
+        const processorComp = entity.components.ItemProcessor;
+        return processorComp.inputCount >= processorComp.inputsPerCharge;
+    };
+
+    MODS_PROCESSING_REQUIREMENTS[enumItemProcessorRequirements["water_sprayer"]] = function ({
+        entity,
+        item,
+        slotIndex,
+    }) {
+        if (!item) return false;
+        if (item.definition) {
+            const recipe = waterSprayerRecipes.find(x => x.shape(item.definition));
+            return !!recipe;
+        } else {
+            const recipe = waterSprayerRecipes.find(x => item.stoneType === x.stone);
+            return !!recipe;
+        }
+    };
+
     /**
      * @this {ItemProcessorSystem}
      */
@@ -261,36 +300,22 @@ export function setupWaterSprayer() {
         // @ts-ignore
         const pinsComp = entity.components.PipedPins;
 
-        if (pinsComp) {
-            if (pinsComp.slots[0].linkedNetwork) {
-                const recipe = waterSprayerRecipes.find(
-                    x => x.shape(items.get(0).definition) && items.get(1).stoneType === x.stone
-                );
+        if (pinsComp.slots[0].linkedNetwork) {
+            const recipe = waterSprayerRecipes.find(
+                x => x.shape(items.get(0).definition) && items.get(1).stoneType === x.stone
+            );
 
-                if (!recipe || pinsComp.slots[0].linkedNetwork.currentFluid !== WATER_SINGLETON) {
-                    // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
-                    return outItems.push({
-                        item: items.get(0),
-                    });
-                }
+            // Output
+            if (
+                pinsComp.getLocalVolume(this.root, entity, pinsComp.slots[0]) > recipe.fluidCost &&
+                pinsComp.getLocalPressure(this.root, entity, pinsComp.slots[0]) > recipe.minPressure
+            ) {
+                outItems.push({
+                    item: recipe.item,
+                });
 
-                // Output
-                if (
-                    pinsComp.getLocalVolume(this.root, entity, pinsComp.slots[0]) > recipe.fluidCost &&
-                    pinsComp.getLocalPressure(this.root, entity, pinsComp.slots[0]) > recipe.minPressure
-                ) {
-                    outItems.push({
-                        item: recipe.item,
-                    });
-
-                    pinsComp.slots[0].linkedNetwork.currentVolume -= recipe.fluidCost;
-                }
+                pinsComp.slots[0].linkedNetwork.currentVolume -= recipe.fluidCost;
             }
-        } else {
-            // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
-            return outItems.push({
-                item: items.get(0),
-            });
         }
     };
 
