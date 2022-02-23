@@ -265,13 +265,6 @@ export function setupCooler() {
                 const recipes = coolerRecipes.filter(x => x.fluid === pinsComp.slots[0].fluid);
                 const recipe = recipes.find(x => x.shape(items.get(0).definition));
 
-                if (!recipe) {
-                    // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
-                    return outItems.push({
-                        item: items.get(0),
-                    });
-                }
-
                 // Output
                 if (
                     pinsComp.getLocalVolume(this.root, entity, pinsComp.slots[0]) > recipe.fluidCost &&
@@ -284,11 +277,6 @@ export function setupCooler() {
                     pinsComp.slots[0].linkedNetwork.currentVolume -= recipe.fluidCost;
                 }
             }
-        } else {
-            // Output same shape a putted in. @TODO: maybe nicer as item acceptor filter
-            return outItems.push({
-                item: items.get(0),
-            });
         }
     };
 

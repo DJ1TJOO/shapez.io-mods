@@ -13,5 +13,6 @@
             "lastServer": ""
         },
         "prefix": "/"
-    }
+    },
+    "_todo": ["fix buttons"]
 }
