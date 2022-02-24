@@ -141,6 +141,8 @@ export function setupHeater() {
 
         if (!pinsComp) return false;
         if (!pinsComp.slots[0].linkedNetwork) return false;
+        if (pinsComp.slots[0].linkedNetwork.currentVolume >= pinsComp.slots[0].linkedNetwork.maxVolume)
+            return false;
 
         const processorComp = entity.components.ItemProcessor;
         return processorComp.inputCount >= processorComp.inputsPerCharge;
@@ -151,6 +153,14 @@ export function setupHeater() {
         item,
         slotIndex,
     }) {
+        // @ts-ignore
+        const pinsComp = entity.components.PipedPins;
+
+        if (!pinsComp) return false;
+        if (!pinsComp.slots[0].linkedNetwork) return false;
+        if (pinsComp.slots[0].linkedNetwork.currentVolume >= pinsComp.slots[0].linkedNetwork.maxVolume)
+            return false;
+
         const recipe = heaterRecipes.find(x => x.item === item);
         return !!recipe;
     };

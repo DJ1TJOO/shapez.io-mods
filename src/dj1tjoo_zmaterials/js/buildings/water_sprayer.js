@@ -280,6 +280,15 @@ export function setupWaterSprayer() {
         slotIndex,
     }) {
         if (!item) return false;
+
+        // @ts-ignore
+        const pinsComp = entity.components.PipedPins;
+
+        if (!pinsComp) return false;
+        if (!pinsComp.slots[0].linkedNetwork) return false;
+        if (!pinsComp.slots[0].linkedNetwork.currentFluid) return false;
+        if (pinsComp.slots[0].linkedNetwork.currentFluid !== WATER_SINGLETON) return false;
+
         if (item.definition) {
             const recipe = waterSprayerRecipes.find(x => x.shape(item.definition));
             return !!recipe;
