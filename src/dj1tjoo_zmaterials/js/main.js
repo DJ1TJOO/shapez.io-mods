@@ -1,3 +1,4 @@
+import { MODS_ADDITIONAL_STORAGE_ITEM_RESOLVER } from "shapez/game/components/storage";
 import { MapChunk } from "shapez/game/map_chunk";
 import { Mod } from "shapez/mods/mod";
 import { MetaBlastFurnaceBuilding, setupBlastFurnace } from "./buildings/blast_furnace";
@@ -30,6 +31,16 @@ class ModImpl extends Mod {
 
         this.modInterface.registerItem(SandItem, itemData => SAND_ITEM_SINGLETONS[itemData]);
         this.modInterface.registerItem(StoneItem, itemData => STONE_ITEM_SINGLETONS[itemData]);
+
+        // Add to storage
+        MODS_ADDITIONAL_STORAGE_ITEM_RESOLVER["stone"] = function (item) {
+            // @ts-ignore
+            return this.storedItem.stoneType === item.stoneType;
+        };
+        MODS_ADDITIONAL_STORAGE_ITEM_RESOLVER["sand"] = function (item) {
+            // @ts-ignore
+            return this.storedItem.sandType === item.sandType;
+        };
 
         // Register buildings
         setupBlastFurnace.apply(this);

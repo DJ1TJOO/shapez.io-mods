@@ -1,4 +1,5 @@
 import { globalConfig } from "shapez/core/config";
+import { DrawParameters } from "shapez/core/draw_parameters";
 import { BaseItem } from "shapez/game/base_item";
 import { types } from "shapez/savegame/serialization";
 
