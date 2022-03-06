@@ -240,20 +240,31 @@ export class MultiplayerPeer {
     }
 
     resetTileTo(origin, entity) {
-        const staticMapEntity = entity.components.StaticMapEntity;
+        if (entity) {
+            const staticMapEntity = entity.components.StaticMapEntity;
 
-        for (let i = 0; i < this.connections.length; i++) {
-            MultiplayerPacket.sendPacket(
-                this.socket,
-                this.connections[i].id,
-                new SignalPacket(SignalPacketSignals.setTile, [
-                    types.tileVector.serialize(origin),
-                    types.float.serialize(staticMapEntity.originalRotation),
-                    types.float.serialize(staticMapEntity.rotation),
-                    types.uintOrString.serialize(staticMapEntity.code),
-                ]),
-                this.connections
-            );
+            for (let i = 0; i < this.connections.length; i++) {
+                MultiplayerPacket.sendPacket(
+                    this.socket,
+                    this.connections[i].id,
+                    new SignalPacket(SignalPacketSignals.setTile, [
+                        types.tileVector.serialize(origin),
+                        types.float.serialize(staticMapEntity.originalRotation),
+                        types.float.serialize(staticMapEntity.rotation),
+                        types.uintOrString.serialize(staticMapEntity.code),
+                    ]),
+                    this.connections
+                );
+            }
+        } else {
+            for (let i = 0; i < this.connections.length; i++) {
+                MultiplayerPacket.sendPacket(
+                    this.socket,
+                    this.connections[i].id,
+                    new SignalPacket(SignalPacketSignals.setTile, [types.tileVector.serialize(origin), null]),
+                    this.connections
+                );
+            }
         }
     }
 
