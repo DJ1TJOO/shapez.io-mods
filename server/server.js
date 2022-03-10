@@ -36,11 +36,16 @@ io.on("connection", function (socket) {
     //destroyRoom function
     socket.on("destroyRoom", roomId => {
         if (!host) {
-            return socket.emit("error", { error: 403, errorMessage: "Forbidden" });
+            try {
+                return socket.emit("error", { error: 403, errorMessage: "Forbidden" });
+            } catch (error) {}
         }
+
         const room = [...io.sockets.adapter.rooms.get(roomId)];
         if (!room) {
-            return socket.emit("error", { error: 404, errorMessage: "Room not found" });
+            try {
+                return socket.emit("error", { error: 404, errorMessage: "Room not found" });
+            } catch (error) {}
         }
 
         for (let i = 0; i < room.length; i++) {
@@ -51,12 +56,16 @@ io.on("connection", function (socket) {
     //kickPlayer function
     socket.on("kick", socketId => {
         if (!host) {
-            return socket.emit("error", { error: 403, errorMessage: "Forbidden" });
+            try {
+                return socket.emit("error", { error: 403, errorMessage: "Forbidden" });
+            } catch (error) {}
         }
 
         const socket = io.sockets.sockets.get(socketId);
         if (!socket) {
-            return socket.emit("error", { error: 404, errorMessage: "Room not found" });
+            try {
+                return socket.emit("error", { error: 404, errorMessage: "Room not found" });
+            } catch (error) {}
         }
 
         socket.disconnect(true);
