@@ -261,7 +261,7 @@ export class MultiplayerPeer {
                 MultiplayerPacket.sendPacket(
                     this.socket,
                     this.connections[i].id,
-                    new SignalPacket(SignalPacketSignals.setTile, [types.tileVector.serialize(origin), null]),
+                    new SignalPacket(SignalPacketSignals.setTile, [types.tileVector.serialize(origin)]),
                     this.connections
                 );
             }
