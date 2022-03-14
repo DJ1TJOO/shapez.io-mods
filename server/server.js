@@ -49,7 +49,9 @@ io.on("connection", function (socket) {
         }
 
         for (let i = 0; i < room.length; i++) {
-            io.sockets.sockets.get(room[i]).disconnect(true);
+            try {
+                io.sockets.sockets.get(room[i]).disconnect(true);
+            } catch (error) {}
         }
     });
 
@@ -68,24 +70,34 @@ io.on("connection", function (socket) {
             } catch (error) {}
         }
 
-        socket.disconnect(true);
+        try {
+            socket.disconnect(true);
+        } catch (error) {}
     });
 
     //joinRoom function
     socket.on("joinRoom", (room, id) => {
         host = false;
         if ([...io.sockets.adapter.rooms.keys()].indexOf(room) >= 0) {
-            socket.join(room);
-            socket.to(room).emit("createPeer", { receiverId: id, room: room });
-        } else socket.emit("error", { error: 404, errorMessage: "Room not found" });
+            try {
+                socket.join(room);
+                socket.to(room).emit("createPeer", { receiverId: id, room: room });
+            } catch (error) {}
+        } else {
+            try {
+                socket.emit("error", { error: 404, errorMessage: "Room not found" });
+            } catch (error) {}
+        }
     });
 
     socket.on("signal", data => {
-        io.to(data.receiverId).emit("signal", {
-            senderId: data.senderId,
-            receiverId: data.receiverId,
-            signal: data.signal,
-        });
+        try {
+            io.to(data.receiverId).emit("signal", {
+                senderId: data.senderId,
+                receiverId: data.receiverId,
+                signal: data.signal,
+            });
+        } catch (error) {}
     });
 
     //close the connection

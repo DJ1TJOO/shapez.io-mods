@@ -221,13 +221,9 @@ export class MultiplayerPeer {
 
         // Send next or recieved packet
         if (packet.type === MultiplayerPacketTypes.FLAG && packet.flag === FlagPacketFlags.RECEIVED_PACKET) {
-            MultiplayerPacket.sendNextPacket();
+            MultiplayerPacket.sendNextPacket(packet);
         } else {
-            MultiplayerPacket.sendPacket(
-                this.socket,
-                senderId,
-                new FlagPacket(FlagPacketFlags.RECEIVED_PACKET)
-            );
+            MultiplayerPacket.handleReceivedPacket(this.socket, senderId, packet);
         }
 
         // Handle signal packets

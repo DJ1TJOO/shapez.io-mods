@@ -20,6 +20,7 @@ import { MODS } from "shapez/mods/modloader";
 import { MultiplayerPacketTypes, FlagPacketFlags } from "../multiplayer/multiplayer_packets";
 import { MultiplayerConnection } from "./multiplayer_ingame";
 import { getMod } from "../getMod";
+import { MultiplayerPacket } from "../multiplayer/multiplayer_packets";
 
 export class MultiplayerState extends GameState {
     constructor() {
@@ -385,6 +386,8 @@ export class MultiplayerState extends GameState {
 
                 const onMessage = data => {
                     const packet = JSON.parse(data);
+
+                    MultiplayerPacket.handleReceivedPacket({ socket }, hostSocketId, packet);
 
                     //When data ends
                     if (

@@ -296,12 +296,14 @@ export class MultiplayerPacket {
      * @param {Array} packet
      */
     static sendPacket(socket, receiverId, packet, connections = undefined) {
-        this._packetsToSend.push(() => {
+        const id = crypto.randomUUID();
+
+        const sender = () => {
             if (!socket.socket.connected) return;
             try {
                 socket.socket.emit("signal", {
                     receiverId: receiverId,
-                    signal: JSON.stringify(packet),
+                    signal: JSON.stringify({ ...packet, id }),
                     senderId: socket.id,
                 });
             } catch (error) {
@@ -309,6 +311,11 @@ export class MultiplayerPacket {
                     connections.splice(connections.indexOf(connections.find(x => x.socket === socket)), 1);
                 console.log(error);
             }
+        };
+
+        this._packetsToSend.push({
+            sender,
+            id,
         });
 
         if (this._packetsToSend.length <= 1) {
@@ -316,11 +323,44 @@ export class MultiplayerPacket {
         }
     }
 
-    static sendNextPacket() {
+    static sendNextPacket(packet) {
+        const send = this._packetsSend.findIndex(x => x.id === packet?.arg);
+        if (send >= 0) {
+            clearTimeout(this._packetsSend[send].timer);
+            this._packetsSend.splice(send, 1);
+        }
+
         if (this._packetsToSend.length < 1) return;
 
-        this._packetsToSend[0]();
-        this._packetsToSend.shift();
+        this._packetsToSend[0].sender();
+
+        const { sender, id } = this._packetsToSend.shift();
+        this._packetsSend.push({
+            id,
+            timer: setTimeout(() => {
+                this._packetsToSend.push({
+                    sender,
+                    id,
+                });
+
+                if (this._packetsToSend.length <= 1) {
+                    this.sendNextPacket();
+                }
+
+                this._packetsSend.splice(
+                    this._packetsSend.findIndex(x => x.id === id),
+                    1
+                );
+            }, 1000),
+        });
+    }
+
+    static handleReceivedPacket(socket, senderId, packet) {
+        MultiplayerPacket.sendPacket(
+            socket,
+            senderId,
+            new FlagPacket(FlagPacketFlags.RECEIVED_PACKET, packet.id)
+        );
     }
 
     /**
@@ -375,8 +415,9 @@ export class MultiplayerPacket {
     }
 }
 
-/** @type {Array<Function>} */
+/** @type {Array<{sender: Function, id:string}>} */
 MultiplayerPacket._packetsToSend = [];
+MultiplayerPacket._packetsSend = [];
 
 export class DataPacket extends MultiplayerPacket {
     constructor(size, data) {
@@ -425,11 +466,14 @@ export const FlagPacketFlags = {
 };
 
 export class FlagPacket extends MultiplayerPacket {
-    constructor(flag) {
+    constructor(flag, arg) {
         super(MultiplayerPacketTypes.FLAG);
 
         /** @type {number} */
         this.flag = flag;
+
+        /** @type {string} */
+        this.arg = arg;
     }
 }
 
