@@ -57,58 +57,6 @@ export const MultiplayerPacketTypes = {
     TEXT: 3,
 };
 
-export class StringSerializable extends BasicSerializableObject {
-    /**
-     * @param {string} value
-     */
-    constructor(value) {
-        super();
-        this.value = value;
-    }
-
-    static getId() {
-        return "string";
-    }
-
-    static getSchema() {
-        return { value: types.string };
-    }
-
-    serialize() {
-        return { value: this.value };
-    }
-
-    deserialize(data) {
-        this.value = data.value;
-    }
-}
-
-export class NumberSerializable extends BasicSerializableObject {
-    /**
-     * @param {number} value
-     */
-    constructor(value) {
-        super();
-        this.value = value;
-    }
-
-    static getId() {
-        return "number";
-    }
-
-    static getSchema() {
-        return { value: types.float };
-    }
-
-    serialize() {
-        return { value: this.value };
-    }
-
-    deserialize(data) {
-        this.value = data.value;
-    }
-}
-
 export const MultiplayerPacketSerializableObject = {
     [BaseGameSpeed.name]: BaseGameSpeed,
     [BaseItem.name]: BaseItem,
@@ -136,7 +84,6 @@ export const MultiplayerPacketSerializableObject = {
     [LogicGateComponent.name]: LogicGateComponent,
     [MapView.name]: MapView,
     [MinerComponent.name]: MinerComponent,
-    [NumberSerializable.name]: NumberSerializable,
     [PausedGameSpeed.name]: PausedGameSpeed,
     [ProductionAnalytics.name]: ProductionAnalytics,
     [RegularGameSpeed.name]: RegularGameSpeed,
@@ -145,7 +92,6 @@ export const MultiplayerPacketSerializableObject = {
     [ShapeItem.name]: ShapeItem,
     [StaticMapEntityComponent.name]: StaticMapEntityComponent,
     [StorageComponent.name]: StorageComponent,
-    [StringSerializable.name]: StringSerializable,
     [UndergroundBeltComponent.name]: UndergroundBeltComponent,
     [WireComponent.name]: WireComponent,
     [WiredPinsComponent.name]: WiredPinsComponent,
@@ -398,7 +344,7 @@ export class MultiplayerPacket {
 
         for (let i = 0; i < decompressedArgs.length; i++) {
             const element = decompressedArgs[i];
-            if (element.class === null) {
+            if (element.class === null || typeof element.class === "undefined") {
                 argsNew.push(element.serialized);
             } else {
                 // @ts-ignore

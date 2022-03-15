@@ -150,7 +150,7 @@ export function multiplayerNotifications(modInterface) {
             if (this.commandHandler.isCommandString(value)) {
                 const command = this.commandHandler.getCommandFromCommandString(value);
                 if (command && this.commandHandler.isCommand(command.cmd)) {
-                    if (!this.commandHandler.executeCommand(command.cmd, command.args))
+                    if (this.commandHandler.executeCommand(command.cmd, command.args) === false)
                         this.internalShowNotification(
                             T.multiplayer.commands.error.replaceAll("<cmd>", command.cmd),
                             enumNotificationType.error

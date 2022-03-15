@@ -97,6 +97,27 @@ export class MultiplayerCommandsHandler {
              * @param {string} cmd
              * @param {Array<string>} args
              */
+            help: (root, user, multiplayerPeer, cmd, args) => {
+                const commands = Object.keys(getMod()["commands"]);
+                let message = "";
+                for (let i = 0; i < commands.length; i++) {
+                    message += "/" + commands[i] + "<br>";
+                }
+
+                root.hud.parts["notifications"].internalShowNotification(
+                    message,
+                    enumNotificationType.success
+                );
+
+                return true;
+            },
+            /**
+             * @param {GameRoot} root
+             * @param {Object} user
+             * @param {MultiplayerPeer} multiplayerPeer
+             * @param {string} cmd
+             * @param {Array<string>} args
+             */
             gamecode: (root, user, multiplayerPeer, cmd, args) => {
                 if (multiplayerPeer.ingameState.isHost()) {
                     //Show uuid of room

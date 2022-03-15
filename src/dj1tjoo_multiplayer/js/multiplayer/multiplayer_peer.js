@@ -11,7 +11,6 @@ import {
     TextPacketTypes,
     SignalPacket,
     SignalPacketSignals,
-    StringSerializable,
     DataPacket,
     FlagPacket,
     FlagPacketFlags,
@@ -314,7 +313,7 @@ export class MultiplayerPeer {
         MultiplayerPacket.sendPacket(
             this.socket,
             receiverId,
-            new SignalPacket(SignalPacketSignals.upgradePurchased, [new StringSerializable(upgradeId)])
+            new SignalPacket(SignalPacketSignals.upgradePurchased, [types.string.serialize(upgradeId)])
         );
     }
 
@@ -437,8 +436,8 @@ export class MultiplayerPeer {
                 entity.components[id][key] = component[key];
             }
         } else if (packet.signal === SignalPacketSignals.upgradePurchased) {
-            this.multipalyerUnlockUpgrade.push(packet.args[0].value);
-            this.ingameState.core.root.hubGoals.tryUnlockUpgrade(packet.args[0].value);
+            this.multipalyerUnlockUpgrade.push(packet.args[0]);
+            this.ingameState.core.root.hubGoals.tryUnlockUpgrade(packet.args[0]);
         }
     }
 
