@@ -4,17 +4,8 @@ FROM node:16-alpine
 WORKDIR /app
 COPY . .
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
-
-RUN npm install
-# If you are building your code for production
-# RUN npm ci --only=production
-
-# Bundle app source
-COPY . .
+# Use yarn to restore packages
+RUN yarn install --production
 
 EXPOSE 8888
-CMD [ "npm", "start" ]
+CMD [ "yarn", "start" ]
