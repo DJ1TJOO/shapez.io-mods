@@ -133,7 +133,6 @@ export class MultiplayerState extends GameState {
     }
 
     onLanguageChooseClicked() {
-        this.app.analytics.trackUiClick("choose_language");
         const setting = /** @type {import("shapez/states/main_menu").EnumSetting} */ (
             this.app.settings.getSettingHandleById("language")
         );
@@ -228,8 +227,7 @@ export class MultiplayerState extends GameState {
     /**
      * @param {import("shapez/savegame/savegame_typedefs").SavegameMetadata} game
      */
-    resumeGame(game) {
-        this.app.analytics.trackUiClick("resume_game");
+    resumeGame(game) {        
         // Get information for host
         const userInput = new FormElementInput({
             id: "userInput",
@@ -262,7 +260,6 @@ export class MultiplayerState extends GameState {
                 const host = hostInput.getValue().trim();
                 this.mod.settings.user.lastServer = host;
                 this.mod.saveSettings();
-                this.app.analytics.trackUiClick("resume_game_adcomplete");
                 const savegame = this.app.savegameMgr.getSavegameById(game.internalId);
                 savegame
                     .readAsync()
