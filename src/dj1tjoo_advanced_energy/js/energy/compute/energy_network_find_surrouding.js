@@ -1,11 +1,6 @@
-const {
-    Vector,
-    enumDirection,
-    enumDirectionToVector,
-    enumInvertedDirections,
-} = require("shapez/core/vector");
-const { EnergyConnectorComponent } = require("../../components/energy_connector");
-const { EnergyPinComponent } = require("../../components/energy_pin");
+import { enumDirection, enumDirectionToVector, enumInvertedDirections, Vector } from "shapez/core/vector";
+import { EnergyConnectorComponent } from "../../components/energy_connector";
+import { EnergyPinComponent } from "../../components/energy_pin";
 
 /**
  * Finds surrounding entities which are not yet assigned to a network
