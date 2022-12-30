@@ -7,8 +7,8 @@
     "types": "./lib/lib/src/index.d.ts",
     "scripts": {
         "build": "yarn tsc",
-        "publish": "npm publish",
-        "version": "npm version"
+        "p": "npm publish",
+        "v": "npm version"
     },
     "author": "DJ1TJOO",
     "license": "ISC",
