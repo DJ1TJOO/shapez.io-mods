@@ -9716,7 +9716,7 @@ declare module "shapez/game/hud/parts/modal_dialogs" {
     import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
 }
 declare module "shapez/mods/mod_meta_building" {
-    export class ModMetaBuilding extends NonAbstract(MetaBuilding) {
+    export abstract class ModMetaBuilding extends MetaBuilding {
         /**
          * @returns {({
          *  variant: string;
