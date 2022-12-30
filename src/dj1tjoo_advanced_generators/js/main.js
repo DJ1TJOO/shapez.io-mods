@@ -4,5 +4,6 @@ import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
 class ModImpl extends Mod {
     init() {
         const energy = new AdvancedEnergy();
+        energy.requireInstalled();
     }
 }
