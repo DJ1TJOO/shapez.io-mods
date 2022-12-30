@@ -3,8 +3,8 @@ const { MODS } = shapez;
 const ENERGY_MOD_ID = "dj1tjoo_advanced_energy";
 /**
  * @typedef {import("shapez/mods/mod").Mod & {
- *  EnergyConnectorComponent: import("../../js/components/energy_connector").EnergyConnectorComponent
- *  EnergyPinComponent: import("../../js/components/energy_pin").EnergyPinComponent
+ *  EnergyConnectorComponent: typeof import("../../js/components/energy_connector").EnergyConnectorComponent
+ *  EnergyPinComponent: typeof import("../../js/components/energy_pin").EnergyPinComponent
  * }} AdvancedEnergyMod
  */
 export class AdvancedEnergy {
