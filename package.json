@@ -5,7 +5,7 @@
     "license": "GPL-3.0-only",
     "scripts": {
         "dev": "cd gulp && yarn gulp",
-        "devStandalone": "cd gulp && yarn gulp main.watch.standalone",
+        "devBrowser": "cd gulp && yarn gulp main.watch",
         "build": "cd gulp && yarn gulp main.build",
         "tslint": "cd src/js && yarn tsc",
         "lint": "yarn eslint src/js",
@@ -13,7 +13,7 @@
     },
     "private": true,
     "dependencies": {
-        "@dj1tjoo/shapez-advanced-energy": "^0.0.1",
+        "@dj1tjoo/shapez-advanced-energy": "^0.0.2",
         "eslint": "8.7.0",
         "simple-peer": "^9.11.0",
         "socket.io-client": "^4.4.1",

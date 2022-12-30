@@ -107,7 +107,7 @@ gulp.task("main.build.dev", async cb => {
     compiler.hooks.afterCompile.tap("reloadShapez", () => {
         reloadShapez();
     });
-    const devServerOptions = { ...webpackConfig.devServer, open: true };
+    const devServerOptions = { ...webpackConfig.devServer, open: false };
     const server = new WebpackDevServer(devServerOptions, compiler);
 
     const runServer = async () => {
@@ -127,6 +127,6 @@ function getGlobs(folder, customExtenstions = []) {
 }
 
 gulp.task("main.watch", gulp.series("main.build.dev", "main.serve.shapez"));
-gulp.task("main.watch.standalone", gulp.series("main.serve.standalone"));
+gulp.task("main.watch.standalone", gulp.series("main.build.dev", "main.serve.standalone"));
 
-gulp.task("default", gulp.series("main.watch"));
+gulp.task("default", gulp.series("main.watch.standalone"));
