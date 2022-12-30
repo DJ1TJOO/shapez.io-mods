@@ -1,8 +1,6 @@
-import { EnergyNetwork } from "./energy_network";
-
 /**
  * Balances the inputs and ouputs of the energy network
- * @param {EnergyNetwork} network
+ * @param {import("./energy_network").EnergyNetwork} network
  */
 export function balanceEnergyNetwork(network) {
     const potentialProduction = network.providers.reduce((a, { slot }) => a + slot.production, 0);
