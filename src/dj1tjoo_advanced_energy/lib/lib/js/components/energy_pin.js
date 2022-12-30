@@ -1,11 +1,9 @@
 import { Component } from "shapez/game/component";
-
 /** @enum {string} */
 export const enumPinSlotType = {
     ejector: "ejector",
     acceptor: "acceptor",
 };
-
 /** @typedef {{
  *   pos: import("shapez/core/vector").Vector,
  *   type: "ejector" | "acceptor",
@@ -14,7 +12,6 @@ export const enumPinSlotType = {
  *   consumption?: number,
  *   maxBuffer?: number
  * }} EnergyPinSlotDefinition */
-
 /** @typedef {{
  *   pos: import("shapez/core/vector").Vector,
  *   type: enumPinSlotType,
@@ -25,7 +22,6 @@ export const enumPinSlotType = {
  *   consumption?: number,
  *   maxBuffer?: number
  * }} EnergyPinSlotType */
-
 export class EnergyPinSlot {
     /**
      * @param {EnergyPinSlotType} param0
@@ -36,21 +32,17 @@ export class EnergyPinSlot {
         this.direction = direction;
         this.linkedNetwork = linkedNetwork;
         this.oldNetwork = oldNetwork;
-
-        this.maxProduction = production ?? 0;
-        this.maxConsumption = consumption ?? 0;
-
+        this.maxProduction = production !== null && production !== void 0 ? production : 0;
+        this.maxConsumption = consumption !== null && consumption !== void 0 ? consumption : 0;
         this.buffer = 0;
-        this.maxBuffer = maxBuffer ?? 3 * Math.max(this.maxProduction, this.maxConsumption);
+        this.maxBuffer = maxBuffer !== null && maxBuffer !== void 0 ? maxBuffer : 3 * Math.max(this.maxProduction, this.maxConsumption);
     }
-
     get production() {
         return Math.min(this.buffer, this.maxProduction);
     }
     produce(amount) {
         this.buffer -= amount;
     }
-
     get consumption() {
         return Math.min(this.maxBuffer - this.buffer, this.maxConsumption);
     }
@@ -58,12 +50,10 @@ export class EnergyPinSlot {
         this.buffer += amount;
     }
 }
-
 export class EnergyPinComponent extends Component {
     static getId() {
         return "EnergyPin";
     }
-
     /**
      * @param {object} param0
      * @param {Array<EnergyPinSlotDefinition>} param0.slots
@@ -72,7 +62,6 @@ export class EnergyPinComponent extends Component {
         super();
         this.setSlots(slots);
     }
-
     /**
      * Sets the slots of this building
      * @param {Array<EnergyPinSlotDefinition>} slots
@@ -80,21 +69,18 @@ export class EnergyPinComponent extends Component {
     setSlots(slots) {
         /** @type {Array<EnergyPinSlot>} */
         this.slots = [];
-
         for (let i = 0; i < slots.length; ++i) {
             const slotData = slots[i];
-            this.slots.push(
-                new EnergyPinSlot({
-                    pos: slotData.pos,
-                    type: slotData.type,
-                    direction: slotData.direction,
-                    linkedNetwork: null,
-                    oldNetwork: null,
-                    production: slotData.production,
-                    consumption: slotData.consumption,
-                    maxBuffer: slotData.maxBuffer,
-                })
-            );
+            this.slots.push(new EnergyPinSlot({
+                pos: slotData.pos,
+                type: slotData.type,
+                direction: slotData.direction,
+                linkedNetwork: null,
+                oldNetwork: null,
+                production: slotData.production,
+                consumption: slotData.consumption,
+                maxBuffer: slotData.maxBuffer,
+            }));
         }
     }
 }
