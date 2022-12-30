@@ -9,7 +9,7 @@ export class AdvancedEnergy {
     get EnergyPinComponent(): import("../../js/components/energy_pin").EnergyPinComponent;
     requireInstalled(): void;
     /**
-     * Check if the energy mod is installed
+     * Returns if the energy mod is installed
      * @returns {boolean}
      */
     isInstalled(): boolean;

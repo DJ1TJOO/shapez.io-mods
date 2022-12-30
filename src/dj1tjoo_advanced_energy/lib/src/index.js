@@ -21,6 +21,9 @@ export class AdvancedEnergy {
         return this.getMod()?.EnergyPinComponent || null;
     }
 
+    /**
+     * Shows a dialog on the main menu when the energy mod is not installed
+     */
     requireInstalled() {
         MODS.signals.stateEntered.add(state => {
             if (this.isInstalled()) return;
@@ -42,7 +45,7 @@ export class AdvancedEnergy {
     }
 
     /**
-     * Check if the energy mod is installed
+     * Returns if the energy mod is installed
      * @returns {boolean}
      */
     isInstalled() {
