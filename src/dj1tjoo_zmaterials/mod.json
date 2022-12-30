@@ -6,5 +6,6 @@
     "author": "DJ1TJOO",
     "description": "The mod that adds materials to shapez",
     "website": "https://github.com/dj1tjoo",
-    "settings": {}
+    "settings": {},
+    "disabled": true
 }

@@ -111,9 +111,7 @@ export function createMultiplayerGameState(modInterface) {
     modInterface.replaceMethod(
         InGameState,
         "stage3CreateCore",
-        /**
-         * @this {InMultiplayerGameState}
-         */
+        /** @this {InMultiplayerGameState} */
         async function () {
             if (this.switchStage(stages.s3_createCore)) {
                 logger.log("Creating new game core");
