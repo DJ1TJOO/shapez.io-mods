@@ -37,7 +37,7 @@ declare const desiredMsDelay: number;
 declare let lastTick: number;
 declare module "shapez/core/config.local" {
     namespace _default {
-        export const externalModUrl: string[];
+        export const externalModUrl: string;
     }
     export default _default;
 }
@@ -9716,7 +9716,7 @@ declare module "shapez/game/hud/parts/modal_dialogs" {
     import { DynamicDomAttach } from "shapez/game/hud/dynamic_dom_attach";
 }
 declare module "shapez/mods/mod_meta_building" {
-    export abstract class ModMetaBuilding extends MetaBuilding {
+    export class ModMetaBuilding extends NonAbstract(MetaBuilding) {
         /**
          * @returns {({
          *  variant: string;
