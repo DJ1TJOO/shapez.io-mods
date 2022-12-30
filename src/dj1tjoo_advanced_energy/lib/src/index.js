@@ -11,20 +11,18 @@ const ENERGY_MOD_ID = "dj1tjoo_advanced_energy";
  */
 
 export class AdvancedEnergy {
-    constructor() {}
-
-    get EnergyConnectorComponent() {
+    static get EnergyConnectorComponent() {
         return this.getMod()?.EnergyConnectorComponent || null;
     }
 
-    get EnergyPinComponent() {
+    static get EnergyPinComponent() {
         return this.getMod()?.EnergyPinComponent || null;
     }
 
     /**
      * Shows a dialog on the main menu when the energy mod is not installed
      */
-    requireInstalled() {
+    static requireInstalled() {
         MODS.signals.stateEntered.add(state => {
             if (this.isInstalled()) return;
 
@@ -48,7 +46,7 @@ export class AdvancedEnergy {
      * Returns if the energy mod is installed
      * @returns {boolean}
      */
-    isInstalled() {
+    static isInstalled() {
         return MODS.mods.some(x => x.metadata.id === ENERGY_MOD_ID);
     }
 
@@ -56,7 +54,7 @@ export class AdvancedEnergy {
      * Returns the energy mod instance
      * @returns {?AdvancedEnergyMod}
      */
-    getMod() {
+    static getMod() {
         return (
             /** @type {AdvancedEnergyMod} */ (MODS.mods.find(x => x.metadata.id === ENERGY_MOD_ID)) || null
         );
@@ -66,7 +64,7 @@ export class AdvancedEnergy {
      * Returns the version of the energy mod instance
      * @returns {?string}
      */
-    getVersion() {
+    static getVersion() {
         const mod = this.getMod();
         if (!mod) return null;
 

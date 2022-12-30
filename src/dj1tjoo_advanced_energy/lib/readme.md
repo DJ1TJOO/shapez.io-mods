@@ -15,7 +15,7 @@ To have less conflicts between mods and energy an api was created. This api make
 
 The api has a npm package [@dj1tjoo/shapez-advanced-energy](https://www.npmjs.com/package/@dj1tjoo/shapez-advanced-energy). This package contains helper funtion you can use in your mod.
 
-The package exports the AdvancedEnergy class. To make use of the helper methods create a new instance of this class.
+The package exports the AdvancedEnergy class. On this class are static methods to help you
 
 The AdvancedEnergy class exposes the api Components
 | Component | Usage |
@@ -23,6 +23,7 @@ The AdvancedEnergy class exposes the api Components
 | EnergyConnectorComponent | A component to make connections with in a newtwork (E.g. simple connector, storage) |
 | EnergyPinComponent | A component to take and add energy to a network (E.g. energy producer, building that uses energy)|
 
+<br />
 The AdvancedEnergy class has the following methods
 
 | Method                               | Usage                                                                |
