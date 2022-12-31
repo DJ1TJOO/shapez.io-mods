@@ -1,0 +1,3 @@
+advaned_generators:
+    oneFluxPerSecond: 1 flux/s
+    fluxPerSecond: <x> flux/s
