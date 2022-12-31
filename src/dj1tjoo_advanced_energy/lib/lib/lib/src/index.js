@@ -16,6 +16,12 @@ export class AdvancedEnergy {
         var _a;
         return ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.EnergyPinComponent) || null;
     }
+    static enableDebug() {
+        this.getMod()["debug"] = true;
+    }
+    static disableDebug() {
+        this.getMod()["debug"] = false;
+    }
     /**
      * Shows a dialog on the main menu when the energy mod is not installed
      */

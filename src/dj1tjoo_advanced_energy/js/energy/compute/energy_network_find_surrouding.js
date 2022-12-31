@@ -54,7 +54,6 @@ export function findSurroundingTargets(root, tileSpaceBounds, initialTile, direc
                         connectorComp.direction.from,
                         connectorComp.direction.to,
                     ].map(x => staticComp.localDirectionToWorld(x));
-                    console.log(enumInvertedDirections[direction], connectorDirections);
 
                     if (!connectorDirections.includes(enumInvertedDirections[direction])) {
                         validDirection = false;

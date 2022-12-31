@@ -11,6 +11,7 @@ import { EnergyPinComponent } from "../components/energy_pin";
 import { balanceEnergyNetwork } from "../energy/energy_balancer";
 import { EnergyNetwork } from "../energy/energy_network";
 import { computeEnergyNetworks } from "../energy/compute/energy_network_compute";
+import { MODS } from "shapez/mods/modloader";
 
 export class EnergySystem extends GameSystem {
     /**
@@ -85,7 +86,10 @@ export class EnergySystem extends GameSystem {
      * @param {MapChunkView} chunk
      */
     drawChunk(parameters, chunk) {
-        if (BUILD_OPTIONS.IS_DEV) {
+        if (
+            BUILD_OPTIONS.IS_DEV &&
+            MODS.mods.find(x => x.metadata.id === "dj1tjoo_advanced_energy")["debug"]
+        ) {
             const contents = chunk.contents;
             for (let y = 0; y < globalConfig.mapChunkSize; ++y) {
                 for (let x = 0; x < globalConfig.mapChunkSize; ++x) {
@@ -212,7 +216,10 @@ export class EnergySystem extends GameSystem {
                             layer: targetEntity.layer,
                         });
 
-                    if (targetStaticComp.rotation !== rotation) {
+                    if (
+                        targetStaticComp.rotation !== rotation ||
+                        targetStaticComp.getRotationVariant() !== rotationVariant
+                    ) {
                         // Change stuff
                         targetStaticComp.rotation = rotation;
                         metaConnector.updateVariants(targetEntity, rotationVariant, variant);

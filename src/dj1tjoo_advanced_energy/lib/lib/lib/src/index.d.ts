@@ -7,6 +7,8 @@
 export class AdvancedEnergy {
     static get EnergyConnectorComponent(): typeof import("../../js/components/energy_connector").EnergyConnectorComponent;
     static get EnergyPinComponent(): typeof import("../../js/components/energy_pin").EnergyPinComponent;
+    static enableDebug(): void;
+    static disableDebug(): void;
     /**
      * Shows a dialog on the main menu when the energy mod is not installed
      */
