@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@dj1tjoo/shapez-advanced-energy@^0.2.3":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-advanced-energy/-/shapez-advanced-energy-0.2.3.tgz#f0342ef5da6243a4a7d3ff2f108aac1ecbe486ea"
-  integrity sha512-OgKDp3pD7MzsMz9oqOoha2xft5o4CgQhdsjENaqqUbo2/jFCeby4BxRvdKvKi8zdZfRv+nJ2AG8VbR1H4KwKZQ==
+"@dj1tjoo/shapez-advanced-energy@^0.2.4":
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-advanced-energy/-/shapez-advanced-energy-0.2.4.tgz#3c53b3554122e8c8daaea1f6bc19da7e2cc24937"
+  integrity sha512-hbpEsypxyZzAniv9rlZTmk6mdO+ZXmcrhihG8wGt63YWcTN+T1CF+Z+hSrC8xn+2l/941rzrxtDxP40D5r5R4A==
 
 "@eslint/eslintrc@^1.0.5":
   version "1.0.5"

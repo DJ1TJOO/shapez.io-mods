@@ -131,6 +131,7 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
         entity.addComponent(
             new AdvancedEnergy.EnergyConnectorComponent({
                 maxEnergyVolume: 50,
+                maxThroughputPerTick: 12.5,
             })
         );
 

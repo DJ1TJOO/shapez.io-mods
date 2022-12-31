@@ -46,8 +46,9 @@ export class MetaBasicConsumerBuilding extends ModMetaBuilding {
     /**
      * Creates the entity at the given location
      * @param {import("shapez/savegame/savegame_typedefs").Entity} entity
+     * @param {import("shapez/game/root").GameRoot} root
      */
-    setupEntityComponents(entity) {
+    setupEntityComponents(entity, root) {
         entity.addComponent(
             new ItemProcessorComponent({
                 inputsPerCharge: 0,
@@ -56,6 +57,7 @@ export class MetaBasicConsumerBuilding extends ModMetaBuilding {
             })
         );
 
+        const speed = globalConfig.beltSpeedItemsPerSecond * (1 / 8);
         entity.addComponent(
             new AdvancedEnergy.EnergyPinComponent({
                 slots: [
@@ -63,7 +65,8 @@ export class MetaBasicConsumerBuilding extends ModMetaBuilding {
                         direction: enumDirection.left,
                         pos: new Vector(0, 0),
                         type: "acceptor",
-                        consumption: 50,
+                        consumptionPerTick: 100 * speed,
+                        maxBuffer: 200,
                     },
                 ],
             })
@@ -75,7 +78,7 @@ export function setupBasicConsumer() {
     enumItemProcessorTypes[processLabelBasicConsumer] = processLabelBasicConsumer;
     enumItemProcessorRequirements[processLabelBasicConsumer] = processLabelBasicConsumer;
 
-    const volumeRemoved = 50;
+    const volumeRemoved = 100;
 
     MODS_CAN_PROCESS[enumItemProcessorRequirements[processLabelBasicConsumer]] = function ({ entity }) {
         /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
@@ -114,6 +117,6 @@ export function setupBasicConsumer() {
      */
     MOD_ITEM_PROCESSOR_SPEEDS[enumItemProcessorTypes[processLabelBasicConsumer]] = function (root) {
         // TODO: remove upgrade later
-        return globalConfig.beltSpeedItemsPerSecond * root.hubGoals.upgradeImprovements.processors * (1 / 8);
+        return globalConfig.beltSpeedItemsPerSecond * (1 / 8);
     };
 }

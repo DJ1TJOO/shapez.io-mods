@@ -12,7 +12,7 @@ import { BasicConnectorRendererComponent } from "./components/basic_connector_re
 class ModImpl extends Mod {
     init() {
         AdvancedEnergy.requireInstalled();
-        // AdvancedEnergy.enableDebug();
+        AdvancedEnergy.enableDebug();
 
         this.registerBuildings();
         this.registerComponents();

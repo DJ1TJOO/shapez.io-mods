@@ -20,11 +20,11 @@ import { enumColors } from "shapez/game/colors";
 import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
 import { BasicGeneratorComponent } from "../components/basic_generator";
 import { T } from "shapez/translations";
-import { formatFluxPerSecond } from "../ui/fluxFormatter";
+import { formatAePerSecond } from "../ui/aeFormatter";
 
 const overlayMatrix = generateMatrixRotations([1, 1, 1, 1, 0, 1, 1, 1, 1]);
 
-const processLabelBasicGenerator = "dj1tjoo@basic_generator";
+export const processLabelBasicGenerator = "dj1tjoo@basic_generator";
 const volumeCreated = 50;
 
 export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
@@ -53,15 +53,16 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
     getAdditionalStatistics(root) {
         const speed = root.hubGoals.getProcessorBaseSpeed(enumItemProcessorTypes[processLabelBasicGenerator]);
         return /** @type {[[string, string]]}*/ ([
-            [T.ingame.buildingPlacement.infoTexts.speed, formatFluxPerSecond(speed * volumeCreated)],
+            [T.ingame.buildingPlacement.infoTexts.speed, formatAePerSecond(speed * volumeCreated)],
         ]);
     }
 
     /**
      * Creates the entity at the given location
      * @param {import("shapez/savegame/savegame_typedefs").Entity} entity
+     * @param {import("shapez/game/root").GameRoot} root
      */
-    setupEntityComponents(entity) {
+    setupEntityComponents(entity, root) {
         entity.addComponent(
             new ItemAcceptorComponent({
                 slots: [
@@ -88,6 +89,7 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
             })
         );
 
+        const speed = globalConfig.beltSpeedItemsPerSecond * (1 / 8);
         entity.addComponent(
             new AdvancedEnergy.EnergyPinComponent({
                 slots: [
@@ -95,7 +97,8 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
                         direction: enumDirection.left,
                         pos: new Vector(0, 0),
                         type: "ejector",
-                        production: volumeCreated,
+                        productionPerTick: volumeCreated * speed,
+                        maxBuffer: 100,
                     },
                 ],
             })
@@ -110,7 +113,7 @@ export function setupBasicGenerator() {
     MODS_CAN_PROCESS[enumItemProcessorRequirements[processLabelBasicGenerator]] = function ({ entity }) {
         /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
         const pinComp = entity.components["EnergyPin"];
-        if (!pinComp.slots[0].linkedNetwork || !pinComp.slots[0].linkedNetwork.canAdd(volumeCreated)) {
+        if (pinComp.slots[0].buffer + volumeCreated > pinComp.slots[0].maxBuffer) {
             return false;
         }
 
@@ -166,7 +169,7 @@ export function setupBasicGenerator() {
         items,
         entity,
     }) {
-        entity.components["BasicGenerator"].queueGeneration();
+        entity.components["EnergyPin"].slots[0].buffer += volumeCreated;
     };
 
     /**

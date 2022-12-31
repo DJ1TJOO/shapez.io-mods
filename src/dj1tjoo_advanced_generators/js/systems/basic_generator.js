@@ -15,28 +15,28 @@ export class BasicGeneratorSystem extends GameSystemWithFilter {
     }
 
     update() {
-        for (let i = 0; i < this.allEntities.length; ++i) {
-            const entity = this.allEntities[i];
-
-            /** @type {import("../components/basic_generator").BasicGeneratorComponent} */
-            const genComp = entity.components["BasicGenerator"];
-            /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
-            const pinComp = entity.components["EnergyPin"];
-
-            const connectedSlots = pinComp.slots.filter(x => x.linkedNetwork && x.type === "ejector");
-
-            let fluxGenerated = 0;
-            if (genComp.generations > 0) {
-                fluxGenerated += genComp.production;
-                genComp.generations--;
-            }
-
-            // Divide generated over all slots
-            for (let i = 0; i < connectedSlots.length; i++) {
-                const slot = connectedSlots[i];
-                slot.buffer += fluxGenerated / connectedSlots.length;
-            }
-        }
+        // for (let i = 0; i < this.allEntities.length; ++i) {
+        //     const entity = this.allEntities[i];
+        //     /** @type {import("../components/basic_generator").BasicGeneratorComponent} */
+        //     const genComp = entity.components["BasicGenerator"];
+        //     /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
+        //     const pinComp = entity.components["EnergyPin"];
+        //     const connectedSlots = pinComp.slots.filter(x => x.type === "ejector");
+        //     let fluxGenerated = 0;
+        //     if (genComp.generations > 0) {
+        //         fluxGenerated += genComp.production;
+        //         genComp.generations--;
+        //     }
+        //     // Divide generated over all slots
+        //     for (let i = 0; i < connectedSlots.length; i++) {
+        //         const slot = connectedSlots[i];
+        //         const actualAdded = Math.min(
+        //             slot.maxBuffer - slot.buffer,
+        //             fluxGenerated / connectedSlots.length
+        //         );
+        //         slot.buffer += actualAdded;
+        //     }
+        // }
     }
 
     /**
@@ -56,13 +56,16 @@ export class BasicGeneratorSystem extends GameSystemWithFilter {
 
             /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
             const pinComp = entity.components["EnergyPin"];
-            if (!pinComp) continue;
 
-            const connectedSlots = pinComp.slots.filter(x => x.linkedNetwork && x.type === "ejector");
+            /** @type {import("../components/basic_generator").BasicGeneratorComponent} */
+            const genComp = entity.components["BasicGenerator"];
+
+            if (!pinComp || !genComp) continue;
+
+            const connectedSlots = pinComp.slots.filter(x => x.type === "ejector");
             if (
                 connectedSlots.length < 1 ||
-                !connectedSlots.some(x => x.buffer < x.maxBuffer) ||
-                connectedSlots.every(x => x.linkedNetwork.currentVolume === x.linkedNetwork.maxVolume)
+                !connectedSlots.some(x => x.buffer + genComp.production < x.maxBuffer)
             )
                 continue;
 
