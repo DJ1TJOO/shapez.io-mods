@@ -83,11 +83,7 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
             })
         );
 
-        entity.addComponent(
-            new BasicGeneratorComponent({
-                production: volumeCreated,
-            })
-        );
+        entity.addComponent(new BasicGeneratorComponent());
 
         const speed = globalConfig.beltSpeedItemsPerSecond * (1 / 8);
         entity.addComponent(

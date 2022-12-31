@@ -2,17 +2,17 @@ import { Mod } from "shapez/mods/mod";
 import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
 
 import { MetaBasicConsumerBuilding, setupBasicConsumer } from "./buildings/basic_consumer";
-import { MetaBasicConnectorBuilding } from "./buildings/basic_connector";
+import { MetaBasicConnectorBuilding } from "./buildings/connector";
 import { MetaBasicGeneratorBuilding, setupBasicGenerator } from "./buildings/basic_generator";
 import { BasicGeneratorComponent } from "./components/basic_generator";
 import { BasicGeneratorSystem } from "./systems/basic_generator";
-import { BasicConnectorRendererSystem } from "./systems/basic_connector_renderer";
-import { BasicConnectorRendererComponent } from "./components/basic_connector_renderer";
+import { ConnectorRendererSystem } from "./systems/connector_renderer";
+import { ConnectorRendererComponent } from "./components/connector_renderer";
 
 class ModImpl extends Mod {
     init() {
         AdvancedEnergy.requireInstalled();
-        AdvancedEnergy.enableDebug();
+        // AdvancedEnergy.enableDebug();
 
         this.registerBuildings();
         this.registerComponents();
@@ -21,7 +21,7 @@ class ModImpl extends Mod {
 
     registerComponents() {
         this.modInterface.registerComponent(BasicGeneratorComponent);
-        this.modInterface.registerComponent(BasicConnectorRendererComponent);
+        this.modInterface.registerComponent(ConnectorRendererComponent);
     }
 
     registerSystems() {
@@ -32,8 +32,8 @@ class ModImpl extends Mod {
             drawHooks: ["staticAfter"],
         });
         this.modInterface.registerGameSystem({
-            id: "basic_connectorRenderer",
-            systemClass: BasicConnectorRendererSystem,
+            id: "connector_renderer",
+            systemClass: ConnectorRendererSystem,
             before: "end",
             drawHooks: ["staticBefore"],
         });

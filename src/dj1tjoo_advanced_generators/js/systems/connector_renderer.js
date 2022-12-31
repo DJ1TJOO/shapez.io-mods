@@ -1,12 +1,12 @@
 import { globalConfig } from "shapez/core/config";
 import { Loader } from "shapez/core/loader";
 import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
-import { arrayConnectorRotationVariantToType, enumConnectorType } from "../buildings/basic_connector";
-import { BasicGeneratorComponent } from "../components/basic_generator";
+import { arrayConnectorRotationVariantToType, enumConnectorType } from "../buildings/connector";
+import { ConnectorRendererComponent } from "../components/connector_renderer";
 
-export class BasicConnectorRendererSystem extends GameSystemWithFilter {
+export class ConnectorRendererSystem extends GameSystemWithFilter {
     constructor(root) {
-        super(root, [BasicGeneratorComponent]);
+        super(root, [ConnectorRendererComponent]);
 
         this.sprites = {};
         this.spritesTop = {};
@@ -16,30 +16,7 @@ export class BasicConnectorRendererSystem extends GameSystemWithFilter {
         }
     }
 
-    update() {
-        for (let i = 0; i < this.allEntities.length; ++i) {
-            const entity = this.allEntities[i];
-
-            /** @type {import("../components/basic_generator").BasicGeneratorComponent} */
-            const genComp = entity.components["BasicGenerator"];
-            /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
-            const pinComp = entity.components["EnergyPin"];
-
-            const connectedSlots = pinComp.slots.filter(x => x.linkedNetwork && x.type === "ejector");
-
-            let fluxGenerated = 0;
-            if (genComp.generations > 0) {
-                fluxGenerated += genComp.production;
-                genComp.generations--;
-            }
-
-            // Divide generated over all slots
-            for (let i = 0; i < connectedSlots.length; i++) {
-                const slot = connectedSlots[i];
-                slot.buffer += fluxGenerated / connectedSlots.length;
-            }
-        }
-    }
+    update() {}
 
     /**
      * Draws a given chunk
@@ -51,7 +28,11 @@ export class BasicConnectorRendererSystem extends GameSystemWithFilter {
         for (let y = 0; y < globalConfig.mapChunkSize; ++y) {
             for (let x = 0; x < globalConfig.mapChunkSize; ++x) {
                 const entity = contents[x][y];
-                if (entity && entity.components["EnergyConnector"]) {
+                if (
+                    entity &&
+                    entity.components["EnergyConnector"] &&
+                    entity.components["ConnectorRenderer"]
+                ) {
                     /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_connector").EnergyConnectorComponent} */
                     const connectorComp = entity.components["EnergyConnector"];
 

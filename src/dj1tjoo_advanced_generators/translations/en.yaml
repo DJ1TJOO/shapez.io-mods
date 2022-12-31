@@ -1,3 +1,3 @@
 advaned_generators:
-    oneFluxPerSecond: 1 AE/t
-    fluxPerSecond: <x> AE/t
+    oneAePerSecond: 1 AE/t
+    aePerSecond: <x> AE/t

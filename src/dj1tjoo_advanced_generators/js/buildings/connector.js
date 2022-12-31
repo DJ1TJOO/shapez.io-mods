@@ -5,9 +5,7 @@ import { generateMatrixRotations } from "shapez/core/utils";
 import { arrayAllDirections, enumDirection, enumInvertedDirections, Vector } from "shapez/core/vector";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
-import { BasicConnectorRendererComponent } from "../components/basic_connector_renderer";
-
-const overlayMatrix = generateMatrixRotations([1, 1, 1, 1, 0, 1, 1, 1, 1]);
+import { ConnectorRendererComponent } from "../components/connector_renderer";
 
 /** @enum {string} */
 export const enumConnectorType = {
@@ -36,7 +34,7 @@ export const connectorOverlayMatrices = {
 
 export class MetaBasicConnectorBuilding extends ModMetaBuilding {
     constructor() {
-        super("basic_connector");
+        super("connector");
     }
 
     getSilhouetteColor() {
@@ -48,6 +46,10 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
     }
 
     getIsReplaceable() {
+        return true;
+    }
+
+    getStayInPlacementMode() {
         return true;
     }
 
@@ -135,7 +137,7 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
             })
         );
 
-        entity.addComponent(new BasicConnectorRendererComponent());
+        entity.addComponent(new ConnectorRendererComponent());
     }
 
     /**
