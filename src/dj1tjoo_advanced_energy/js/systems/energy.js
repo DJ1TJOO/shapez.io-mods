@@ -99,35 +99,63 @@ export class EnergySystem extends GameSystem {
                         const staticComp = entity.components.StaticMapEntity;
                         /** @type {EnergyConnectorComponent} */
                         const connectorComp = entity.components["EnergyConnector"];
-                        // Draw network info for pipes
+                        /** @type {EnergyPinComponent} */
+                        const pinComp = entity.components["EnergyPin"];
+                        // Draw network info for connectors
                         if (connectorComp && connectorComp.linkedNetwork) {
                             parameters.context.fillStyle = "red";
                             parameters.context.font = "5px Tahoma";
-                            parameters.context.fillText(
-                                "MV" + connectorComp.linkedNetwork.maxVolume,
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.8) * globalConfig.tileSize
-                            );
-                            parameters.context.fillText(
-                                "TV:" + round1Digit(connectorComp.linkedNetwork.currentVolume),
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.2) * globalConfig.tileSize
-                            );
                             parameters.context.fillText(
                                 "V:" + round1Digit(connectorComp.energyVolume),
                                 (staticComp.origin.x + 0) * globalConfig.tileSize,
                                 (staticComp.origin.y + 0.2) * globalConfig.tileSize
                             );
                             parameters.context.fillText(
+                                "NV:" + round1Digit(connectorComp.linkedNetwork.currentVolume),
+                                (staticComp.origin.x + 0) * globalConfig.tileSize,
+                                (staticComp.origin.y + 0.4) * globalConfig.tileSize
+                            );
+                            parameters.context.fillText(
                                 "MV:" + connectorComp.maxEnergyVolume,
+                                (staticComp.origin.x + 0) * globalConfig.tileSize,
+                                (staticComp.origin.y + 0.6) * globalConfig.tileSize
+                            );
+                            parameters.context.fillText(
+                                "NMV" + connectorComp.linkedNetwork.maxVolume,
                                 (staticComp.origin.x + 0) * globalConfig.tileSize,
                                 (staticComp.origin.y + 0.8) * globalConfig.tileSize
                             );
-                            // parameters.context.fillText(
-                            //     "v:" + round1Digit(connectorComp.volume),
-                            //     (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                            //     (staticComp.origin.y + 0.8) * globalConfig.tileSize
-                            // );
+                        }
+                        // Draw network info for pins
+                        if (pinComp) {
+                            const connectedSlots = pinComp.slots.filter(x => x.linkedNetwork);
+                            parameters.context.fillStyle = "red";
+                            parameters.context.font = "5px Tahoma";
+
+                            for (let i = 0; i < connectedSlots.length; i++) {
+                                const slot = connectedSlots[i];
+
+                                parameters.context.fillText(
+                                    "V:" + round1Digit(slot.buffer),
+                                    (staticComp.origin.x + slot.pos.x + 0) * globalConfig.tileSize,
+                                    (staticComp.origin.y + slot.pos.y + 0.2) * globalConfig.tileSize
+                                );
+                                parameters.context.fillText(
+                                    "MV:" + round1Digit(slot.maxBuffer),
+                                    (staticComp.origin.x + slot.pos.x + 0) * globalConfig.tileSize,
+                                    (staticComp.origin.y + slot.pos.y + 0.4) * globalConfig.tileSize
+                                );
+                                parameters.context.fillText(
+                                    "MC:" + slot.maxConsumption,
+                                    (staticComp.origin.x + slot.pos.x + 0) * globalConfig.tileSize,
+                                    (staticComp.origin.y + slot.pos.y + 0.6) * globalConfig.tileSize
+                                );
+                                parameters.context.fillText(
+                                    "MP" + slot.maxProduction,
+                                    (staticComp.origin.x + slot.pos.x + 0) * globalConfig.tileSize,
+                                    (staticComp.origin.y + slot.pos.y + 0.8) * globalConfig.tileSize
+                                );
+                            }
                         }
                     }
                 }

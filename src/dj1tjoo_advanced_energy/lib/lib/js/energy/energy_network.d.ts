@@ -43,6 +43,10 @@ export class EnergyNetwork {
      */
     uid: number;
     /**
+     * @returns { number } The max energy that is able to be transfered in the network with in a tick, limited by the weakest link
+     */
+    get maxThoughput(): number;
+    /**
      * @returns { number } The max energy that is able to be stored in the network
      */
     get maxVolume(): number;

@@ -8,8 +8,8 @@ export namespace enumPinSlotType {
  *   pos: import("shapez/core/vector").Vector,
  *   type: "ejector" | "acceptor",
  *   direction: import("shapez/core/vector").enumDirection,
- *   production?: number,
- *   consumption?: number,
+ *   productionPerTick?: number,
+ *   consumptionPerTick?: number,
  *   maxBuffer?: number
  * }} EnergyPinSlotDefinition */
 /** @typedef {{
@@ -18,15 +18,15 @@ export namespace enumPinSlotType {
  *   direction: import("shapez/core/vector").enumDirection,
  *   linkedNetwork: import("../energy/energy_network").EnergyNetwork,
  *   oldNetwork: import("../energy/energy_network").EnergyNetwork,
- *   production?: number,
- *   consumption?: number,
+ *   productionPerTick?: number,
+ *   consumptionPerTick?: number,
  *   maxBuffer?: number
  * }} EnergyPinSlotType */
 export class EnergyPinSlot {
     /**
      * @param {EnergyPinSlotType} param0
      */
-    constructor({ pos, type, direction, linkedNetwork, oldNetwork, production, consumption, maxBuffer }: EnergyPinSlotType);
+    constructor({ pos, type, direction, linkedNetwork, oldNetwork, productionPerTick, consumptionPerTick, maxBuffer, }: EnergyPinSlotType);
     pos: import("shapez/core/vector").Vector;
     type: string;
     direction: string;
@@ -61,8 +61,8 @@ export type EnergyPinSlotDefinition = {
     pos: import("shapez/core/vector").Vector;
     type: "ejector" | "acceptor";
     direction: import("shapez/core/vector").enumDirection;
-    production?: number;
-    consumption?: number;
+    productionPerTick?: number;
+    consumptionPerTick?: number;
     maxBuffer?: number;
 };
 export type EnergyPinSlotType = {
@@ -71,8 +71,8 @@ export type EnergyPinSlotType = {
     direction: import("shapez/core/vector").enumDirection;
     linkedNetwork: import("../energy/energy_network").EnergyNetwork;
     oldNetwork: import("../energy/energy_network").EnergyNetwork;
-    production?: number;
-    consumption?: number;
+    productionPerTick?: number;
+    consumptionPerTick?: number;
     maxBuffer?: number;
 };
 import { Component } from "shapez/game/component";

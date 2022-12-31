@@ -38,6 +38,13 @@ export class EnergyNetwork {
     }
 
     /**
+     * @returns { number } The max energy that is able to be transfered in the network with in a tick, limited by the weakest link
+     */
+    get maxThoughput() {
+        return Math.min(...this.connectors.map(x => x.components.EnergyConnector.maxThroughputPerTick));
+    }
+
+    /**
      * @returns { number } The max energy that is able to be stored in the network
      */
     get maxVolume() {

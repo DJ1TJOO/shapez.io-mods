@@ -6,7 +6,7 @@
     "type": "module",
     "types": "./lib/lib/src/index.d.ts",
     "scripts": {
-        "build": "yarn tsc",
+        "build": "yarn tsc && cd ./lib/js && del /S *.js && cd ../../",
         "p": "npm publish",
         "v": "npm version"
     },

@@ -10,8 +10,8 @@ export const enumPinSlotType = {
  *   pos: import("shapez/core/vector").Vector,
  *   type: "ejector" | "acceptor",
  *   direction: import("shapez/core/vector").enumDirection,
- *   production?: number,
- *   consumption?: number,
+ *   productionPerTick?: number,
+ *   consumptionPerTick?: number,
  *   maxBuffer?: number
  * }} EnergyPinSlotDefinition */
 
@@ -21,8 +21,8 @@ export const enumPinSlotType = {
  *   direction: import("shapez/core/vector").enumDirection,
  *   linkedNetwork: import("../energy/energy_network").EnergyNetwork,
  *   oldNetwork: import("../energy/energy_network").EnergyNetwork,
- *   production?: number,
- *   consumption?: number,
+ *   productionPerTick?: number,
+ *   consumptionPerTick?: number,
  *   maxBuffer?: number
  * }} EnergyPinSlotType */
 
@@ -30,29 +30,38 @@ export class EnergyPinSlot {
     /**
      * @param {EnergyPinSlotType} param0
      */
-    constructor({ pos, type, direction, linkedNetwork, oldNetwork, production, consumption, maxBuffer }) {
+    constructor({
+        pos,
+        type,
+        direction,
+        linkedNetwork,
+        oldNetwork,
+        productionPerTick,
+        consumptionPerTick,
+        maxBuffer,
+    }) {
         this.pos = pos;
         this.type = type;
         this.direction = direction;
         this.linkedNetwork = linkedNetwork;
         this.oldNetwork = oldNetwork;
 
-        this.maxProduction = production ?? 0;
-        this.maxConsumption = consumption ?? 0;
+        this.maxProduction = productionPerTick ?? 0;
+        this.maxConsumption = consumptionPerTick ?? 0;
 
         this.buffer = 0;
         this.maxBuffer = maxBuffer ?? 3 * Math.max(this.maxProduction, this.maxConsumption);
     }
 
     get production() {
-        return Math.min(this.buffer, this.maxProduction);
+        return Math.min(this.buffer, this.maxProduction, this.linkedNetwork.maxThoughput);
     }
     produce(amount) {
         this.buffer -= amount;
     }
 
     get consumption() {
-        return Math.min(this.maxBuffer - this.buffer, this.maxConsumption);
+        return Math.min(this.maxBuffer - this.buffer, this.maxConsumption, this.linkedNetwork.maxThoughput);
     }
     consume(amount) {
         this.buffer += amount;
@@ -90,8 +99,8 @@ export class EnergyPinComponent extends Component {
                     direction: slotData.direction,
                     linkedNetwork: null,
                     oldNetwork: null,
-                    production: slotData.production,
-                    consumption: slotData.consumption,
+                    productionPerTick: slotData.productionPerTick,
+                    consumptionPerTick: slotData.consumptionPerTick,
                     maxBuffer: slotData.maxBuffer,
                 })
             );
