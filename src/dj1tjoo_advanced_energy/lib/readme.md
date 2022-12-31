@@ -32,3 +32,5 @@ The AdvancedEnergy class has the following methods
 | isInstalled(): boolean               | Returns if the energy mod is installed                               |
 | getMod(): AdvancedEnergyMod \| null; | Returns the energy mod instance                                      |
 | getVersion(): string \| null;        | Returns the version of the energy mod instance                       |
+| enableDebug(): void                  | Enables debug rendering on connectors                                |
+| disableDebug(): void                 | Disables debug rendering on connectors                               |
