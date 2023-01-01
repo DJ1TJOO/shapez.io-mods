@@ -109,9 +109,8 @@ export class Pipes {
         }
 
         const uid = this.loadedUid++;
-        MODS.signals.stateEntered.add(state => {
+        MODS.signals.appBooted.add(() => {
             if (this.isLoaded.includes(uid)) return;
-            if (state.key !== "MainMenuState") return;
 
             this.isLoadedComlete = true;
             this.isLoaded.push(uid);
