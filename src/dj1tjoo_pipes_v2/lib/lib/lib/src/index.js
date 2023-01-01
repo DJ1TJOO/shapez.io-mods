@@ -32,22 +32,26 @@ export class Pipe {
         return ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.PipePinComponent) || null;
     }
     static enableDebug() {
-        this.getMod()["debug"] = true;
+        this.onLoaded(() => (this.getMod()["debug"] = true));
     }
     static disableDebug() {
-        this.getMod()["debug"] = false;
+        this.onLoaded(() => (this.getMod()["debug"] = false));
     }
     /**
      * Register to run callback on pipes loaded
      * @param {(installed: boolean) => void} cb
      */
     static onLoaded(cb) {
+        if (this.isLoadedComlete) {
+            return cb(this.isInstalled());
+        }
         const uid = this.loadedUid++;
         MODS.signals.stateEntered.add(state => {
             if (this.isLoaded.includes(uid))
                 return;
             if (state.key !== "MainMenuState")
                 return;
+            this.isLoadedComlete = true;
             this.isLoaded.push(uid);
             cb(this.isInstalled());
         });
@@ -94,5 +98,6 @@ export class Pipe {
         return mod.metadata.version;
     }
 }
+Pipe.isLoadedComlete = false;
 Pipe.isLoaded = [];
 Pipe.loadedUid = 0;

@@ -14,6 +14,7 @@ const MOD_ID = "dj1tjoo_pipes";
  */
 
 export class Pipe {
+    static isLoadedComlete = false;
     static isLoaded = [];
     static loadedUid = 0;
 
@@ -38,11 +39,11 @@ export class Pipe {
     }
 
     static enableDebug() {
-        this.getMod()["debug"] = true;
+        this.onLoaded(() => (this.getMod()["debug"] = true));
     }
 
     static disableDebug() {
-        this.getMod()["debug"] = false;
+        this.onLoaded(() => (this.getMod()["debug"] = false));
     }
 
     /**
@@ -50,11 +51,16 @@ export class Pipe {
      * @param {(installed: boolean) => void} cb
      */
     static onLoaded(cb) {
+        if (this.isLoadedComlete) {
+            return cb(this.isInstalled());
+        }
+
         const uid = this.loadedUid++;
         MODS.signals.stateEntered.add(state => {
             if (this.isLoaded.includes(uid)) return;
             if (state.key !== "MainMenuState") return;
 
+            this.isLoadedComlete = true;
             this.isLoaded.push(uid);
             cb(this.isInstalled());
         });
