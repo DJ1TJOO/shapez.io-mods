@@ -1,3 +1,5 @@
 advaned_generators:
     oneAePerSecond: 1 AE/t
     aePerSecond: <x> AE/t
+    volume: "Volume: <x>/<y> AE"
+    throughput: "Throughput: <x>/<y> AE/t"

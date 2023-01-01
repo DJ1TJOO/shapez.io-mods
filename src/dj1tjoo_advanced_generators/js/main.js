@@ -8,15 +8,25 @@ import { BasicGeneratorComponent } from "./components/basic_generator";
 import { BasicGeneratorSystem } from "./systems/basic_generator";
 import { ConnectorRendererSystem } from "./systems/connector_renderer";
 import { ConnectorRendererComponent } from "./components/connector_renderer";
+import { HUDConnectorInfo } from "./hud/connector_info";
+import { GameHUD } from "shapez/game/hud/hud";
 
 class ModImpl extends Mod {
     init() {
         AdvancedEnergy.requireInstalled();
         // AdvancedEnergy.enableDebug();
 
+        this.registerHuds();
         this.registerBuildings();
         this.registerComponents();
         this.registerSystems();
+    }
+
+    registerHuds() {
+        this.modInterface.registerHudElement("connectorInfo", HUDConnectorInfo);
+        this.modInterface.runAfterMethod(GameHUD, "drawOverlays", function (parameters) {
+            this.parts["connectorInfo"].drawOverlays(parameters);
+        });
     }
 
     registerComponents() {
