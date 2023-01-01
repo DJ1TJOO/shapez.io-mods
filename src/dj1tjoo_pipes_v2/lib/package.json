@@ -1,0 +1,22 @@
+{
+    "name": "@dj1tjoo/shapez-pipes",
+    "version": "0.0.1",
+    "description": "A helper library for the pipes mod",
+    "main": "./lib/lib/src/index.js",
+    "type": "module",
+    "types": "./lib/lib/src/index.d.ts",
+    "scripts": {
+        "build": "yarn tsc && cd ./lib/js && del /S *.js && cd ../../",
+        "p": "npm publish",
+        "v": "npm version"
+    },
+    "author": "DJ1TJOO",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/node": "^18.11.18",
+        "typescript": "^4.9.4"
+    },
+    "directories": {
+        "lib": "lib"
+    }
+}
