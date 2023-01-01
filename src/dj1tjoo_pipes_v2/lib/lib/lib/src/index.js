@@ -53,7 +53,9 @@ export class Pipes {
             static get Fluid() {
                 if (fluidClass)
                     return fluidClass;
-                return (fluidClass = createFluidClass());
+                fluidClass = createFluidClass();
+                fluidClass.resolver = () => this.SINGLETON;
+                return fluidClass;
             }
         };
     }
