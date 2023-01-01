@@ -1,7 +1,7 @@
 /** @type {{MODS: import("shapez/mods/modloader").ModLoader}} */
 const { MODS } = shapez;
 
-const ENERGY_MOD_ID = "dj1tjoo_pipes";
+const MOD_ID = "dj1tjoo_pipes";
 
 /**
  * @typedef {import("shapez/mods/mod").Mod & {
@@ -14,6 +14,9 @@ const ENERGY_MOD_ID = "dj1tjoo_pipes";
  */
 
 export class Pipe {
+    static isLoaded = [];
+    static loadedUid = 0;
+
     static get gFluidRegistry() {
         return this.getMod()?.gFluidRegistry || null;
     }
@@ -43,13 +46,26 @@ export class Pipe {
     }
 
     /**
+     * Register to run callback on pipes loaded
+     * @param {(installed: boolean) => void} cb
+     */
+    static onLoaded(cb) {
+        const uid = this.loadedUid++;
+        MODS.signals.stateEntered.add(state => {
+            if (this.isLoaded.includes(uid)) return;
+            if (state.key !== "MainMenuState") return;
+
+            this.isLoaded.push(uid);
+            cb(this.isInstalled());
+        });
+    }
+
+    /**
      * Shows a dialog on the main menu when the pipes mod is not installed
      */
     static requireInstalled() {
-        MODS.signals.stateEntered.add(state => {
-            if (this.isInstalled()) return;
-
-            if (state.key !== "MainMenuState") return;
+        this.onLoaded(installed => {
+            if (installed) return;
 
             /** @type {import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs | null} */
             const dialogs = MODS.app.stateMgr.currentState["dialogs"];
@@ -70,7 +86,7 @@ export class Pipe {
      * @returns {boolean}
      */
     static isInstalled() {
-        return MODS.mods.some(x => x.metadata.id === ENERGY_MOD_ID);
+        return MODS.mods.some(x => x.metadata.id === MOD_ID);
     }
 
     /**
@@ -78,7 +94,7 @@ export class Pipe {
      * @returns {?PipesMod}
      */
     static getMod() {
-        return /** @type {PipesMod} */ (MODS.mods.find(x => x.metadata.id === ENERGY_MOD_ID)) || null;
+        return /** @type {PipesMod} */ (MODS.mods.find(x => x.metadata.id === MOD_ID)) || null;
     }
 
     /**

@@ -9,6 +9,8 @@
  * }} PipesMod
  */
 export class Pipe {
+    static isLoaded: any[];
+    static loadedUid: number;
     static get gFluidRegistry(): import("shapez/core/factory").Factory;
     static get typeFluidSingleton(): import("shapez/savegame/serialization_data_types").TypeClass;
     static get BaseFluid(): typeof import("../../js/items/base_fluid").BaseFluid;
@@ -16,6 +18,11 @@ export class Pipe {
     static get PipePinComponent(): typeof import("../../js/components/pipe_pin").PipePinComponent;
     static enableDebug(): void;
     static disableDebug(): void;
+    /**
+     * Register to run callback on pipes loaded
+     * @param {(installed: boolean) => void} cb
+     */
+    static onLoaded(cb: (installed: boolean) => void): void;
     /**
      * Shows a dialog on the main menu when the pipes mod is not installed
      */
