@@ -17,20 +17,20 @@ The api has a npm package [@dj1tjoo/shapez-advanced-energy](https://www.npmjs.co
 
 The package exports the AdvancedEnergy class. On this class are static methods to help you
 
-The AdvancedEnergy class exposes the api Components
+The AdvancedEnergy class exposes the api components. All the api components can only be accessed after the preload state. You can use `onLoaded` to make a callback from when the preload state is over.
 | Component | Usage |
 | ------------------------------------ | -------------------------------------------------------------------- |
 | EnergyConnectorComponent | A component to make connections with in a newtwork (E.g. simple connector, storage) |
 | EnergyPinComponent | A component to take and add energy to a network (E.g. energy producer, building that uses energy)|
 
-<br />
-The AdvancedEnergy class has the following methods
+The AdvancedEnergy class has the following methods. The methods with a `*` can only be accessed after the preload state. You can use `onLoaded` to make a callback from when the preload state is over.
 
-| Method                               | Usage                                                                |
-| ------------------------------------ | -------------------------------------------------------------------- |
-| requireInstalled(): void             | Shows a dialog on the main menu when the energy mod is not installed |
-| isInstalled(): boolean               | Returns if the energy mod is installed                               |
-| getMod(): AdvancedEnergyMod \| null; | Returns the energy mod instance                                      |
-| getVersion(): string \| null;        | Returns the version of the energy mod instance                       |
-| enableDebug(): void                  | Enables debug rendering on connectors                                |
-| disableDebug(): void                 | Disables debug rendering on connectors                               |
+| Method                                           | Usage                                                                |
+| ------------------------------------------------ | -------------------------------------------------------------------- |
+| requireInstalled(): void                         | Shows a dialog on the main menu when the energy mod is not installed |
+| `*` isInstalled(): boolean                       | Returns if the energy mod is installed                               |
+| `*` getMod(): AdvancedEnergyMod \| null;         | Returns the energy mod instance                                      |
+| `*` getVersion(): string \| null;                | Returns the version of the energy mod instance                       |
+| onLoaded(cb: (installed: boolean) => void): void | Register to run callback on energy mod loaded                        |
+| enableDebug(): void                              | Enables debug rendering on connectors                                |
+| disableDebug(): void                             | Disables debug rendering on connectors                               |
