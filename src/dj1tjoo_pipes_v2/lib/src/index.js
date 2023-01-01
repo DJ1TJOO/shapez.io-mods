@@ -8,10 +8,20 @@ const ENERGY_MOD_ID = "dj1tjoo_pipes";
  *  PipeConnectorComponent: typeof import("../../js/components/pipe_connector").PipeConnectorComponent
  *  PipePinComponent: typeof import("../../js/components/pipe_pin").PipePinComponent
  *  BaseFluid: typeof import("../../js/items/base_fluid").BaseFluid
+ *  typeFluidSingleton: typeof import("../../js/items/base_fluid").typeFluidSingleton
+ *  gFluidRegistry: typeof import("../../js/items/base_fluid").gFluidRegistry
  * }} PipesMod
  */
 
 export class Pipe {
+    static get gFluidRegistry() {
+        return this.getMod()?.gFluidRegistry || null;
+    }
+
+    static get typeFluidSingleton() {
+        return this.getMod()?.typeFluidSingleton || null;
+    }
+
     static get BaseFluid() {
         return this.getMod()?.BaseFluid || null;
     }

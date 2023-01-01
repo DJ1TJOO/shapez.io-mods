@@ -23,6 +23,8 @@ The Pipes class exposes the api Components
 | PipeConnectorComponent | A component to make connections with in a newtwork (E.g. simple connector, storage) |
 | PipePinComponent | A component to take and add fluids to a network (E.g. fluid producer, building that uses fluid)|
 | BaseFluid | The base for creating a new fluid|
+| gFluidRegistry | Register the new fluid |
+| typeFluidSingleton | The type for storing fluids|
 
 <br />
 The Pipes class has the following methods
