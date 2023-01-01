@@ -1,11 +1,16 @@
+/// <reference path="../../../types.d.ts" />
 /**
  * @typedef {import("shapez/mods/mod").Mod & {
  *  PipeConnectorComponent: typeof import("../../js/components/pipe_connector").PipeConnectorComponent
  *  PipePinComponent: typeof import("../../js/components/pipe_pin").PipePinComponent
  *  BaseFluid: typeof import("../../js/items/base_fluid").BaseFluid
+ *  typeFluidSingleton: typeof import("../../js/items/base_fluid").typeFluidSingleton
+ *  gFluidRegistry: typeof import("../../js/items/base_fluid").gFluidRegistry
  * }} PipesMod
  */
 export class Pipe {
+    static get gFluidRegistry(): import("shapez/core/factory").Factory;
+    static get typeFluidSingleton(): import("shapez/savegame/serialization_data_types").TypeClass;
     static get BaseFluid(): typeof import("../../js/items/base_fluid").BaseFluid;
     static get PipeConnectorComponent(): typeof import("../../js/components/pipe_connector").PipeConnectorComponent;
     static get PipePinComponent(): typeof import("../../js/components/pipe_pin").PipePinComponent;
@@ -35,4 +40,6 @@ export type PipesMod = import("shapez/mods/mod").Mod & {
     PipeConnectorComponent: typeof import("../../js/components/pipe_connector").PipeConnectorComponent;
     PipePinComponent: typeof import("../../js/components/pipe_pin").PipePinComponent;
     BaseFluid: typeof import("../../js/items/base_fluid").BaseFluid;
+    typeFluidSingleton: typeof import("../../js/items/base_fluid").typeFluidSingleton;
+    gFluidRegistry: typeof import("../../js/items/base_fluid").gFluidRegistry;
 };

@@ -6,9 +6,19 @@ const ENERGY_MOD_ID = "dj1tjoo_pipes";
  *  PipeConnectorComponent: typeof import("../../js/components/pipe_connector").PipeConnectorComponent
  *  PipePinComponent: typeof import("../../js/components/pipe_pin").PipePinComponent
  *  BaseFluid: typeof import("../../js/items/base_fluid").BaseFluid
+ *  typeFluidSingleton: typeof import("../../js/items/base_fluid").typeFluidSingleton
+ *  gFluidRegistry: typeof import("../../js/items/base_fluid").gFluidRegistry
  * }} PipesMod
  */
 export class Pipe {
+    static get gFluidRegistry() {
+        var _a;
+        return ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.gFluidRegistry) || null;
+    }
+    static get typeFluidSingleton() {
+        var _a;
+        return ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.typeFluidSingleton) || null;
+    }
     static get BaseFluid() {
         var _a;
         return ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.BaseFluid) || null;
