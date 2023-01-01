@@ -25,7 +25,7 @@ export class Pipes {
     static registerFluid(createFluidClass: () => typeof this.BaseFluid): {
         new (): {};
         readonly SINGLETON: any;
-        readonly Fluid: any;
+        readonly Class: any;
     };
     /**
      * Shows a dialog on the main menu when the pipes mod is not installed

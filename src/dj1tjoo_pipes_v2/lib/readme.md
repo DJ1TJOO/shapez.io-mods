@@ -28,12 +28,13 @@ The Pipes class exposes the api components. All the api components can only be a
 
 The Pipes class has the following methods. The methods with a `*` can only be accessed after the preload state. You can use `onLoaded` to make a callback from when the preload state is over.
 
-| Method                                           | Usage                                                               |
-| ------------------------------------------------ | ------------------------------------------------------------------- |
-| requireInstalled(): void                         | Shows a dialog on the main menu when the pipes mod is not installed |
-| `*` isInstalled(): boolean                       | Returns if the pipes mod is installed                               |
-| `*` getMod(): AdvancedEnergyMod \| null;         | Returns the pipes mod instance                                      |
-| `*` getVersion(): string \| null;                | Returns the version of the pipes mod instance                       |
-| onLoaded(cb: (installed: boolean) => void): void | Register to run callback on pipes loaded                            |
-| enableDebug(): void                              | Enables debug rendering on connectors                               |
-| disableDebug(): void                             | Disables debug rendering on connectors                              |
+| Method                                                        | Usage                                                               |
+| ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| requireInstalled(): void                                      | Shows a dialog on the main menu when the pipes mod is not installed |
+| registerFluid(createFluidClass: () => typeof BaseFluid): void | Registers the fluid class created in the callback                   |
+| `*` isInstalled(): boolean                                    | Returns if the pipes mod is installed                               |
+| `*` getMod(): AdvancedEnergyMod \| null;                      | Returns the pipes mod instance                                      |
+| `*` getVersion(): string \| null;                             | Returns the version of the pipes mod instance                       |
+| onLoaded(cb: (installed: boolean) => void): void              | Register to run callback on pipes loaded                            |
+| enableDebug(): void                                           | Enables debug rendering on connectors                               |
+| disableDebug(): void                                          | Disables debug rendering on connectors                              |

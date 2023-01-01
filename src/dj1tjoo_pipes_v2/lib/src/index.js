@@ -44,28 +44,30 @@ export class Pipes {
      * @returns
      */
     static registerFluid(createFluidClass) {
-        this.onLoaded(installed => {
-            if (!installed) return;
-
-            this.gFluidRegistry.register();
-        });
-
         let fluidClass = null;
         let singleton = null;
-        return class Fluid {
+        class Fluid {
             static get SINGLETON() {
                 if (singleton) return singleton;
-                return (singleton = new this.Fluid());
+                return (singleton = new this.Class());
             }
 
-            static get Fluid() {
+            static get Class() {
                 if (fluidClass) return fluidClass;
 
                 fluidClass = createFluidClass();
                 fluidClass.resolver = () => this.SINGLETON;
                 return fluidClass;
             }
-        };
+        }
+
+        this.onLoaded(installed => {
+            if (!installed) return;
+
+            this.gFluidRegistry.register(Fluid.Class);
+        });
+
+        return Fluid;
     }
 
     /**
