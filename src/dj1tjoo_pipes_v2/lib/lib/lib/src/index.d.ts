@@ -8,7 +8,7 @@
  *  gFluidRegistry: typeof import("../../js/items/base_fluid").gFluidRegistry
  * }} PipesMod
  */
-export class Pipe {
+export class Pipes {
     static isLoadedComlete: boolean;
     static isLoaded: any[];
     static loadedUid: number;
@@ -17,6 +17,20 @@ export class Pipe {
     static get BaseFluid(): typeof import("../../js/items/base_fluid").BaseFluid;
     static get PipeConnectorComponent(): typeof import("../../js/components/pipe_connector").PipeConnectorComponent;
     static get PipePinComponent(): typeof import("../../js/components/pipe_pin").PipePinComponent;
+    /**
+     * Registers a new fluid from the given class callback
+     * @param {() => typeof this.BaseFluid} createFluidClass
+     * @returns
+     */
+    static registerFluid(createFluidClass: () => typeof this.BaseFluid): {
+        new (): {};
+        readonly SINGLETON: any;
+        readonly Fluid: any;
+    };
+    /**
+     * Shows a dialog on the main menu when the pipes mod is not installed
+     */
+    static requireInstalled(): void;
     static enableDebug(): void;
     static disableDebug(): void;
     /**
@@ -24,10 +38,6 @@ export class Pipe {
      * @param {(installed: boolean) => void} cb
      */
     static onLoaded(cb: (installed: boolean) => void): void;
-    /**
-     * Shows a dialog on the main menu when the pipes mod is not installed
-     */
-    static requireInstalled(): void;
     /**
      * Returns if the pipes mod is installed
      * @returns {boolean}
