@@ -25,6 +25,25 @@ export function balanceEnergyNetwork(network) {
         consumptionRatio = realConsumption / potentialConsumption;
     }
 
-    network.providers.forEach(({ slot }) => slot.produce(productionRatio * slot.production));
-    network.consumers.forEach(({ slot }) => slot.consume(consumptionRatio * slot.consumption));
+    let maxProduction = 0;
+    let maxConsumption = 0;
+
+    network.providers.forEach(({ slot }) => {
+        const production = productionRatio * slot.production;
+        if (maxProduction < production) {
+            maxProduction = production;
+        }
+
+        slot.produce(production);
+    });
+    network.consumers.forEach(({ slot }) => {
+        const consumption = consumptionRatio * slot.consumption;
+        if (maxConsumption < consumption) {
+            maxConsumption = consumption;
+        }
+
+        slot.consume(consumption);
+    });
+
+    network.currentThroughput = Math.max(maxProduction, maxConsumption);
 }

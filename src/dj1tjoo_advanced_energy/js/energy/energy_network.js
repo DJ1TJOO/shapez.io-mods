@@ -12,6 +12,7 @@ export class EnergyNetwork {
         this.consumers = [];
 
         this.currentVolume = 0;
+        this.currentThroughput = 0;
 
         /**
          * All connectors in the network

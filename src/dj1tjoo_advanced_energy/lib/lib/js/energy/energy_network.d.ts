@@ -15,6 +15,7 @@ export class EnergyNetwork {
         slot: import("../components/energy_pin").EnergyPinSlot;
     }[];
     currentVolume: number;
+    currentThroughput: number;
     /**
      * All connectors in the network
      * @type {(
