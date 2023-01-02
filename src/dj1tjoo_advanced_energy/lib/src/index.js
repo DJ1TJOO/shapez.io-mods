@@ -7,6 +7,7 @@ const MOD_ID = "dj1tjoo_advanced_energy";
  * @typedef {import("shapez/mods/mod").Mod & {
  *  EnergyConnectorComponent: typeof import("../../js/components/energy_connector").EnergyConnectorComponent
  *  EnergyPinComponent: typeof import("../../js/components/energy_pin").EnergyPinComponent
+ *  EnergyTickerComponent: typeof import("../../js/components/energy_ticker").EnergyTickerComponent
  * }} AdvancedEnergyMod
  */
 
@@ -21,6 +22,10 @@ export class AdvancedEnergy {
 
     static get EnergyPinComponent() {
         return this.getMod()?.EnergyPinComponent || null;
+    }
+
+    static get EnergyTickerComponent() {
+        return this.getMod()?.EnergyTickerComponent || null;
     }
 
     /**

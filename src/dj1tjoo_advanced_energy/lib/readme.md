@@ -22,6 +22,7 @@ The AdvancedEnergy class exposes the api components. All the api components can 
 | ------------------------------------ | -------------------------------------------------------------------- |
 | EnergyConnectorComponent | A component to make connections with in a newtwork (E.g. simple connector, storage) |
 | EnergyPinComponent | A component to take and add energy to a network (E.g. energy producer, building that uses energy)|
+| PipeTickerComponent | A component to take and add energy to a buffer per tick (Use to create smooth delivery)|
 
 The AdvancedEnergy class has the following methods. The methods with a `*` can only be accessed after the preload state. You can use `onLoaded` to make a callback from when the preload state is over.
 
