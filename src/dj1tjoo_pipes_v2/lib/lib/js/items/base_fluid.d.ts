@@ -17,8 +17,8 @@ export class BaseFluid extends BasicSerializableObject {
     static getId(): string;
     static resolver(data: any): {};
     constructor();
-    _type: string;
-    getFluidType(): string;
+    _type: any;
+    getFluidType(): any;
     getItemType(): string;
     /**
      * Returns a string id of the item

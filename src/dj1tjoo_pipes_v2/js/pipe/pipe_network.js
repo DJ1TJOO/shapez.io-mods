@@ -46,7 +46,10 @@ export class PipeNetwork {
      * @returns { number } The max fluid that is able to be transfered in the network with in a tick, limited by the weakest link
      */
     get maxThoughput() {
-        return Math.min(...this.connectors.map(x => x.components.PipeConnector.maxThroughputPerTick));
+        return (
+            Math.min(...this.connectors.map(x => x.components.PipeConnector.maxThroughputPerTick)) *
+            Math.max(this.providers.length, this.consumers.length)
+        );
     }
 
     /**

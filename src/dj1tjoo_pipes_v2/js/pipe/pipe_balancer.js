@@ -7,6 +7,7 @@ export function balancePipeNetwork(network) {
     const potentialConsumption = network.consumers.reduce((a, { slot }) => a + slot.consumption, 0);
 
     if (potentialConsumption === 0 && potentialProduction === 0) {
+        network.currentThroughput = 0;
         return;
     }
 
@@ -18,32 +19,17 @@ export function balancePipeNetwork(network) {
         const realProduction = Math.min(potentialProduction, potentialConsumption + storageDeficit);
         network.currentVolume += realProduction - potentialConsumption;
         productionRatio = realProduction / potentialProduction;
+
+        network.currentThroughput = Math.max(realProduction, potentialConsumption);
     } else {
         const storageSurplus = network.currentVolume;
         const realConsumption = Math.min(potentialConsumption, potentialProduction + storageSurplus);
         network.currentVolume -= realConsumption - potentialProduction;
         consumptionRatio = realConsumption / potentialConsumption;
+
+        network.currentThroughput = Math.max(potentialProduction, realConsumption);
     }
 
-    let maxProduction = 0;
-    let maxConsumption = 0;
-
-    network.providers.forEach(({ slot }) => {
-        const production = productionRatio * slot.production;
-        if (maxProduction < production) {
-            maxProduction = production;
-        }
-
-        slot.produce(production);
-    });
-    network.consumers.forEach(({ slot }) => {
-        const consumption = consumptionRatio * slot.consumption;
-        if (maxConsumption < consumption) {
-            maxConsumption = consumption;
-        }
-
-        slot.consume(consumption);
-    });
-
-    network.currentThroughput = Math.max(maxProduction, maxConsumption);
+    network.providers.forEach(({ slot }) => slot.produce(productionRatio * slot.production));
+    network.consumers.forEach(({ slot }) => slot.consume(consumptionRatio * slot.consumption));
 }

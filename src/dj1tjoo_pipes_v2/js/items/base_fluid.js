@@ -43,7 +43,7 @@ export class BaseFluid extends BasicSerializableObject {
     }
 
     getFluidType() {
-        return "no-type";
+        return this.constructor["getId"]();
     }
 
     getItemType() {
