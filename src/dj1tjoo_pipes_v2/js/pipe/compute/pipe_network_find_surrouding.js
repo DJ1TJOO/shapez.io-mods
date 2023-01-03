@@ -104,7 +104,8 @@ export function findSurroundingTargets(
 
                     if (
                         !slot.linkedNetwork &&
-                        (currentNetwork.currentFluid === null || slot.fluid === currentNetwork.currentFluid)
+                        (currentNetwork.currentFluid === null ||
+                            slot.fluid.equals(currentNetwork.currentFluid))
                     ) {
                         currentNetwork.currentFluid = slot.fluid;
                         result.push({

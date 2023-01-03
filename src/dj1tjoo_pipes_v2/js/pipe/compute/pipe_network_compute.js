@@ -49,7 +49,7 @@ export function computePipeNetworks(root, pinEntities, connectors) {
         computePipeNetwork(root, connector, currentNetwork);
         if (
             currentNetwork.currentFluid === null ||
-            (pipeComp.oldNetwork && currentNetwork.currentFluid !== pipeComp.oldNetwork.currentFluid)
+            (pipeComp.oldNetwork && !currentNetwork.currentFluid.equals(pipeComp.oldNetwork.currentFluid))
         ) {
             currentNetwork.currentVolume = 0;
         }
@@ -123,7 +123,7 @@ function computePipeNetwork(root, connector, currentNetwork) {
                 if (
                     pipeComp.oldNetwork &&
                     (currentNetwork.currentFluid === null ||
-                        pipeComp.oldNetwork.currentFluid === currentNetwork.currentFluid)
+                        pipeComp.oldNetwork.currentFluid.equals(currentNetwork.currentFluid))
                 ) {
                     const oldNetworkCharge =
                         pipeComp.oldNetwork.currentVolume / pipeComp.oldNetwork.maxVolume;
