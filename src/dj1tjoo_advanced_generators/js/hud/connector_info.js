@@ -35,9 +35,9 @@ export class HUDConnectorInfo extends BaseHUDPart {
         }
 
         if (
-            !this.root.camera.getIsMapOverlayActive() &&
-            entity.components["EnergyConnector"] &&
-            !this.root.logic.getIsEntityIntersectedWithMatrix(entity, worldPos)
+            this.root.camera.getIsMapOverlayActive() ||
+            ((entity.components["EnergyConnector"] || entity.components["PipeConnector"]) &&
+                !this.root.logic.getIsEntityIntersectedWithMatrix(entity, worldPos))
         ) {
             // Detailed intersection check
             return;
@@ -54,20 +54,28 @@ export class HUDConnectorInfo extends BaseHUDPart {
             return;
         }
 
-        const x = mousePos.x + 40;
-        const y = mousePos.y + 10;
+        const x = mousePos.x + 10;
+        let y = mousePos.y + 10;
+
+        let minWidth = 0;
 
         const ctx = /** @type {CanvasRenderingContext2D & {beginRoundedRect: beginRoundedRect}} */ (
             parameters.context
         );
 
-        if (networks.length === 1) {
-            const network = networks[0];
+        if (networks.length < 1) return;
+
+        for (let i = 0; i < networks.length; i++) {
+            const network = networks[i];
 
             ctx.fillStyle = "#64666Ebb";
             ctx.strokeStyle = "#64666Ebb";
 
-            const throughputText = T.advaned_generators.throughput
+            const throughputText = (
+                typeof network["currentFluid"] === "undefined"
+                    ? T.advanced_generators.throughputAe
+                    : T.advanced_generators.throughputL
+            )
                 .replace("<x>", round2Digits(network.currentThroughput))
                 .replace("<y>", round2Digits(network.maxThoughput));
             const throughputMetrics = ctx.measureText(throughputText);
@@ -75,7 +83,11 @@ export class HUDConnectorInfo extends BaseHUDPart {
                 throughputMetrics.actualBoundingBoxAscent + throughputMetrics.actualBoundingBoxDescent;
             const throughputWidth = throughputMetrics.width;
 
-            const volumeText = T.advaned_generators.volume
+            const volumeText = (
+                typeof network["currentFluid"] === "undefined"
+                    ? T.advanced_generators.volumeAe
+                    : T.advanced_generators.volumeL
+            )
                 .replace("<x>", round2Digits(network.currentVolume))
                 .replace("<y>", round2Digits(network.maxVolume));
             const volumeMetrics = ctx.measureText(volumeText);
@@ -86,8 +98,12 @@ export class HUDConnectorInfo extends BaseHUDPart {
             const infoWidth = Math.max(throughputWidth, volumeWidth);
             const infoHeight = throughputHeight + 5 + volumeHeight;
 
+            if (infoWidth > minWidth) {
+                minWidth = infoWidth;
+            }
+
             ctx.beginPath();
-            ctx.beginRoundedRect(x, y, infoWidth + 20, infoHeight + 20, 5);
+            ctx.beginRoundedRect(x, y, minWidth + 20, infoHeight + 20, 5);
             ctx.fill();
             ctx.stroke();
             ctx.closePath();
@@ -101,6 +117,8 @@ export class HUDConnectorInfo extends BaseHUDPart {
             ctx.fillText(volumeText, innerX, innerY + 2 + throughputHeight);
 
             ctx.textBaseline = "alphabetic";
+
+            y += infoHeight + 20 + 10;
         }
     }
 
@@ -108,29 +126,30 @@ export class HUDConnectorInfo extends BaseHUDPart {
      * Returns all energy networks this entity participates in on the given tile
      * @param {import("shapez/game/entity").Entity} entity
      * @param {import("shapez/core/vector").Vector} tile
-     * @returns {Array<import("@dj1tjoo/shapez-advanced-energy/lib/js/energy/energy_network").EnergyNetwork>|null} Null if the entity is never able to be connected at the given tile
+     * @returns {Array<import("@dj1tjoo/shapez-advanced-energy/lib/js/energy/energy_network").EnergyNetwork| import("@dj1tjoo/shapez-pipes/lib/js/pipe/pipe_network").PipeNetwork>|null} Null if the entity is never able to be connected at the given tile
      */
     getEntityNetworks(entity, tile) {
         let canConnectAtAll = false;
 
-        /** @type {Set<import("@dj1tjoo/shapez-advanced-energy/lib/js/energy/energy_network").EnergyNetwork>} */
+        /** @type {Set<import("@dj1tjoo/shapez-advanced-energy/lib/js/energy/energy_network").EnergyNetwork | import("@dj1tjoo/shapez-pipes/lib/js/pipe/pipe_network").PipeNetwork>} */
         const networks = new Set();
 
         const staticComp = entity.components.StaticMapEntity;
 
-        /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_connector").EnergyConnectorComponent} */
-        const connectorComp = entity.components["EnergyConnector"];
-        if (connectorComp) {
+        /** @type {(import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_connector").EnergyConnectorComponent | import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_connector").PipeConnectorComponent)[]} */
+        const connectorComps = [
+            entity.components["EnergyConnector"],
+            entity.components["PipeConnector"],
+        ].filter(Boolean);
+        if (connectorComps) {
             canConnectAtAll = true;
-            if (connectorComp.linkedNetwork) {
-                networks.add(connectorComp.linkedNetwork);
-            }
+            connectorComps.forEach(x => x.linkedNetwork && networks.add(x.linkedNetwork));
         }
 
-        /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
-        const pinsComp = entity.components["EnergyPin"];
-        if (pinsComp) {
-            const slots = pinsComp.slots;
+        /** @type {(import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent | import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_pin").PipePinComponent)[]} */
+        const pinsComps = [entity.components["EnergyPin"], entity.components["PipePin"]].filter(Boolean);
+        if (pinsComps) {
+            const slots = pinsComps.flatMap(x => x.slots);
             for (let i = 0; i < slots.length; ++i) {
                 const slot = slots[i];
                 const slotLocalPos = staticComp.localTileToWorld(slot.pos);

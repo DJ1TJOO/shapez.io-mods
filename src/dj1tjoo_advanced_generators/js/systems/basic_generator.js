@@ -64,9 +64,9 @@ export class BasicGeneratorSystem extends GameSystemWithFilter {
             if (!processorComp || (processorComp.ongoingCharges.length < 1 && processorComp.inputCount < 1))
                 continue;
 
-            const speed = this.root.hubGoals.getProcessorBaseSpeed(
-                enumItemProcessorTypes[processLabelBasicGenerator]
-            );
+            const speed =
+                this.root.hubGoals.getProcessorBaseSpeed(enumItemProcessorTypes[processLabelBasicGenerator]) /
+                this.root.app.settings.getDesiredFps();
             if (
                 connectedSlots.length < 1 ||
                 !connectedSlots.some(x => x.buffer + x.production / speed < x.maxBuffer)

@@ -1,40 +1,22 @@
-import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
+import { Pipes } from "@dj1tjoo/shapez-pipes";
 import { Loader } from "shapez/core/loader";
 import { Rectangle } from "shapez/core/rectangle";
-import { generateMatrixRotations } from "shapez/core/utils";
 import { arrayAllDirections, enumDirection, enumInvertedDirections, Vector } from "shapez/core/vector";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
-import { ConnectorRendererComponent } from "../components/connector_renderer";
+import { T } from "shapez/translations";
+import { PipeConnectorRendererComponent } from "../components/pipe_connector_renderer";
+import { config } from "../config";
+import {
+    arrayConnectorRotationVariantToType,
+    enumConnectorType,
+    connectorOverlayMatrices,
+} from "../connectorTypes";
+import { formatL, formatLPerTick } from "../ui/formatter";
 
-/** @enum {string} */
-export const enumConnectorType = {
-    forward: "forward",
-    turn: "turn",
-    split: "split",
-    cross: "cross",
-    stub: "stub",
-};
-
-export const arrayConnectorRotationVariantToType = [
-    enumConnectorType.forward,
-    enumConnectorType.turn,
-    enumConnectorType.split,
-    enumConnectorType.cross,
-    enumConnectorType.stub,
-];
-
-export const connectorOverlayMatrices = {
-    [enumConnectorType.forward]: generateMatrixRotations([0, 1, 0, 0, 1, 0, 0, 1, 0]),
-    [enumConnectorType.split]: generateMatrixRotations([0, 0, 0, 1, 1, 1, 0, 1, 0]),
-    [enumConnectorType.turn]: generateMatrixRotations([0, 0, 0, 0, 1, 1, 0, 1, 0]),
-    [enumConnectorType.cross]: generateMatrixRotations([0, 1, 0, 1, 1, 1, 0, 1, 0]),
-    [enumConnectorType.stub]: generateMatrixRotations([0, 1, 0, 0, 1, 0, 0, 1, 0]),
-};
-
-export class MetaBasicConnectorBuilding extends ModMetaBuilding {
+export class MetaPipeConnectorBuilding extends ModMetaBuilding {
     constructor() {
-        super("connector");
+        super("pipe_connector");
     }
 
     getSilhouetteColor() {
@@ -62,19 +44,19 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
     getPreviewSprite(rotationVariant, variant) {
         switch (arrayConnectorRotationVariantToType[rotationVariant]) {
             case enumConnectorType.forward: {
-                return Loader.getSprite("sprites/connectors/" + "connector" + "_forward.png");
+                return Loader.getSprite("sprites/connectors/pipe/" + "pipe" + "_forward.png");
             }
             case enumConnectorType.turn: {
-                return Loader.getSprite("sprites/connectors/" + "connector" + "_turn.png");
+                return Loader.getSprite("sprites/connectors/pipe/" + "pipe" + "_turn.png");
             }
             case enumConnectorType.split: {
-                return Loader.getSprite("sprites/connectors/" + "connector" + "_split.png");
+                return Loader.getSprite("sprites/connectors/pipe/" + "pipe" + "_split.png");
             }
             case enumConnectorType.cross: {
-                return Loader.getSprite("sprites/connectors/" + "connector" + "_cross.png");
+                return Loader.getSprite("sprites/connectors/pipe/" + "pipe" + "_cross.png");
             }
             case enumConnectorType.stub: {
-                return Loader.getSprite("sprites/connectors/" + "connector" + "_stub.png");
+                return Loader.getSprite("sprites/connectors/pipe/" + "pipe" + "_stub.png");
             }
             default: {
                 assertAlways(false, "Invalid connector rotation variant");
@@ -90,32 +72,32 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
         return [
             {
                 variant: defaultBuildingVariant,
-                name: "Basic Connector",
-                description: "Stores 50f (flux)",
+                name: "Basic Pipe",
+                description: "Connects buildings that produce and consume fluids together",
                 rotationVariant: 0,
             },
             {
                 variant: defaultBuildingVariant,
-                name: "Basic Connector",
-                description: "Stores 50f (flux)",
+                name: "Basic Pipe",
+                description: "Connects buildings that produce and consume fluids together",
                 rotationVariant: 1,
             },
             {
                 variant: defaultBuildingVariant,
-                name: "Basic Connector",
-                description: "Stores 50f (flux)",
+                name: "Basic Pipe",
+                description: "Connects buildings that produce and consume fluids together",
                 rotationVariant: 2,
             },
             {
                 variant: defaultBuildingVariant,
-                name: "Basic Connector",
-                description: "Stores 50f (flux)",
+                name: "Basic Pipe",
+                description: "Connects buildings that produce and consume fluids together",
                 rotationVariant: 3,
             },
             {
                 variant: defaultBuildingVariant,
-                name: "Basic Connector",
-                description: "Stores 50f (flux)",
+                name: "Basic Pipe",
+                description: "Connects buildings that produce and consume fluids together",
                 rotationVariant: 4,
             },
         ];
@@ -125,19 +107,30 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
         return connectorOverlayMatrices[arrayConnectorRotationVariantToType[rotationVariant]][rotation];
     }
 
+    getAdditionalStatistics() {
+        const localConfig = config().pipe;
+
+        return /** @type {[string, string][]}*/ ([
+            [T.advanced_generators.throughput, formatLPerTick(localConfig.maxThroughputPerTick)],
+            [T.advanced_generators.stores, formatL(localConfig.volume)],
+        ]);
+    }
+
     /**
      * Creates the entity at the given location
      * @param {import("shapez/savegame/savegame_typedefs").Entity} entity
      */
     setupEntityComponents(entity) {
+        const localConfig = config().pipe;
+
         entity.addComponent(
-            new AdvancedEnergy.EnergyConnectorComponent({
-                maxEnergyVolume: 50,
-                maxThroughputPerTick: 15,
+            new Pipes.PipeConnectorComponent({
+                maxPipeVolume: localConfig.volume,
+                maxThroughputPerTick: localConfig.maxThroughputPerTick,
             })
         );
 
-        entity.addComponent(new ConnectorRendererComponent());
+        entity.addComponent(new PipeConnectorRendererComponent());
     }
 
     /**
@@ -193,6 +186,7 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
             [enumDirection.right]: false,
         };
 
+        let currentNetwork = null;
         for (let i = 0; i < offsets.length; i++) {
             const { direction, initialSearchTile } = offsets[i];
             const entity = root.map.getLayerContentXY(initialSearchTile.x, initialSearchTile.y, "regular");
@@ -200,8 +194,8 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
 
             const staticComp = entity.components.StaticMapEntity;
 
-            /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_connector").EnergyConnectorComponent} */
-            const connectorComp = entity.components["EnergyConnector"];
+            /** @type {import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_connector").PipeConnectorComponent} */
+            const connectorComp = entity.components["PipeConnector"];
 
             if (connectorComp) {
                 let validDirection = true;
@@ -217,13 +211,14 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
                 }
 
                 if ((!typeMask || connectorComp.type === typeMask) && validDirection) {
+                    currentNetwork = connectorComp.linkedNetwork;
                     connections[direction] = true;
                 }
             }
 
             // Check for connected slots
-            /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
-            const pinComp = entity.components["EnergyPin"];
+            /** @type {import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_pin").PipePinComponent} */
+            const pinComp = entity.components["PipePin"];
             if (pinComp) {
                 // Go over all slots and see if they are connected
                 const pinSlots = pinComp.slots;
@@ -242,6 +237,15 @@ export class MetaBasicConnectorBuilding extends ModMetaBuilding {
                         continue;
                     }
 
+                    if (
+                        currentNetwork &&
+                        currentNetwork.currentFluid !== null &&
+                        !slot.fluid.equals(currentNetwork.currentFluid)
+                    ) {
+                        continue;
+                    }
+
+                    currentNetwork = slot.linkedNetwork;
                     connections[direction] = true;
                 }
             }

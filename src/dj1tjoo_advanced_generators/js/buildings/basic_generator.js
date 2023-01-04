@@ -20,12 +20,16 @@ import { enumColors } from "shapez/game/colors";
 import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
 import { BasicGeneratorComponent } from "../components/basic_generator";
 import { T } from "shapez/translations";
-import { formatAePerSecond } from "../ui/aeFormatter";
+import { formatAePerTick, formatLPerTick } from "../ui/formatter";
+import { amountPerCharge } from "../amountPerCharge";
+import { config } from "../config";
+import { Pipes } from "@dj1tjoo/shapez-pipes";
+import { StoneMagma } from "../../../shared/fluids/magma";
 
 const overlayMatrix = generateMatrixRotations([1, 1, 1, 1, 0, 1, 1, 1, 1]);
 
 export const processLabelBasicGenerator = "dj1tjoo@basic_generator";
-const volumeCreated = 50;
+export const basicGeneratorMagma = "basic_magma";
 
 export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
     constructor() {
@@ -43,18 +47,76 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
                 name: "Basic Generator",
                 description: "Generates flux by providing it with a circle",
             },
+            {
+                variant: basicGeneratorMagma,
+                name: "Basic Magma Generator",
+                description: "Generates flux by providing it with magma",
+            },
         ];
+    }
+
+    getAvailableVariants() {
+        return [defaultBuildingVariant, basicGeneratorMagma];
     }
 
     getSpecialOverlayRenderMatrix(rotation, rotationVariant, variant) {
         return overlayMatrix[rotation];
     }
 
-    getAdditionalStatistics(root) {
-        const speed = root.hubGoals.getProcessorBaseSpeed(enumItemProcessorTypes[processLabelBasicGenerator]);
-        return /** @type {[[string, string]]}*/ ([
-            [T.ingame.buildingPlacement.infoTexts.speed, formatAePerSecond(speed * volumeCreated)],
+    getAdditionalStatistics(root, variant) {
+        return /** @type {[string, string][]}*/ ([
+            [T.advanced_generators.produces, formatAePerTick(config().basic_generator[variant].energy)],
+            variant === basicGeneratorMagma && [
+                T.advanced_generators.consumes,
+                formatLPerTick(config().basic_generator[variant].magma),
+            ],
         ]);
+    }
+
+    /**
+     * Should update the entity to match the given variants
+     * @param {import("shapez/game/entity").Entity} entity
+     * @param {number} rotationVariant
+     * @param {string} variant
+     */
+    updateVariants(entity, rotationVariant, variant) {
+        const localConfig = config().basic_generator[variant];
+
+        entity.components["EnergyPin"].setSlots([
+            {
+                direction: enumDirection.left,
+                pos: new Vector(0, 0),
+                type: "ejector",
+                productionPerTick: localConfig.energy,
+                maxBuffer: entity.root
+                    ? amountPerCharge(entity.root, localConfig.energy, processLabelBasicGenerator) * 3
+                    : localConfig.energy * 3,
+            },
+        ]);
+
+        if (variant === basicGeneratorMagma) {
+            entity.components.ItemProcessor.inputsPerCharge = 0;
+            entity.components["PipePin"].setSlots([
+                {
+                    direction: enumDirection.bottom,
+                    pos: new Vector(0, 0),
+                    type: "acceptor",
+                    consumptionPerTick: localConfig.magma,
+                    maxBuffer: entity.root
+                        ? amountPerCharge(entity.root, localConfig.magma, processLabelBasicGenerator) * 3
+                        : localConfig.magma * 3,
+                    fluid: StoneMagma.SINGLETON,
+                },
+            ]);
+        } else if (variant === defaultBuildingVariant) {
+            entity.components.ItemAcceptor.setSlots([
+                {
+                    direction: enumDirection.bottom,
+                    pos: new Vector(0, 0),
+                    filter: "shape",
+                },
+            ]);
+        }
     }
 
     /**
@@ -65,13 +127,7 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
     setupEntityComponents(entity, root) {
         entity.addComponent(
             new ItemAcceptorComponent({
-                slots: [
-                    {
-                        direction: enumDirection.bottom,
-                        pos: new Vector(0, 0),
-                        filter: "shape",
-                    },
-                ],
+                slots: [],
             })
         );
 
@@ -85,18 +141,15 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
 
         entity.addComponent(new BasicGeneratorComponent());
 
-        const speed = globalConfig.beltSpeedItemsPerSecond * (1 / 8);
         entity.addComponent(
             new AdvancedEnergy.EnergyPinComponent({
-                slots: [
-                    {
-                        direction: enumDirection.left,
-                        pos: new Vector(0, 0),
-                        type: "ejector",
-                        productionPerTick: volumeCreated * speed,
-                        maxBuffer: 100,
-                    },
-                ],
+                slots: [],
+            })
+        );
+
+        entity.addComponent(
+            new Pipes.PipePinComponent({
+                slots: [],
             })
         );
     }
@@ -106,10 +159,29 @@ export function setupBasicGenerator() {
     enumItemProcessorTypes[processLabelBasicGenerator] = processLabelBasicGenerator;
     enumItemProcessorRequirements[processLabelBasicGenerator] = processLabelBasicGenerator;
 
+    /**
+     * @this {import("shapez/game/systems/item_processor").ItemProcessorSystem}
+     */
     MODS_CAN_PROCESS[enumItemProcessorRequirements[processLabelBasicGenerator]] = function ({ entity }) {
+        const localConfig = config().basic_generator[entity.components.StaticMapEntity.getVariant()];
+
         /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
         const pinComp = entity.components["EnergyPin"];
-        if (pinComp.slots[0].buffer + volumeCreated > pinComp.slots[0].maxBuffer) {
+        if (
+            pinComp.slots[0].buffer +
+                amountPerCharge(this.root, localConfig.energy, processLabelBasicGenerator) >
+            pinComp.slots[0].maxBuffer
+        ) {
+            return false;
+        }
+
+        /** @type {import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_pin").PipePinComponent} */
+        const pipeComp = entity.components["PipePin"];
+        if (
+            pipeComp.slots[0] &&
+            pipeComp.slots[0].buffer <
+                amountPerCharge(this.root, localConfig.magma, processLabelBasicGenerator)
+        ) {
             return false;
         }
 
@@ -159,13 +231,27 @@ export function setupBasicGenerator() {
     };
 
     /**
-     * @this {ItemProcessorSystem}
+     * @this {import("shapez/game/systems/item_processor").ItemProcessorSystem}
      */
     MOD_ITEM_PROCESSOR_HANDLERS[enumItemProcessorTypes[processLabelBasicGenerator]] = function ({
         items,
         entity,
     }) {
-        entity.components["EnergyPin"].slots[0].buffer += volumeCreated;
+        const localConfig = config().basic_generator[entity.components.StaticMapEntity.getVariant()];
+
+        entity.components["EnergyPin"].slots[0].buffer += amountPerCharge(
+            this.root,
+            localConfig.energy,
+            processLabelBasicGenerator
+        );
+
+        if (entity.components.StaticMapEntity.getVariant() === basicGeneratorMagma) {
+            entity.components["PipePin"].slots[0].buffer -= amountPerCharge(
+                this.root,
+                localConfig.magma,
+                processLabelBasicGenerator
+            );
+        }
     };
 
     /**

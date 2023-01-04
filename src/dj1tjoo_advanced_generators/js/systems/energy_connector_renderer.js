@@ -1,18 +1,20 @@
 import { globalConfig } from "shapez/core/config";
 import { Loader } from "shapez/core/loader";
 import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
-import { arrayConnectorRotationVariantToType, enumConnectorType } from "../buildings/connector";
-import { ConnectorRendererComponent } from "../components/connector_renderer";
+import { EnergyConnectorRendererComponent } from "../components/energy_connector_renderer";
+import { enumConnectorType, arrayConnectorRotationVariantToType } from "../connectorTypes";
 
-export class ConnectorRendererSystem extends GameSystemWithFilter {
+export class EnergyConnectorRendererSystem extends GameSystemWithFilter {
     constructor(root) {
-        super(root, [ConnectorRendererComponent]);
+        super(root, [EnergyConnectorRendererComponent]);
 
         this.sprites = {};
         this.spritesTop = {};
         for (const type in enumConnectorType) {
-            this.sprites[type] = Loader.getSprite("sprites/connectors/connector_" + type + ".png");
-            this.spritesTop[type] = Loader.getSprite("sprites/connectors/connector_" + type + "_top.png");
+            this.sprites[type] = Loader.getSprite("sprites/connectors/energy/connector_" + type + ".png");
+            this.spritesTop[type] = Loader.getSprite(
+                "sprites/connectors/energy/connector_" + type + "_top.png"
+            );
         }
     }
 
@@ -31,7 +33,7 @@ export class ConnectorRendererSystem extends GameSystemWithFilter {
                 if (
                     entity &&
                     entity.components["EnergyConnector"] &&
-                    entity.components["ConnectorRenderer"]
+                    entity.components["EnergyConnectorRenderer"]
                 ) {
                     /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_connector").EnergyConnectorComponent} */
                     const connectorComp = entity.components["EnergyConnector"];

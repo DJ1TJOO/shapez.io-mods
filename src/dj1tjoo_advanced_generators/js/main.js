@@ -2,24 +2,54 @@ import { Mod } from "shapez/mods/mod";
 import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
 
 import { MetaBasicConsumerBuilding, setupBasicConsumer } from "./buildings/basic_consumer";
-import { MetaBasicConnectorBuilding } from "./buildings/connector";
+import { MetaEnergyConnectorBuilding } from "./buildings/energy_connector";
 import { MetaBasicGeneratorBuilding, setupBasicGenerator } from "./buildings/basic_generator";
 import { BasicGeneratorComponent } from "./components/basic_generator";
 import { BasicGeneratorSystem } from "./systems/basic_generator";
-import { ConnectorRendererSystem } from "./systems/connector_renderer";
-import { ConnectorRendererComponent } from "./components/connector_renderer";
+import { EnergyConnectorRendererSystem } from "./systems/energy_connector_renderer";
+import { EnergyConnectorRendererComponent } from "./components/energy_connector_renderer";
 import { HUDConnectorInfo } from "./hud/connector_info";
 import { GameHUD } from "shapez/game/hud/hud";
+import { PipeConnectorRendererComponent } from "./components/pipe_connector_renderer";
+import { PipeConnectorRendererSystem } from "./systems/pipe_connector_renderer";
+import { MetaPipeConnectorBuilding } from "./buildings/pipe_connector";
+import { MetaPumpBuilding, setupPump } from "./buildings/pump";
+import { Pipes } from "@dj1tjoo/shapez-pipes";
+import { MapChunk } from "shapez/game/map_chunk";
+import { MetaSteamGeneratorBuilding, setupSteamGenerator } from "./buildings/steam_generator";
+import { config } from "./config";
+import { Water } from "../../shared/fluids/water";
+import { EnergyPinRendererSystem } from "../../shared/systems/energy_pin_renderer";
+import { EnergyPinRendererComponent } from "../../shared/components/energy_pin_renderer";
+import { registerComponentShared, registerSystemShared } from "../../shared/registerShared";
+import { MetaTurbineBuilding, setupTurbine } from "./buildings/turbine";
+import { TurbineComponent } from "./components/turbine";
+import { TurbineSystem } from "./systems/turbine";
+import { PipePinRendererSystem } from "../../shared/systems/pipe_pin_renderer";
+import { PipePinRendererComponent } from "../../shared/components/pipe_pin_renderer";
 
 class ModImpl extends Mod {
     init() {
+        this.config = config();
+
         AdvancedEnergy.requireInstalled();
-        // AdvancedEnergy.enableDebug();
+        AdvancedEnergy.enableDebug();
+        Pipes.requireInstalled();
+        Pipes.enableDebug();
 
         this.registerHuds();
         this.registerBuildings();
         this.registerComponents();
         this.registerSystems();
+        this.registerPatches();
+    }
+
+    registerPatches() {
+        this.modInterface.runAfterMethod(MapChunk, "generatePatches", function ({ rng }) {
+            if (rng.next() < 0.05) {
+                this.internalGeneratePatch(rng, 2, Water.SINGLETON);
+            }
+        });
     }
 
     registerHuds() {
@@ -31,7 +61,12 @@ class ModImpl extends Mod {
 
     registerComponents() {
         this.modInterface.registerComponent(BasicGeneratorComponent);
-        this.modInterface.registerComponent(ConnectorRendererComponent);
+        this.modInterface.registerComponent(EnergyConnectorRendererComponent);
+        this.modInterface.registerComponent(PipeConnectorRendererComponent);
+        this.modInterface.registerComponent(TurbineComponent);
+
+        registerComponentShared.bind(this)(EnergyPinRendererComponent);
+        registerComponentShared.bind(this)(PipePinRendererComponent);
     }
 
     registerSystems() {
@@ -42,10 +77,34 @@ class ModImpl extends Mod {
             drawHooks: ["staticAfter"],
         });
         this.modInterface.registerGameSystem({
-            id: "connector_renderer",
-            systemClass: ConnectorRendererSystem,
+            id: "energy_connector_renderer",
+            systemClass: EnergyConnectorRendererSystem,
             before: "end",
             drawHooks: ["staticBefore"],
+        });
+        this.modInterface.registerGameSystem({
+            id: "pipe_connector_renderer",
+            systemClass: PipeConnectorRendererSystem,
+            before: "end",
+            drawHooks: ["staticBefore"],
+        });
+        this.modInterface.registerGameSystem({
+            id: "turbine",
+            systemClass: TurbineSystem,
+            before: "end",
+            drawHooks: ["staticAfter"],
+        });
+        registerSystemShared.bind(this)({
+            id: "pipe_pin_renderer",
+            systemClass: PipePinRendererSystem,
+            before: "end",
+            drawHooks: ["staticAfter"],
+        });
+        registerSystemShared.bind(this)({
+            id: "energy_pin_renderer",
+            systemClass: EnergyPinRendererSystem,
+            before: "end",
+            drawHooks: ["staticAfter"],
         });
     }
 
@@ -59,14 +118,33 @@ class ModImpl extends Mod {
             metaClass: MetaBasicGeneratorBuilding,
         });
         this.modInterface.registerNewBuilding({
-            metaClass: MetaBasicConnectorBuilding,
+            metaClass: MetaEnergyConnectorBuilding,
+        });
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaPipeConnectorBuilding,
+        });
+        setupPump.apply(this);
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaPumpBuilding,
+        });
+        setupSteamGenerator.apply(this);
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaSteamGeneratorBuilding,
+        });
+        setupTurbine.apply(this);
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaTurbineBuilding,
         });
 
         this.modLoader.signals.hudElementInitialized.add(element => {
             if (element.constructor.name === "HUDBuildingsToolbar") {
                 element.primaryBuildings.push(MetaBasicConsumerBuilding);
                 element.primaryBuildings.push(MetaBasicGeneratorBuilding);
-                element.primaryBuildings.push(MetaBasicConnectorBuilding);
+                element.primaryBuildings.push(MetaEnergyConnectorBuilding);
+                element.primaryBuildings.push(MetaPipeConnectorBuilding);
+                element.primaryBuildings.push(MetaPumpBuilding);
+                element.primaryBuildings.push(MetaSteamGeneratorBuilding);
+                element.primaryBuildings.push(MetaTurbineBuilding);
             }
         });
     }

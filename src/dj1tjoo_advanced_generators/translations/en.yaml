@@ -1,5 +1,17 @@
-advaned_generators:
-    oneAePerSecond: 1 AE/t
-    aePerSecond: <x> AE/t
-    volume: "Volume: <x>/<y> AE"
-    throughput: "Throughput: <x>/<y> AE/t"
+advanced_generators:
+    oneAePerTick: 1 AE/t
+    aePerTick: <x> AE/t
+    ae: "<x> AE"
+    volumeAe: "Volume: <x>/<y> AE"
+    throughputAe: "Throughput: <x>/<y> AE/t"
+
+    oneLPerTick: 1 L/t
+    lPerTick: <x> L/t
+    l: "<x> L"
+    volumeL: "Volume: <x>/<y> L"
+    throughputL: "Throughput: <x>/<y> L/t"
+
+    produces: Produces
+    consumes: Consumes
+    throughput: Throughput
+    stores: Stores

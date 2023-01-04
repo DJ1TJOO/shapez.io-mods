@@ -81,6 +81,10 @@ function computeEnergyNetwork(root, connector, currentNetwork) {
         const currentEntity = current.entity;
         const currentSlot = current.slot;
 
+        if (currentSlot?.linkedNetwork || currentEntity.components["EnergyConnector"]?.linkedNetwork) {
+            continue;
+        }
+
         let newSearchDirections = [];
         let newSearchTile = null;
 

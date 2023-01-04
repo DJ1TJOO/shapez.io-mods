@@ -87,6 +87,10 @@ function computePipeNetwork(root, connector, currentNetwork) {
         const currentEntity = current.entity;
         const currentSlot = current.slot;
 
+        if (currentSlot?.linkedNetwork || currentEntity.components["PipeConnector"]?.linkedNetwork) {
+            continue;
+        }
+
         let newSearchDirections = [];
         let newSearchTile = null;
 
