@@ -31,6 +31,20 @@ export class EnergyNetwork {
         };
     })[];
     /**
+     * All tunnels in the network
+     * @type {(
+     *      import("shapez/game/entity").Entity & {
+     *      components: import("shapez/game/entity_components").EntityComponentStorage & {
+     *          EnergyTunnel?: import("../components/energy_tunnel").EnergyTunnelComponent
+     *      }
+     * })[]}
+     */
+    tunnels: (import("shapez/game/entity").Entity & {
+        components: import("shapez/game/entity_components").EntityComponentStorage & {
+            EnergyTunnel?: import("../components/energy_tunnel").EnergyTunnelComponent;
+        };
+    })[];
+    /**
      * All connected slots
      * @type {Array<{ entity: import("shapez/game/entity").Entity, slot: import("../components/energy_pin").EnergyPinSlot }>}
      */
@@ -51,16 +65,4 @@ export class EnergyNetwork {
      * @returns { number } The max energy that is able to be stored in the network
      */
     get maxVolume(): number;
-    /**
-     * Returns if network can hold energy
-     * @param {number} volume
-     * @returns Can add volume
-     */
-    canAdd(volume: number): boolean;
-    /**
-     * Returns if network has the energy
-     * @param {number} volume
-     * @returns Can remove volume
-     */
-    canRemove(volume: number): boolean;
 }

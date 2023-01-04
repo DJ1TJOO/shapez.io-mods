@@ -12,7 +12,7 @@ export class EnergyConnectorComponent extends Component {
      * @param {string=} param0.type The type of connectors it can link to
      * @param {{from: import("shapez/core/vector").enumDirection, to: import("shapez/core/vector").enumDirection}=} param0.direction The directions the connector is able to input and output from
      */
-    constructor({ maxEnergyVolume = 30, maxThroughputPerTick = 50, type = "default", direction = null }) {
+    constructor({ maxEnergyVolume = 1000, maxThroughputPerTick = 1000, type = "default", direction = null }) {
         super();
         this.maxEnergyVolume = maxEnergyVolume;
         this.maxThroughputPerTick = maxThroughputPerTick;

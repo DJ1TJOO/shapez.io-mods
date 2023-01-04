@@ -1,6 +1,12 @@
-import { arrayAllDirections } from "shapez/core/vector";
+import {
+    arrayAllDirections,
+    enumDirectionToVector,
+    enumInvertedDirections,
+    Vector,
+} from "shapez/core/vector";
 import { EnergyConnectorComponent } from "../../components/energy_connector";
 import { enumPinSlotType } from "../../components/energy_pin";
+import { EnergyTunnelComponent } from "../../components/energy_tunnel";
 import { EnergyNetwork } from "../energy_network";
 import { findSurroundingTargets } from "./energy_network_find_surrouding";
 
@@ -9,9 +15,10 @@ import { findSurroundingTargets } from "./energy_network_find_surrouding";
  * @param {import("shapez/game/root").GameRoot} root
  * @param {import("shapez/game/entity").Entity[]} pinEntities
  * @param {import("shapez/game/entity").Entity[]} connectors
+ * @param {import("shapez/game/entity").Entity[]} tunnels
  * @returns {EnergyNetwork[]}
  */
-export function computeEnergyNetworks(root, pinEntities, connectors) {
+export function computeEnergyNetworks(root, pinEntities, connectors, tunnels) {
     const networks = [];
 
     // Remove current references and store them in the old network
@@ -20,6 +27,16 @@ export function computeEnergyNetworks(root, pinEntities, connectors) {
         const pinComp = entity.components["EnergyPin"];
         for (let i = 0; i < pinComp.slots.length; i++) {
             const slot = pinComp.slots[i];
+            slot.oldNetwork = slot.linkedNetwork;
+            slot.linkedNetwork = null;
+        }
+    }
+
+    for (const entity of tunnels) {
+        /** @type {import("../../components/energy_tunnel").EnergyTunnelComponent}*/
+        const tunnelComp = entity.components["EnergyTunnel"];
+        for (let i = 0; i < tunnelComp.slots.length; i++) {
+            const slot = tunnelComp.slots[i];
             slot.oldNetwork = slot.linkedNetwork;
             slot.linkedNetwork = null;
         }
@@ -72,14 +89,16 @@ function computeEnergyNetwork(root, connector, currentNetwork) {
     /**
      * @type {{
      *  entity: import("shapez/game/entity").Entity,
-     *  slot: import("../../components/energy_pin").EnergyPinSlot | null
+     *  slot: import("../../components/energy_pin").EnergyPinSlot | null,
+     *  tunnelSlot: import("../../components/energy_tunnel").EnergyTunnelSlot | null
      * }[]}
      */
-    const entitiesToProcess = [{ entity: connector, slot: null }];
+    const entitiesToProcess = [{ entity: connector, slot: null, tunnelSlot: null }];
     while (entitiesToProcess.length > 0) {
         const current = entitiesToProcess.shift();
         const currentEntity = current.entity;
         const currentSlot = current.slot;
+        const currentTunnelSlot = current.tunnelSlot;
 
         if (currentSlot?.linkedNetwork || currentEntity.components["EnergyConnector"]?.linkedNetwork) {
             continue;
@@ -87,6 +106,7 @@ function computeEnergyNetwork(root, connector, currentNetwork) {
 
         let newSearchDirections = [];
         let newSearchTile = null;
+        let tunnel = false;
 
         if (currentEntity.components["EnergyPin"]) {
             if (currentSlot.type === enumPinSlotType.ejector) {
@@ -108,6 +128,31 @@ function computeEnergyNetwork(root, connector, currentNetwork) {
             newSearchTile = currentEntity.components.StaticMapEntity.localTileToWorld(currentSlot.pos);
 
             delete currentSlot.oldNetwork;
+        }
+
+        if (currentEntity.components["EnergyTunnel"]) {
+            if (currentTunnelSlot.type === typeMask) {
+                // Divide remaining evenly between old and new network
+                if (currentTunnelSlot.oldNetwork) {
+                    const oldNetworkCharge =
+                        currentTunnelSlot.oldNetwork.currentVolume / currentTunnelSlot.oldNetwork.maxVolume;
+                    const localCharge = currentTunnelSlot.maxEnergyVolume * oldNetworkCharge;
+
+                    currentNetwork.currentVolume += localCharge;
+                    delete currentTunnelSlot.oldNetwork;
+                }
+
+                // Register on the network
+                currentNetwork.tunnels.push(currentEntity);
+                currentTunnelSlot.linkedNetwork = currentNetwork;
+            }
+
+            // Specify where to search next
+            newSearchDirections = [
+                currentEntity.components.StaticMapEntity.localDirectionToWorld(currentTunnelSlot.direction),
+            ];
+            newSearchTile = currentEntity.components.StaticMapEntity.localTileToWorld(currentTunnelSlot.pos);
+            tunnel = true;
         }
 
         if (currentEntity.components["EnergyConnector"]) {
@@ -152,7 +197,8 @@ function computeEnergyNetwork(root, connector, currentNetwork) {
                 currentEntity.components.StaticMapEntity.getTileSpaceBounds(),
                 newSearchTile,
                 newSearchDirections,
-                typeMask
+                typeMask,
+                tunnel ? currentEntity : null
             )
         );
     }

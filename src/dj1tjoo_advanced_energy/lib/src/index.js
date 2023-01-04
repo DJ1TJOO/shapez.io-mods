@@ -7,6 +7,7 @@ const MOD_ID = "dj1tjoo_advanced_energy";
  * @typedef {import("shapez/mods/mod").Mod & {
  *  EnergyConnectorComponent: typeof import("../../js/components/energy_connector").EnergyConnectorComponent
  *  EnergyPinComponent: typeof import("../../js/components/energy_pin").EnergyPinComponent
+ *  EnergyTunnelComponent: typeof import("../../js/components/energy_tunnel").EnergyTunnelComponent
  * }} AdvancedEnergyMod
  */
 
@@ -23,6 +24,9 @@ export class AdvancedEnergy {
         return this.getMod()?.EnergyPinComponent || null;
     }
 
+    static get EnergyTunnelComponent() {
+        return this.getMod()?.EnergyTunnelComponent || null;
+    }
     /**
      * Shows a dialog on the main menu when the energy mod is not installed
      */

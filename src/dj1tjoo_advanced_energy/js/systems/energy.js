@@ -12,6 +12,7 @@ import { balanceEnergyNetwork } from "../energy/energy_balancer";
 import { EnergyNetwork } from "../energy/energy_network";
 import { computeEnergyNetworks } from "../energy/compute/energy_network_compute";
 import { MODS } from "shapez/mods/modloader";
+import { EnergyTunnelComponent } from "../components/energy_tunnel";
 
 export class EnergySystem extends GameSystem {
     /**
@@ -49,7 +50,8 @@ export class EnergySystem extends GameSystem {
         // Recompute networks
         const pinEntities = this.root.entityMgr.getAllWithComponent(EnergyPinComponent);
         const connectors = this.root.entityMgr.getAllWithComponent(EnergyConnectorComponent);
-        this.networks = computeEnergyNetworks(this.root, pinEntities, connectors);
+        const tunnels = this.root.entityMgr.getAllWithComponent(EnergyTunnelComponent);
+        this.networks = computeEnergyNetworks(this.root, pinEntities, connectors, tunnels);
 
         // Update all sprites around pins
         for (let i = 0; i < pinEntities.length; ++i) {
