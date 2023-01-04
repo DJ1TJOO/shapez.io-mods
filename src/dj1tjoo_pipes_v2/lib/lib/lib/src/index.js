@@ -5,7 +5,6 @@ const MOD_ID = "dj1tjoo_pipes";
  * @typedef {import("shapez/mods/mod").Mod & {
  *  PipeConnectorComponent: typeof import("../../js/components/pipe_connector").PipeConnectorComponent
  *  PipePinComponent: typeof import("../../js/components/pipe_pin").PipePinComponent
- *  PipeTickerComponent: typeof import("../../js/components/pipe_ticker").PipeTickerComponent
  *  BaseFluid: typeof import("../../js/items/base_fluid").BaseFluid
  *  typeFluidSingleton: typeof import("../../js/items/base_fluid").typeFluidSingleton
  *  gFluidRegistry: typeof import("../../js/items/base_fluid").gFluidRegistry
@@ -31,10 +30,6 @@ export class Pipes {
     static get PipePinComponent() {
         var _a;
         return ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.PipePinComponent) || null;
-    }
-    static get PipeTickerComponent() {
-        var _a;
-        return ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.PipeTickerComponent) || null;
     }
     /**
      * Registers a new fluid from the given class callback

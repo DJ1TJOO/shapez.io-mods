@@ -22,7 +22,6 @@ The Pipes class exposes the api components. All the api components can only be a
 | ------------------------------------ | -------------------------------------------------------------------- |
 | PipeConnectorComponent | A component to make connections with in a newtwork (E.g. simple connector, storage) |
 | PipePinComponent | A component to take and add fluids to a network (E.g. fluid producer, building that uses fluid)|
-| PipeTickerComponent | A component to take and add fluids to a buffer per tick (Use to create smooth delivery)|
 | BaseFluid | The base for creating a new fluid|
 | gFluidRegistry | Register the new fluid |
 | typeFluidSingleton | The type for storing fluids|

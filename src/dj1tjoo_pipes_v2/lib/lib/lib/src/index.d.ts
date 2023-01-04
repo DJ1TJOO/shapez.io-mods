@@ -3,7 +3,6 @@
  * @typedef {import("shapez/mods/mod").Mod & {
  *  PipeConnectorComponent: typeof import("../../js/components/pipe_connector").PipeConnectorComponent
  *  PipePinComponent: typeof import("../../js/components/pipe_pin").PipePinComponent
- *  PipeTickerComponent: typeof import("../../js/components/pipe_ticker").PipeTickerComponent
  *  BaseFluid: typeof import("../../js/items/base_fluid").BaseFluid
  *  typeFluidSingleton: typeof import("../../js/items/base_fluid").typeFluidSingleton
  *  gFluidRegistry: typeof import("../../js/items/base_fluid").gFluidRegistry
@@ -18,7 +17,6 @@ export class Pipes {
     static get BaseFluid(): typeof import("../../js/items/base_fluid").BaseFluid;
     static get PipeConnectorComponent(): typeof import("../../js/components/pipe_connector").PipeConnectorComponent;
     static get PipePinComponent(): typeof import("../../js/components/pipe_pin").PipePinComponent;
-    static get PipeTickerComponent(): typeof import("../../js/components/pipe_ticker").PipeTickerComponent;
     /**
      * Registers a new fluid from the given class callback
      * @param {() => typeof this.BaseFluid} createFluidClass
@@ -59,7 +57,6 @@ export class Pipes {
 export type PipesMod = import("shapez/mods/mod").Mod & {
     PipeConnectorComponent: typeof import("../../js/components/pipe_connector").PipeConnectorComponent;
     PipePinComponent: typeof import("../../js/components/pipe_pin").PipePinComponent;
-    PipeTickerComponent: typeof import("../../js/components/pipe_ticker").PipeTickerComponent;
     BaseFluid: typeof import("../../js/items/base_fluid").BaseFluid;
     typeFluidSingleton: typeof import("../../js/items/base_fluid").typeFluidSingleton;
     gFluidRegistry: typeof import("../../js/items/base_fluid").gFluidRegistry;
