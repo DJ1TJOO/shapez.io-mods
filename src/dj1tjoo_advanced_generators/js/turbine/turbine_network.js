@@ -1,7 +1,9 @@
 import { round2Digits } from "shapez/core/utils";
+import { enumItemProcessorTypes } from "shapez/game/components/item_processor";
 import { ShapeItem } from "shapez/game/items/shape_item";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
-import { turbineComponents } from "../buildings/turbine";
+import { amountPerCharge } from "../amountPerCharge";
+import { processLabelTurbine, turbineComponents } from "../buildings/turbine";
 import { config } from "../config";
 
 let turbineUidCounter = 0;
@@ -21,11 +23,19 @@ export class TurbineNetwork {
          * @type {ShapeItem[]}
          */
         this.fuel = [];
+
+        this.remainingChargeTime = 0;
     }
 
-    process() {
+    /**
+     * @param {import("shapez/game/root").GameRoot} root
+     */
+    process(root) {
         // TODO: show why turbine is not valid on controller
         if (!this.isValid) return;
+
+        this.remainingChargeTime -= root.dynamicTickrate.deltaSeconds;
+        if (this.remainingChargeTime > 0) return;
 
         const tier = this.tier;
         const steam = this.steam;
@@ -33,7 +43,11 @@ export class TurbineNetwork {
 
         if (this.fuel.length < tier.items) return;
         if (steam < tier.steam) return;
-        if (this.energy + tier.energy > availableEnergyBuffer) return;
+
+        const produced = amountPerCharge(root, tier.energy, processLabelTurbine);
+        if (this.energy + produced > availableEnergyBuffer) return;
+        this.remainingChargeTime =
+            1 / root.hubGoals.getProcessorBaseSpeed(enumItemProcessorTypes[processLabelTurbine]);
 
         // Consume
         this.fuel.splice(this.fuel.length - tier.items, tier.items);
@@ -53,11 +67,10 @@ export class TurbineNetwork {
                 entity => entity.components.StaticMapEntity.getVariant() === turbineComponents.energy_outlet
             )
             .flatMap(entity => entity.components["EnergyPin"].slots.map((y, i) => ({ slot: y, i, entity })))
-            .forEach(({ slot, i, entity }) =>
-                entity.components["EnergyTicker"].addToBuffer(
-                    i,
-                    ((slot.maxBuffer - slot.buffer) / availableEnergyBuffer) * tier.energy * efficienty
-                )
+            .forEach(
+                ({ slot, i, entity }) =>
+                    (entity.components["EnergyPin"].slots[i].buffer +=
+                        ((slot.maxBuffer - slot.buffer) / availableEnergyBuffer) * produced * efficienty)
             );
     }
 
@@ -80,8 +93,7 @@ export class TurbineNetwork {
                 (total, outlet) =>
                     total +
                     outlet.components["EnergyPin"].slots.reduce(
-                        (total, slot, i) =>
-                            total + slot.maxBuffer - outlet.components["EnergyTicker"].getBuffer(i),
+                        (total, slot, i) => total + slot.maxBuffer,
                         0
                     ),
                 0

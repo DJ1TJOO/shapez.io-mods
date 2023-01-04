@@ -48,10 +48,6 @@ export class TurbineSystem extends GameSystemWithFilter {
         // Recompute networks
         this.networks = computeTurbineNetworks(this.root, this.allEntities);
 
-        for (const network of this.networks) {
-            if (network.isValid) continue;
-        }
-
         if (this.recomputeAreas.length > 0) {
             for (let i = 0; i < this.recomputeAreas.length; i++) {
                 this.updateSurroundingPlacement(this.recomputeAreas[i]);
@@ -68,7 +64,7 @@ export class TurbineSystem extends GameSystemWithFilter {
         }
 
         for (const network of this.networks) {
-            network.process();
+            network.process(this.root);
         }
     }
 

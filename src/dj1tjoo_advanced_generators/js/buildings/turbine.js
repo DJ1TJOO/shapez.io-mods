@@ -19,11 +19,12 @@ import { formatAePerTick } from "../ui/formatter";
 import { Pipes } from "@dj1tjoo/shapez-pipes";
 import { Loader } from "shapez/core/loader";
 import { Rectangle } from "shapez/core/rectangle";
-import { arrayAllDirections, Vector, enumDirection, enumInvertedDirections } from "shapez/core/vector";
+import { arrayAllDirections, Vector, enumDirection } from "shapez/core/vector";
 import { TurbineComponent } from "../components/turbine";
 import { getComponentShared } from "../../../shared/getShared";
 import { config } from "../config";
 import { Steam } from "../../../shared/fluids/steam";
+import { amountPerCharge } from "../amountPerCharge";
 
 export const processLabelTurbine = "dj1tjoo@turbine";
 
@@ -199,10 +200,17 @@ export class MetaTurbineBuilding extends ModMetaBuilding {
     updateVariants(entity, rotationVariant, variant) {
         const localConfig = config().turbine;
         const enumRotationVariant = arrayTurbineRotationVariantToType[rotationVariant];
+        const tier = entity.components["Turbine"].linkedNetwork?.tier || localConfig.tier1;
 
-        entity.components["EnergyPin"].setSlots([]);
-        entity.components["PipePin"].setSlots([]);
-        entity.components.ItemAcceptor.setSlots([]);
+        let produced = localConfig.maxBuffers.energy_outlet * tier.items;
+        if (entity.root) {
+            const ticksPassed = amountPerCharge(entity.root, tier.items, processLabelTurbine);
+            produced = tier.energy * ticksPassed;
+        }
+
+        if (variant !== turbineComponents.energy_outlet) entity.components["EnergyPin"].setSlots([]);
+        if (variant !== turbineComponents.steam_intake) entity.components["PipePin"].setSlots([]);
+        if (variant !== turbineComponents.fuel_intake) entity.components.ItemAcceptor.setSlots([]);
 
         if (variant === turbineComponents.energy_outlet) {
             /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
@@ -211,9 +219,8 @@ export class MetaTurbineBuilding extends ModMetaBuilding {
                     direction: x,
                     pos: new Vector(0, 0),
                     type: "ejector",
-                    productionPerTick: (entity.components["Turbine"].linkedNetwork?.tier || localConfig.tier1)
-                        .energy,
-                    maxBuffer: localConfig.maxBuffers.energy_outlet,
+                    productionPerTick: tier.energy,
+                    maxBuffer: produced,
                 }))
             );
         }
@@ -225,10 +232,8 @@ export class MetaTurbineBuilding extends ModMetaBuilding {
                     direction: x,
                     pos: new Vector(0, 0),
                     type: "acceptor",
-                    consumptionPerTick: (
-                        entity.components["Turbine"].linkedNetwork?.tier || localConfig.tier1
-                    ).steam,
-                    maxBuffer: localConfig.maxBuffers.steam_intake,
+                    consumptionPerTick: tier.steam,
+                    maxBuffer: localConfig.maxBuffers.steam_intake * tier.items,
                     fluid: Steam.SINGLETON,
                 }))
             );
@@ -297,9 +302,6 @@ export class MetaTurbineBuilding extends ModMetaBuilding {
                 processingRequirement: enumItemProcessorRequirements[processLabelTurbine],
             })
         );
-
-        entity.addComponent(new AdvancedEnergy.EnergyTickerComponent());
-        entity.addComponent(new Pipes.PipeTickerComponent());
 
         entity.addComponent(getComponentShared("EnergyPinRenderer"));
         entity.addComponent(getComponentShared("PipePinRenderer"));
@@ -527,11 +529,12 @@ export function setupTurbine() {
      */
     MODS_CAN_PROCESS[enumItemProcessorRequirements[processLabelTurbine]] = function ({ entity }) {
         const localConfig = config().turbine;
+        const tier = entity.components["Turbine"].linkedNetwork?.tier || localConfig.tier1;
 
         if (
             !entity.components["Turbine"].linkedNetwork ||
             !entity.components["Turbine"].linkedNetwork.isValid ||
-            entity.components["Turbine"].linkedNetwork.fuel.length > localConfig.maxBuffers.fuel_intake
+            entity.components["Turbine"].linkedNetwork.fuel.length > tier.items * 2
         )
             return false;
 

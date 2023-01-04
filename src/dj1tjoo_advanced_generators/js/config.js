@@ -26,7 +26,6 @@ const defaultConfig = {
 
         maxBuffers: {
             steam_intake: 2000,
-            fuel_intake: 30,
             energy_outlet: 1000000,
         },
         maxArea: 200,

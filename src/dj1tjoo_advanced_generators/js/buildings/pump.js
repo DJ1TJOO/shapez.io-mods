@@ -71,9 +71,6 @@ export class MetaPumpBuilding extends ModMetaBuilding {
             })
         );
 
-        entity.addComponent(new Pipes.PipeTickerComponent());
-        entity.addComponent(new AdvancedEnergy.EnergyTickerComponent());
-
         const localConfig = config().pump;
 
         entity.addComponent(
@@ -144,9 +141,7 @@ export function setupPump() {
         const energyPinComp = entity.components["EnergyPin"];
         if (
             !energyPinComp.slots[0].linkedNetwork ||
-            energyPinComp.slots[0].buffer <
-                amountPerCharge(this.root, localConfig.energy, processLabelPump) -
-                    entity.components["EnergyTicker"].getBuffer(0)
+            energyPinComp.slots[0].buffer < amountPerCharge(this.root, localConfig.energy, processLabelPump)
         ) {
             return false;
         }
@@ -155,9 +150,7 @@ export function setupPump() {
         const pipePinComp = entity.components["PipePin"];
         if (
             !pipePinComp ||
-            pipePinComp.slots[0].buffer +
-                amountPerCharge(this.root, localConfig.water, processLabelPump) +
-                entity.components["PipeTicker"].getBuffer(0) >
+            pipePinComp.slots[0].buffer + amountPerCharge(this.root, localConfig.water, processLabelPump) >
                 pipePinComp.slots[0].maxBuffer
         ) {
             return false;
@@ -185,13 +178,16 @@ export function setupPump() {
 
         if (!pinComp.slots[0].linkedNetwork) return;
 
-        entity.components["EnergyTicker"].addToBuffer(
-            0,
-            -amountPerCharge(this.root, localConfig.energy, processLabelPump)
+        entity.components["EnergyPin"].slots[0].buffer -= amountPerCharge(
+            this.root,
+            localConfig.energy,
+            processLabelPump
         );
-        entity.components["PipeTicker"].addToBuffer(
-            0,
-            amountPerCharge(this.root, localConfig.water, processLabelPump)
+
+        entity.components["PipePin"].slots[0].buffer += amountPerCharge(
+            this.root,
+            localConfig.water,
+            processLabelPump
         );
     };
 

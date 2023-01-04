@@ -67,8 +67,6 @@ export class MetaBasicConsumerBuilding extends ModMetaBuilding {
             })
         );
 
-        entity.addComponent(new AdvancedEnergy.EnergyTickerComponent());
-
         const localConfig = config().basic_consumer;
         entity.addComponent(
             new AdvancedEnergy.EnergyPinComponent({
@@ -103,8 +101,7 @@ export function setupBasicConsumer() {
         if (
             !pinComp.slots[0].linkedNetwork ||
             pinComp.slots[0].buffer <
-                amountPerCharge(this.root, localConfig.energy, processLabelBasicConsumer) -
-                    entity.components["EnergyTicker"].getBuffer(0)
+                amountPerCharge(this.root, localConfig.energy, processLabelBasicConsumer)
         ) {
             return false;
         }
@@ -133,9 +130,10 @@ export function setupBasicConsumer() {
 
         if (!pinComp.slots[0].linkedNetwork) return;
 
-        entity.components["EnergyTicker"].addToBuffer(
-            0,
-            -amountPerCharge(this.root, localConfig.energy, processLabelBasicConsumer)
+        entity.components["EnergyPin"].slots[0].buffer -= amountPerCharge(
+            this.root,
+            localConfig.energy,
+            processLabelBasicConsumer
         );
     };
 

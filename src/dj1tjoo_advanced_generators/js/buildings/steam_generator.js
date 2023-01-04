@@ -70,9 +70,6 @@ export class MetaSteamGeneratorBuilding extends ModMetaBuilding {
             })
         );
 
-        entity.addComponent(new Pipes.PipeTickerComponent());
-        entity.addComponent(new AdvancedEnergy.EnergyTickerComponent());
-
         entity.addComponent(getComponentShared("EnergyPinRenderer"));
         entity.addComponent(getComponentShared("PipePinRenderer"));
 
@@ -138,8 +135,7 @@ export function setupSteamGenerator() {
         if (
             !energyPinComp.slots[0].linkedNetwork ||
             energyPinComp.slots[0].buffer <
-                amountPerCharge(this.root, localConfig.energy, processLabelSteamGenerator) -
-                    entity.components["EnergyTicker"].getBuffer(0)
+                amountPerCharge(this.root, localConfig.energy, processLabelSteamGenerator)
         ) {
             return false;
         }
@@ -149,8 +145,7 @@ export function setupSteamGenerator() {
         if (
             !pipePinComp.slots[0].linkedNetwork ||
             pipePinComp.slots[0].buffer +
-                amountPerCharge(this.root, localConfig.steam, processLabelSteamGenerator) +
-                entity.components["PipeTicker"].getBuffer(0) >
+                amountPerCharge(this.root, localConfig.steam, processLabelSteamGenerator) >
                 pipePinComp.slots[0].maxBuffer
         ) {
             return false;
@@ -159,8 +154,7 @@ export function setupSteamGenerator() {
         if (
             !pipePinComp.slots[1].linkedNetwork ||
             pipePinComp.slots[1].buffer <
-                amountPerCharge(this.root, localConfig.water, processLabelSteamGenerator) -
-                    entity.components["PipeTicker"].getBuffer(1)
+                amountPerCharge(this.root, localConfig.water, processLabelSteamGenerator)
         ) {
             return false;
         }
@@ -190,17 +184,22 @@ export function setupSteamGenerator() {
 
         if (!pinComp.slots[0].linkedNetwork) return;
 
-        entity.components["EnergyTicker"].addToBuffer(
-            0,
-            -amountPerCharge(this.root, localConfig.energy, processLabelSteamGenerator)
+        entity.components["EnergyPin"].slots[0].buffer -= amountPerCharge(
+            this.root,
+            localConfig.energy,
+            processLabelSteamGenerator
         );
-        entity.components["PipeTicker"].addToBuffer(
-            0,
-            amountPerCharge(this.root, localConfig.steam, processLabelSteamGenerator)
+
+        entity.components["PipePin"].slots[0].buffer += amountPerCharge(
+            this.root,
+            localConfig.steam,
+            processLabelSteamGenerator
         );
-        entity.components["PipeTicker"].addToBuffer(
-            1,
-            -amountPerCharge(this.root, localConfig.water, processLabelSteamGenerator)
+
+        entity.components["PipePin"].slots[1].buffer -= amountPerCharge(
+            this.root,
+            localConfig.water,
+            processLabelSteamGenerator
         );
     };
 

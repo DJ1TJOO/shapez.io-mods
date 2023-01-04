@@ -82,8 +82,6 @@ export class MetaHeaterBuilding extends ModMetaBuilding {
             })
         );
 
-        entity.addComponent(new Pipes.PipeTickerComponent());
-
         const localConfig = config().heater;
         entity.addComponent(
             new Pipes.PipePinComponent({
@@ -134,8 +132,7 @@ export function setupHeater() {
         if (
             !pipePinComp.slots[0].linkedNetwork ||
             pipePinComp.slots[0].buffer +
-                amountPerCharge(this.root, config().heater.magma, processLabelHeater) +
-                entity.components["PipeTicker"].getBuffer(0) >
+                amountPerCharge(this.root, config().heater.magma, processLabelHeater) >
                 pipePinComp.slots[0].maxBuffer
         ) {
             return false;
@@ -170,9 +167,10 @@ export function setupHeater() {
             this.root.signals.entityChanged.dispatch(entity);
         }
 
-        entity.components["PipeTicker"].addToBuffer(
-            0,
-            amountPerCharge(this.root, config().heater.magma, processLabelHeater)
+        entity.components["PipePin"].slots[0].buffer += amountPerCharge(
+            this.root,
+            config().heater.magma,
+            processLabelHeater
         );
     };
 

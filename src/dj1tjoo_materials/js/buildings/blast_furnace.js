@@ -89,7 +89,6 @@ export class MetaBlastFurnaceBuilding extends ModMetaBuilding {
             })
         );
 
-        entity.addComponent(new AdvancedEnergy.EnergyTickerComponent());
         entity.addComponent(getComponentShared("EnergyPinRenderer"));
         entity.addComponent(
             new AdvancedEnergy.EnergyPinComponent({
@@ -165,8 +164,7 @@ export function setupBlastFurnace() {
         if (
             !energyPinComp.slots[0].linkedNetwork ||
             energyPinComp.slots[0].buffer <
-                amountPerCharge(this.root, localConfig.energy, processLabelBlastFurnace) -
-                    entity.components["EnergyTicker"].getBuffer(0)
+                amountPerCharge(this.root, localConfig.energy, processLabelBlastFurnace)
         ) {
             return false;
         }
@@ -200,9 +198,10 @@ export function setupBlastFurnace() {
 
         if (!pinComp.slots[0].linkedNetwork) return;
 
-        entity.components["EnergyTicker"].addToBuffer(
-            0,
-            -amountPerCharge(this.root, localConfig.energy, processLabelBlastFurnace)
+        entity.components["EnergyPin"].slots[0].buffer -= amountPerCharge(
+            this.root,
+            localConfig.energy,
+            processLabelBlastFurnace
         );
 
         const recipe = blastFurnaceRecipes.find(x => x.shape(items.get(0).definition));
