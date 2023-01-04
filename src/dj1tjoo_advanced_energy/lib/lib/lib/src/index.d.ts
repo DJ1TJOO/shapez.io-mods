@@ -2,7 +2,6 @@
  * @typedef {import("shapez/mods/mod").Mod & {
  *  EnergyConnectorComponent: typeof import("../../js/components/energy_connector").EnergyConnectorComponent
  *  EnergyPinComponent: typeof import("../../js/components/energy_pin").EnergyPinComponent
- *  EnergyTickerComponent: typeof import("../../js/components/energy_ticker").EnergyTickerComponent
  * }} AdvancedEnergyMod
  */
 export class AdvancedEnergy {
@@ -11,7 +10,6 @@ export class AdvancedEnergy {
     static loadedUid: number;
     static get EnergyConnectorComponent(): typeof import("../../js/components/energy_connector").EnergyConnectorComponent;
     static get EnergyPinComponent(): typeof import("../../js/components/energy_pin").EnergyPinComponent;
-    static get EnergyTickerComponent(): typeof import("../../js/components/energy_ticker").EnergyTickerComponent;
     /**
      * Shows a dialog on the main menu when the energy mod is not installed
      */
@@ -42,5 +40,4 @@ export class AdvancedEnergy {
 export type AdvancedEnergyMod = import("shapez/mods/mod").Mod & {
     EnergyConnectorComponent: typeof import("../../js/components/energy_connector").EnergyConnectorComponent;
     EnergyPinComponent: typeof import("../../js/components/energy_pin").EnergyPinComponent;
-    EnergyTickerComponent: typeof import("../../js/components/energy_ticker").EnergyTickerComponent;
 };
