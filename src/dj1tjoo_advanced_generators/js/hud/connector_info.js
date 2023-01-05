@@ -77,7 +77,7 @@ export class HUDConnectorInfo extends BaseHUDPart {
                     : T.advanced_generators.throughputL
             )
                 .replace("<x>", round2Digits(network.currentThroughput))
-                .replace("<y>", round2Digits(network.maxThoughput));
+                .replace("<y>", network.maxThoughput < 0 ? "Infinit" : round2Digits(network.maxThoughput));
             const throughputMetrics = ctx.measureText(throughputText);
             const throughputHeight =
                 throughputMetrics.actualBoundingBoxAscent + throughputMetrics.actualBoundingBoxDescent;

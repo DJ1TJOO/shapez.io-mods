@@ -249,6 +249,30 @@ export class MetaPipeConnectorBuilding extends ModMetaBuilding {
                     connections[direction] = true;
                 }
             }
+
+            /** @type {import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_tunnel").PipeTunnelComponent} */
+            const tunnelComp = entity.components["PipeTunnel"];
+            if (tunnelComp) {
+                // Go over all slots and see if they are connected
+                const tunnelSlots = tunnelComp.slots;
+                for (let j = 0; j < tunnelSlots.length; ++j) {
+                    const tunnelSlot = tunnelSlots[j];
+
+                    // Check if the position matches
+                    const tunnelPos = staticComp.localTileToWorld(tunnelSlot.pos);
+                    if (!tunnelPos.equals(initialSearchTile)) {
+                        continue;
+                    }
+
+                    // Check if the direction (inverted) matches
+                    const pinDirection = staticComp.localDirectionToWorld(tunnelSlot.direction);
+                    if (pinDirection !== enumInvertedDirections[direction]) {
+                        continue;
+                    }
+
+                    connections[direction] = true;
+                }
+            }
         }
 
         let flag = 0;

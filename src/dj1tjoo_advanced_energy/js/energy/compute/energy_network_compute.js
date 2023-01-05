@@ -1,12 +1,6 @@
-import {
-    arrayAllDirections,
-    enumDirectionToVector,
-    enumInvertedDirections,
-    Vector,
-} from "shapez/core/vector";
+import { arrayAllDirections } from "shapez/core/vector";
 import { EnergyConnectorComponent } from "../../components/energy_connector";
 import { enumPinSlotType } from "../../components/energy_pin";
-import { EnergyTunnelComponent } from "../../components/energy_tunnel";
 import { EnergyNetwork } from "../energy_network";
 import { findSurroundingTargets } from "./energy_network_find_surrouding";
 

@@ -4,11 +4,11 @@ const defaultConfig = {
     // Connectors
     energy: {
         volume: 2000,
-        maxThroughputPerTick: 1000,
+        maxThroughputPerTick: -1000, // Inifinit
     },
     pipe: {
         volume: 2000,
-        maxThroughputPerTick: 1000,
+        maxThroughputPerTick: -1000, // Inifinit
     },
 
     // Generators

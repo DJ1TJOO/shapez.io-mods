@@ -27,6 +27,8 @@ import { TurbineComponent } from "./components/turbine";
 import { TurbineSystem } from "./systems/turbine";
 import { PipePinRendererSystem } from "../../shared/systems/pipe_pin_renderer";
 import { PipePinRendererComponent } from "../../shared/components/pipe_pin_renderer";
+import { MetaEnergyTunnelBuilding } from "./buildings/energy_tunnel";
+import { MetaPipeTunnelBuilding } from "./buildings/pipe_tunnel";
 
 class ModImpl extends Mod {
     init() {
@@ -123,6 +125,12 @@ class ModImpl extends Mod {
         this.modInterface.registerNewBuilding({
             metaClass: MetaPipeConnectorBuilding,
         });
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaEnergyTunnelBuilding,
+        });
+        this.modInterface.registerNewBuilding({
+            metaClass: MetaPipeTunnelBuilding,
+        });
         setupPump.apply(this);
         this.modInterface.registerNewBuilding({
             metaClass: MetaPumpBuilding,
@@ -145,6 +153,8 @@ class ModImpl extends Mod {
                 element.primaryBuildings.push(MetaPumpBuilding);
                 element.primaryBuildings.push(MetaSteamGeneratorBuilding);
                 element.primaryBuildings.push(MetaTurbineBuilding);
+                element.primaryBuildings.push(MetaEnergyTunnelBuilding);
+                element.primaryBuildings.push(MetaPipeTunnelBuilding);
             }
         });
     }

@@ -1,6 +1,7 @@
 import { Mod } from "shapez/mods/mod";
 import { PipeConnectorComponent } from "./components/pipe_connector";
 import { PipePinComponent } from "./components/pipe_pin";
+import { PipeTunnelComponent } from "./components/pipe_tunnel";
 import { BaseFluid, gFluidRegistry, typeFluidSingleton } from "./items/base_fluid";
 import { PipeSystem } from "./systems/pipe";
 
@@ -31,6 +32,7 @@ class ModImpl extends Mod {
     exposeComponents() {
         this.PipeConnectorComponent = PipeConnectorComponent;
         this.PipePinComponent = PipePinComponent;
+        this.PipeTunnelComponent = PipeTunnelComponent;
         this.BaseFluid = BaseFluid;
         this.gFluidRegistry = gFluidRegistry;
         this.typeFluidSingleton = typeFluidSingleton;
