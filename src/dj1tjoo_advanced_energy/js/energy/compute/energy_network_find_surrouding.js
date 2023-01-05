@@ -153,10 +153,12 @@ export function findSurroundingTargets(root, tileSpaceBounds, initialTile, direc
         /** @type {EnergyTunnelComponent}*/
         const energyComp = tunnel.components["EnergyTunnel"];
         for (const tunnelSlot of energyComp.slots) {
-            if (result.some(x => x.direction === tunnelSlot.direction)) continue;
+            const tunnelDirection = tunnel.components.StaticMapEntity.localDirectionToWorld(
+                tunnelSlot.tunnelDirection
+            );
 
             const pos = tunnel.components.StaticMapEntity.localTileToWorld(tunnelSlot.pos);
-            const directionVector = enumDirectionToVector[tunnelSlot.direction];
+            const directionVector = enumDirectionToVector[tunnelDirection];
 
             let offset = pos.add(directionVector);
             for (let i = 0; i < tunnelSlot.maxLength; i++) {
@@ -176,10 +178,10 @@ export function findSurroundingTargets(root, tileSpaceBounds, initialTile, direc
 
                         // Check if the direction (inverted) matches
                         const pinDirection = entity.components.StaticMapEntity.localDirectionToWorld(
-                            slot.direction
+                            slot.tunnelDirection
                         );
 
-                        if (pinDirection !== enumInvertedDirections[tunnelSlot.direction]) {
+                        if (pinDirection !== enumInvertedDirections[tunnelDirection]) {
                             continue;
                         }
 
@@ -189,6 +191,7 @@ export function findSurroundingTargets(root, tileSpaceBounds, initialTile, direc
                                 tunnelSlot: slot,
                                 slot: null,
                             });
+                            return result;
                         }
                     }
                 }

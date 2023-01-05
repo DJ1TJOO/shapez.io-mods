@@ -3,6 +3,7 @@ import { Component } from "shapez/game/component";
 /** @typedef {{
  *   pos: import("shapez/core/vector").Vector,
  *   direction: import("shapez/core/vector").enumDirection,
+ *   tunnelDirection: import("shapez/core/vector").enumDirection,
  *   maxThroughputPerTick?: number,
  *   maxEnergyVolume?: number
  *   type?: string
@@ -12,6 +13,7 @@ import { Component } from "shapez/game/component";
 /** @typedef {{
  *   pos: import("shapez/core/vector").Vector,
  *   direction: import("shapez/core/vector").enumDirection,
+ *   tunnelDirection: import("shapez/core/vector").enumDirection,
  *   linkedNetwork: import("../energy/energy_network").EnergyNetwork,
  *   oldNetwork: import("../energy/energy_network").EnergyNetwork,
  *   maxThroughputPerTick?: number,
@@ -27,6 +29,7 @@ export class EnergyTunnelSlot {
     constructor({
         pos,
         direction,
+        tunnelDirection,
         linkedNetwork,
         oldNetwork,
         maxEnergyVolume = 1000,
@@ -37,6 +40,7 @@ export class EnergyTunnelSlot {
         this.pos = pos;
         this.type = type;
         this.direction = direction;
+        this.tunnelDirection = tunnelDirection;
         this.linkedNetwork = linkedNetwork;
         this.oldNetwork = oldNetwork;
 
@@ -89,6 +93,7 @@ export class EnergyTunnelComponent extends Component {
                     maxThroughputPerTick: slotData.maxThroughputPerTick,
                     type: slotData.type,
                     maxLength: slotData.maxLength,
+                    tunnelDirection: slotData.tunnelDirection,
                 })
             );
         }

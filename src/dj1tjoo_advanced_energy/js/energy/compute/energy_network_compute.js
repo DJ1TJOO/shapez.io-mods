@@ -66,6 +66,7 @@ export function computeEnergyNetworks(root, pinEntities, connectors, tunnels) {
         computeEnergyNetwork(root, connector, currentNetwork);
     }
 
+    console.log(networks);
     return networks;
 }
 
@@ -100,13 +101,16 @@ function computeEnergyNetwork(root, connector, currentNetwork) {
         const currentSlot = current.slot;
         const currentTunnelSlot = current.tunnelSlot;
 
-        if (currentSlot?.linkedNetwork || currentEntity.components["EnergyConnector"]?.linkedNetwork) {
+        if (
+            currentSlot?.linkedNetwork ||
+            currentTunnelSlot?.linkedNetwork ||
+            currentEntity.components["EnergyConnector"]?.linkedNetwork
+        ) {
             continue;
         }
 
         let newSearchDirections = [];
         let newSearchTile = null;
-        let tunnel = false;
 
         if (currentEntity.components["EnergyPin"]) {
             if (currentSlot.type === enumPinSlotType.ejector) {
@@ -128,31 +132,6 @@ function computeEnergyNetwork(root, connector, currentNetwork) {
             newSearchTile = currentEntity.components.StaticMapEntity.localTileToWorld(currentSlot.pos);
 
             delete currentSlot.oldNetwork;
-        }
-
-        if (currentEntity.components["EnergyTunnel"]) {
-            if (currentTunnelSlot.type === typeMask) {
-                // Divide remaining evenly between old and new network
-                if (currentTunnelSlot.oldNetwork) {
-                    const oldNetworkCharge =
-                        currentTunnelSlot.oldNetwork.currentVolume / currentTunnelSlot.oldNetwork.maxVolume;
-                    const localCharge = currentTunnelSlot.maxEnergyVolume * oldNetworkCharge;
-
-                    currentNetwork.currentVolume += localCharge;
-                    delete currentTunnelSlot.oldNetwork;
-                }
-
-                // Register on the network
-                currentNetwork.tunnels.push(currentEntity);
-                currentTunnelSlot.linkedNetwork = currentNetwork;
-            }
-
-            // Specify where to search next
-            newSearchDirections = [
-                currentEntity.components.StaticMapEntity.localDirectionToWorld(currentTunnelSlot.direction),
-            ];
-            newSearchTile = currentEntity.components.StaticMapEntity.localTileToWorld(currentTunnelSlot.pos);
-            tunnel = true;
         }
 
         if (currentEntity.components["EnergyConnector"]) {
@@ -190,16 +169,51 @@ function computeEnergyNetwork(root, connector, currentNetwork) {
             }
         }
 
-        // Add new entities
-        entitiesToProcess.push(
-            ...findSurroundingTargets(
-                root,
-                currentEntity.components.StaticMapEntity.getTileSpaceBounds(),
-                newSearchTile,
-                newSearchDirections,
-                typeMask,
-                tunnel ? currentEntity : null
-            )
-        );
+        if (currentEntity.components["EnergyTunnel"]) {
+            if (currentTunnelSlot.type === typeMask) {
+                // Register on the network
+                currentNetwork.tunnels.push(currentEntity);
+
+                // Divide remaining evenly between old and new network
+                if (currentTunnelSlot.oldNetwork) {
+                    const oldNetworkCharge =
+                        currentTunnelSlot.oldNetwork.currentVolume / currentTunnelSlot.oldNetwork.maxVolume;
+                    const localCharge = currentTunnelSlot.maxEnergyVolume * oldNetworkCharge;
+
+                    currentNetwork.currentVolume += localCharge;
+                    delete currentTunnelSlot.oldNetwork;
+                }
+
+                currentTunnelSlot.linkedNetwork = currentNetwork;
+
+                // Add new entities
+                entitiesToProcess.push(
+                    ...findSurroundingTargets(
+                        root,
+                        currentEntity.components.StaticMapEntity.getTileSpaceBounds(),
+                        currentEntity.components.StaticMapEntity.localTileToWorld(currentTunnelSlot.pos),
+                        [
+                            currentEntity.components.StaticMapEntity.localDirectionToWorld(
+                                currentTunnelSlot.direction
+                            ),
+                        ],
+                        typeMask,
+                        currentEntity
+                    )
+                );
+            }
+        } else {
+            // Add new entities
+            entitiesToProcess.push(
+                ...findSurroundingTargets(
+                    root,
+                    currentEntity.components.StaticMapEntity.getTileSpaceBounds(),
+                    newSearchTile,
+                    newSearchDirections,
+                    typeMask,
+                    null
+                )
+            );
+        }
     }
 }

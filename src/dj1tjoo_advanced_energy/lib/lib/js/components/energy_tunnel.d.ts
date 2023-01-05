@@ -2,6 +2,7 @@
 /** @typedef {{
  *   pos: import("shapez/core/vector").Vector,
  *   direction: import("shapez/core/vector").enumDirection,
+ *   tunnelDirection: import("shapez/core/vector").enumDirection,
  *   maxThroughputPerTick?: number,
  *   maxEnergyVolume?: number
  *   type?: string
@@ -10,6 +11,7 @@
 /** @typedef {{
  *   pos: import("shapez/core/vector").Vector,
  *   direction: import("shapez/core/vector").enumDirection,
+ *   tunnelDirection: import("shapez/core/vector").enumDirection,
  *   linkedNetwork: import("../energy/energy_network").EnergyNetwork,
  *   oldNetwork: import("../energy/energy_network").EnergyNetwork,
  *   maxThroughputPerTick?: number,
@@ -21,10 +23,11 @@ export class EnergyTunnelSlot {
     /**
      * @param {EnergyTunnelSlotType} param0
      */
-    constructor({ pos, direction, linkedNetwork, oldNetwork, maxEnergyVolume, maxThroughputPerTick, type, maxLength, }: EnergyTunnelSlotType);
+    constructor({ pos, direction, tunnelDirection, linkedNetwork, oldNetwork, maxEnergyVolume, maxThroughputPerTick, type, maxLength, }: EnergyTunnelSlotType);
     pos: import("shapez/core/vector").Vector;
     type: string;
     direction: string;
+    tunnelDirection: string;
     linkedNetwork: import("../energy/energy_network").EnergyNetwork;
     oldNetwork: import("../energy/energy_network").EnergyNetwork;
     maxLength: number;
@@ -51,6 +54,7 @@ export class EnergyTunnelComponent extends Component {
 export type EnergyTunnelSlotDefinition = {
     pos: import("shapez/core/vector").Vector;
     direction: import("shapez/core/vector").enumDirection;
+    tunnelDirection: import("shapez/core/vector").enumDirection;
     maxThroughputPerTick?: number;
     maxEnergyVolume?: number;
     type?: string;
@@ -59,6 +63,7 @@ export type EnergyTunnelSlotDefinition = {
 export type EnergyTunnelSlotType = {
     pos: import("shapez/core/vector").Vector;
     direction: import("shapez/core/vector").enumDirection;
+    tunnelDirection: import("shapez/core/vector").enumDirection;
     linkedNetwork: import("../energy/energy_network").EnergyNetwork;
     oldNetwork: import("../energy/energy_network").EnergyNetwork;
     maxThroughputPerTick?: number;

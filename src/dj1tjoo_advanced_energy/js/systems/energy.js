@@ -211,7 +211,11 @@ export class EnergySystem extends GameSystem {
      * @returns {boolean} valid
      */
     isEntityRelevantForEnergy(entity) {
-        return entity.components["EnergyConnector"] || entity.components["EnergyPin"];
+        return (
+            entity.components["EnergyConnector"] ||
+            entity.components["EnergyPin"] ||
+            entity.components["EnergyTunnel"]
+        );
     }
 
     /**
