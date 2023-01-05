@@ -60,14 +60,18 @@ export class PipePinSlot {
     }
 
     get production() {
-        return Math.min(this.buffer, this.maxProduction, this.linkedNetwork?.maxThoughput);
+        return this.linkedNetwork?.maxThoughput < 0
+            ? Math.min(this.buffer, this.maxProduction)
+            : Math.min(this.buffer, this.maxProduction, this.linkedNetwork?.maxThoughput);
     }
     produce(amount) {
         this.buffer -= amount;
     }
 
     get consumption() {
-        return Math.min(this.maxBuffer - this.buffer, this.maxConsumption, this.linkedNetwork?.maxThoughput);
+        return this.linkedNetwork?.maxThoughput < 0
+            ? Math.min(this.maxBuffer - this.buffer, this.maxConsumption)
+            : Math.min(this.maxBuffer - this.buffer, this.maxConsumption, this.linkedNetwork?.maxThoughput);
     }
     consume(amount) {
         this.buffer += amount;

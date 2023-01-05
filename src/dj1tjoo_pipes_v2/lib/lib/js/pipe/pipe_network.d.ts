@@ -14,6 +14,20 @@ export class PipeNetwork {
         entity: import("shapez/savegame/savegame_typedefs").Entity;
         slot: import("../components/pipe_pin").PipePinSlot;
     }[];
+    /**
+     * All tunnels in the network
+     * @type {(
+     *      import("shapez/game/entity").Entity & {
+     *      components: import("shapez/game/entity_components").EntityComponentStorage & {
+     *          PipeTunnel?: import("../components/pipe_tunnel").PipeTunnelComponent
+     *      }
+     * })[]}
+     */
+    tunnels: (import("shapez/game/entity").Entity & {
+        components: import("shapez/game/entity_components").EntityComponentStorage & {
+            PipeTunnel?: import("../components/pipe_tunnel").PipeTunnelComponent;
+        };
+    })[];
     currentVolume: number;
     currentThroughput: number;
     /** @type {BaseFluid | null} */
@@ -53,17 +67,5 @@ export class PipeNetwork {
      * @returns { number } The max fluid that is able to be stored in the network
      */
     get maxVolume(): number;
-    /**
-     * Returns if network can hold pipe
-     * @param {number} volume
-     * @returns Can add volume
-     */
-    canAdd(volume: number): boolean;
-    /**
-     * Returns if network has the pipe
-     * @param {number} volume
-     * @returns Can remove volume
-     */
-    canRemove(volume: number): boolean;
 }
 import { BaseFluid } from "../items/base_fluid";

@@ -1,6 +1,7 @@
 import { enumDirection, enumDirectionToVector, enumInvertedDirections, Vector } from "shapez/core/vector";
 import { PipeConnectorComponent } from "../../components/pipe_connector";
 import { PipePinComponent } from "../../components/pipe_pin";
+import { PipeTunnelComponent } from "../../components/pipe_tunnel";
 import { PipeNetwork } from "../pipe_network";
 
 /**
@@ -10,9 +11,11 @@ import { PipeNetwork } from "../pipe_network";
  * @param {Vector} initialTile
  * @param {Array<enumDirection>} directions
  * @param {string} typeMask
+ * @param {import("shapez/game/entity").Entity | null} tunnel
  * @returns {Array<{
  *  entity: import("shapez/game/entity").Entity,
  *  slot: import("../../components/pipe_pin").PipePinSlot
+ *  tunnelSlot: import("../../components/pipe_tunnel").PipeTunnelSlot
  * }>}
  * @param {PipeNetwork} currentNetwork
  */
@@ -22,7 +25,8 @@ export function findSurroundingTargets(
     initialTile,
     directions,
     typeMask,
-    currentNetwork
+    currentNetwork,
+    tunnel
 ) {
     let result = [];
 
@@ -77,6 +81,7 @@ export function findSurroundingTargets(
                     result.push({
                         entity,
                         slot: null,
+                        tunnelSlot: null,
                     });
                 }
             }
@@ -111,12 +116,98 @@ export function findSurroundingTargets(
                         result.push({
                             entity,
                             slot,
+                            tunnelSlot: null,
                         });
                     }
                 }
 
                 // Pin slots mean it can be nothing else
                 continue;
+            }
+
+            /** @type {PipeTunnelComponent} */
+            const tunnelComp = entity.components["PipeTunnel"];
+            if (tunnelComp) {
+                // Go over all slots and see if they are connected
+                const tunnelSlots = tunnelComp.slots;
+                for (let j = 0; j < tunnelSlots.length; ++j) {
+                    const tunnelSlot = tunnelSlots[j];
+
+                    // Check if the position matches
+                    const tunnelPos = staticComp.localTileToWorld(tunnelSlot.pos);
+                    if (!tunnelPos.equals(tile)) {
+                        continue;
+                    }
+
+                    // Check if the direction (inverted) matches
+                    const pinDirection = staticComp.localDirectionToWorld(tunnelSlot.direction);
+                    if (pinDirection !== enumInvertedDirections[direction]) {
+                        continue;
+                    }
+
+                    if (!tunnelSlot.linkedNetwork && tunnelSlot.type === typeMask) {
+                        result.push({
+                            entity,
+                            tunnelSlot,
+                            slot: null,
+                            direction,
+                        });
+                    }
+                }
+
+                // Pin slots mean it can be nothing else
+                continue;
+            }
+        }
+    }
+
+    // Add connected tunnels
+    if (tunnel) {
+        /** @type {PipeTunnelComponent}*/
+        const pipeComp = tunnel.components["PipeTunnel"];
+        for (const tunnelSlot of pipeComp.slots) {
+            const tunnelDirection = tunnel.components.StaticMapEntity.localDirectionToWorld(
+                tunnelSlot.tunnelDirection
+            );
+
+            const pos = tunnel.components.StaticMapEntity.localTileToWorld(tunnelSlot.pos);
+            const directionVector = enumDirectionToVector[tunnelDirection];
+
+            let offset = pos.add(directionVector);
+            for (let i = 0; i < tunnelSlot.maxLength; i++) {
+                offset.addInplace(directionVector);
+                const contents = root.map.getLayersContentsMultipleXY(offset.x, offset.y);
+
+                for (let j = 0; j < contents.length; j++) {
+                    const entity = contents[j];
+                    if (!entity.components["PipeTunnel"]) continue;
+
+                    for (const slot of entity.components["PipeTunnel"].slots) {
+                        // Check if the position matches
+                        const pinPos = entity.components.StaticMapEntity.localTileToWorld(slot.pos);
+                        if (!pinPos.equals(offset)) {
+                            continue;
+                        }
+
+                        // Check if the direction (inverted) matches
+                        const pinDirection = entity.components.StaticMapEntity.localDirectionToWorld(
+                            slot.tunnelDirection
+                        );
+
+                        if (pinDirection !== enumInvertedDirections[tunnelDirection]) {
+                            continue;
+                        }
+
+                        if (!slot.linkedNetwork) {
+                            result.push({
+                                entity,
+                                tunnelSlot: slot,
+                                slot: null,
+                            });
+                            return result;
+                        }
+                    }
+                }
             }
         }
     }

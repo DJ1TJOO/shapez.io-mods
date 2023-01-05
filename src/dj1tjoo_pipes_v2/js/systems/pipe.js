@@ -9,6 +9,7 @@ import { MapChunkView } from "shapez/game/map_chunk_view";
 import { MODS } from "shapez/mods/modloader";
 import { PipeConnectorComponent } from "../components/pipe_connector";
 import { PipePinComponent } from "../components/pipe_pin";
+import { PipeTunnelComponent } from "../components/pipe_tunnel";
 import { computePipeNetworks } from "../pipe/compute/pipe_network_compute";
 import { balancePipeNetwork } from "../pipe/pipe_balancer";
 import { PipeNetwork } from "../pipe/pipe_network";
@@ -49,7 +50,8 @@ export class PipeSystem extends GameSystem {
         // Recompute networks
         const pinEntities = this.root.entityMgr.getAllWithComponent(PipePinComponent);
         const connectors = this.root.entityMgr.getAllWithComponent(PipeConnectorComponent);
-        this.networks = computePipeNetworks(this.root, pinEntities, connectors);
+        const tunnels = this.root.entityMgr.getAllWithComponent(PipeTunnelComponent);
+        this.networks = computePipeNetworks(this.root, pinEntities, connectors, tunnels);
 
         // Update all sprites around pins
         for (let i = 0; i < pinEntities.length; ++i) {
@@ -206,7 +208,11 @@ export class PipeSystem extends GameSystem {
      * @returns {boolean} valid
      */
     isEntityRelevantForPipe(entity) {
-        return entity.components["PipeConnector"] || entity.components["PipePin"];
+        return (
+            entity.components["PipeConnector"] ||
+            entity.components["PipePin"] ||
+            entity.components["PipeTunnel"]
+        );
     }
 
     /**

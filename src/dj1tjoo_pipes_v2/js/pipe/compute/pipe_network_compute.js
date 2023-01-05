@@ -9,9 +9,10 @@ import { findSurroundingTargets } from "./pipe_network_find_surrouding";
  * @param {import("shapez/game/root").GameRoot} root
  * @param {import("shapez/game/entity").Entity[]} pinEntities
  * @param {import("shapez/game/entity").Entity[]} connectors
+ * @param {import("shapez/game/entity").Entity[]} tunnels
  * @returns {PipeNetwork[]}
  */
-export function computePipeNetworks(root, pinEntities, connectors) {
+export function computePipeNetworks(root, pinEntities, connectors, tunnels) {
     const networks = [];
 
     // Remove current references and store them in the old network
@@ -20,6 +21,16 @@ export function computePipeNetworks(root, pinEntities, connectors) {
         const pinComp = entity.components["PipePin"];
         for (let i = 0; i < pinComp.slots.length; i++) {
             const slot = pinComp.slots[i];
+            slot.oldNetwork = slot.linkedNetwork;
+            slot.linkedNetwork = null;
+        }
+    }
+
+    for (const entity of tunnels) {
+        /** @type {import("../../components/pipe_tunnel").PipeTunnelComponent}*/
+        const tunnelComp = entity.components["PipeTunnel"];
+        for (let i = 0; i < tunnelComp.slots.length; i++) {
+            const slot = tunnelComp.slots[i];
             slot.oldNetwork = slot.linkedNetwork;
             slot.linkedNetwork = null;
         }
@@ -79,15 +90,21 @@ function computePipeNetwork(root, connector, currentNetwork) {
      * @type {{
      *  entity: import("shapez/game/entity").Entity,
      *  slot: import("../../components/pipe_pin").PipePinSlot | null
+     *  tunnelSlot: import("../../components/pipe_tunnel").PipeTunnelSlot | null
      * }[]}
      */
-    const entitiesToProcess = [{ entity: connector, slot: null }];
+    const entitiesToProcess = [{ entity: connector, slot: null, tunnelSlot: null }];
     while (entitiesToProcess.length > 0) {
         const current = entitiesToProcess.shift();
         const currentEntity = current.entity;
         const currentSlot = current.slot;
+        const currentTunnelSlot = current.tunnelSlot;
 
-        if (currentSlot?.linkedNetwork || currentEntity.components["PipeConnector"]?.linkedNetwork) {
+        if (
+            currentSlot?.linkedNetwork ||
+            currentTunnelSlot?.linkedNetwork ||
+            currentEntity.components["PipeConnector"]?.linkedNetwork
+        ) {
             continue;
         }
 
@@ -152,17 +169,53 @@ function computePipeNetwork(root, connector, currentNetwork) {
                 }
             }
         }
+        if (currentEntity.components["PipeTunnel"]) {
+            if (currentTunnelSlot.type === typeMask) {
+                // Register on the network
+                currentNetwork.tunnels.push(currentEntity);
 
-        // Add new entities
-        entitiesToProcess.push(
-            ...findSurroundingTargets(
-                root,
-                currentEntity.components.StaticMapEntity.getTileSpaceBounds(),
-                newSearchTile,
-                newSearchDirections,
-                typeMask,
-                currentNetwork
-            )
-        );
+                // Divide remaining evenly between old and new network
+                if (currentTunnelSlot.oldNetwork) {
+                    const oldNetworkCharge =
+                        currentTunnelSlot.oldNetwork.currentVolume / currentTunnelSlot.oldNetwork.maxVolume;
+                    const localCharge = currentTunnelSlot.maxPipeVolume * oldNetworkCharge;
+
+                    currentNetwork.currentVolume += localCharge;
+                    delete currentTunnelSlot.oldNetwork;
+                }
+
+                currentTunnelSlot.linkedNetwork = currentNetwork;
+
+                // Add new entities
+                entitiesToProcess.push(
+                    ...findSurroundingTargets(
+                        root,
+                        currentEntity.components.StaticMapEntity.getTileSpaceBounds(),
+                        currentEntity.components.StaticMapEntity.localTileToWorld(currentTunnelSlot.pos),
+                        [
+                            currentEntity.components.StaticMapEntity.localDirectionToWorld(
+                                currentTunnelSlot.direction
+                            ),
+                        ],
+                        typeMask,
+                        currentNetwork,
+                        currentEntity
+                    )
+                );
+            }
+        } else {
+            // Add new entities
+            entitiesToProcess.push(
+                ...findSurroundingTargets(
+                    root,
+                    currentEntity.components.StaticMapEntity.getTileSpaceBounds(),
+                    newSearchTile,
+                    newSearchDirections,
+                    typeMask,
+                    currentNetwork,
+                    null
+                )
+            );
+        }
     }
 }
