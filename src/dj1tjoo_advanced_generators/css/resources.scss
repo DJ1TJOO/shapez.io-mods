@@ -1,4 +1,7 @@
 [data-icon="building_tutorials/basic_generator.png"] {
-    /* @load-async */
     background-image: url("../res/building_tutorials/basic_generator.png") !important;
+}
+
+[data-icon="building_icons/basic_generator.png"] .icon {
+    background-image: url("../res/icons/basic_generator.png") !important;
 }

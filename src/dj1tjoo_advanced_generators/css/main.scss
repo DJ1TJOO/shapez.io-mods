@@ -1,5 +1,9 @@
+@import "mixins.scss";
+@import "variables.scss";
+@import "dynamic_ui.scss";
 @import "resources.scss";
+@import "hud/toolbar_switcher.scss";
 
-[data-icon="building_icons/basic_generator.png"] .icon {
-    background-image: url("../res/icons/basic_generator.png") !important;
+#ingame_HUD_advanced_generators_toolbar {
+    z-index: 330;
 }

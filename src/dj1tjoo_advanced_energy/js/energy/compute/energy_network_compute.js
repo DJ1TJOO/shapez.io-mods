@@ -60,7 +60,6 @@ export function computeEnergyNetworks(root, pinEntities, connectors, tunnels) {
         computeEnergyNetwork(root, connector, currentNetwork);
     }
 
-    console.log(networks);
     return networks;
 }
 

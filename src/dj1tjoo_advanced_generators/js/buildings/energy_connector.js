@@ -35,6 +35,10 @@ export class MetaEnergyConnectorBuilding extends ModMetaBuilding {
         return true;
     }
 
+    getHasDirectionLockAvailable() {
+        return true;
+    }
+
     /**
      *
      * @param {number} rotationVariant

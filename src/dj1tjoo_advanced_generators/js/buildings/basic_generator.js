@@ -64,13 +64,18 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
     }
 
     getAdditionalStatistics(root, variant) {
-        return /** @type {[string, string][]}*/ ([
+        const stats = /** @type {[string, string][]}*/ ([
             [T.advanced_generators.produces, formatAePerTick(config().basic_generator[variant].energy)],
-            variant === basicGeneratorMagma && [
+        ]);
+
+        if (variant === basicGeneratorMagma) {
+            stats.push([
                 T.advanced_generators.consumes,
                 formatLPerTick(config().basic_generator[variant].magma),
-            ],
-        ]);
+            ]);
+        }
+
+        return stats;
     }
 
     /**
