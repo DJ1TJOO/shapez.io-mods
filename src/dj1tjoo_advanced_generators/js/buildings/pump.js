@@ -20,6 +20,7 @@ import { Pipes } from "@dj1tjoo/shapez-pipes";
 import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
 import { amountPerCharge } from "../amountPerCharge";
 import { config } from "../config";
+import { rewards } from "../reward";
 
 const overlayMatrix = generateMatrixRotations([1, 1, 1, 1, 0, 1, 1, 1, 1]);
 
@@ -55,6 +56,14 @@ export class MetaPumpBuilding extends ModMetaBuilding {
             [T.advanced_generators.produces, formatLPerTick(localConfig.water)],
             [T.advanced_generators.consumes, formatAePerTick(localConfig.energy)],
         ]);
+    }
+
+    /**
+     * @param {import("shapez/game/root").GameRoot} root
+     * @returns {boolean}
+     */
+    getIsUnlocked(root) {
+        return root.hubGoals.isRewardUnlocked(rewards.advanced_energy_fluids);
     }
 
     /**

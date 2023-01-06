@@ -25,6 +25,7 @@ import { getComponentShared } from "../../../shared/getShared";
 import { config } from "../config";
 import { Steam } from "../../../shared/fluids/steam";
 import { amountPerCharge } from "../amountPerCharge";
+import { rewards } from "../reward";
 
 export const processLabelTurbine = "dj1tjoo@turbine";
 
@@ -68,6 +69,14 @@ export class MetaTurbineBuilding extends ModMetaBuilding {
 
     getStayInPlacementMode() {
         return true;
+    }
+
+    /**
+     * @param {import("shapez/game/root").GameRoot} root
+     * @returns {boolean}
+     */
+    getIsUnlocked(root) {
+        return root.hubGoals.isRewardUnlocked(rewards.advanced_energy_steam_turbine);
     }
 
     getSprite(rotationVariant) {

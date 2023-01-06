@@ -22,6 +22,7 @@ import { config } from "../config";
 import { Steam } from "../../../shared/fluids/steam";
 import { Water } from "../../../shared/fluids/water";
 import { getComponentShared } from "../../../shared/getShared";
+import { rewards } from "../reward";
 
 export const processLabelSteamGenerator = "dj1tjoo@steam_generator";
 
@@ -36,6 +37,14 @@ export class MetaSteamGeneratorBuilding extends ModMetaBuilding {
 
     getDimensions() {
         return new Vector(3, 2);
+    }
+
+    /**
+     * @param {import("shapez/game/root").GameRoot} root
+     * @returns {boolean}
+     */
+    getIsUnlocked(root) {
+        return root.hubGoals.isRewardUnlocked(rewards.advanced_energy_steam_turbine);
     }
 
     static getAllVariantCombinations() {

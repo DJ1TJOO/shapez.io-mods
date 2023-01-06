@@ -25,6 +25,7 @@ import { amountPerCharge } from "../amountPerCharge";
 import { config } from "../config";
 import { Pipes } from "@dj1tjoo/shapez-pipes";
 import { StoneMagma } from "../../../shared/fluids/magma";
+import { rewards } from "../reward";
 
 const overlayMatrix = generateMatrixRotations([1, 1, 1, 1, 0, 1, 1, 1, 1]);
 
@@ -55,8 +56,12 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
         ];
     }
 
-    getAvailableVariants() {
-        return [defaultBuildingVariant, basicGeneratorMagma];
+    getAvailableVariants(root) {
+        if (root.hubGoals.isRewardUnlocked(rewards.advanced_energy_fluids)) {
+            return [defaultBuildingVariant, basicGeneratorMagma];
+        }
+
+        return [defaultBuildingVariant];
     }
 
     getSpecialOverlayRenderMatrix(rotation, rotationVariant, variant) {

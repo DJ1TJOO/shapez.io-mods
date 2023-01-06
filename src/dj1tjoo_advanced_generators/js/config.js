@@ -29,7 +29,7 @@ const defaultConfig = {
             energy_outlet: 1000000,
         },
         maxArea: 200,
-        tier1: { shape: "CuCuCuCu", items: 3, energy: 5000, steam: 100 }, //"CuRuCuRu"
+        tier1: { shape: "CuRuCuRu", items: 3, energy: 5000, steam: 100 },
         tier2: { shape: "CgRyCgRy:CyRbCyRb", items: 5, energy: 22500, steam: 300 },
         tier3: { shape: "SyCcSyCc:ScCyScCy:CwRcCwRc", items: 9, energy: 70000, steam: 700 },
         tier4: { shape: "CgSyCgSy:SpCySpCy:--RcCwRc:Cy------", items: 15, energy: 137500, steam: 1100 },

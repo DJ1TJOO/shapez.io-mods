@@ -13,6 +13,7 @@ import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { T } from "shapez/translations";
 import { config } from "../config";
+import { rewards } from "../reward";
 import { formatAe, formatAePerTick } from "../ui/formatter";
 
 export class MetaEnergyTunnelBuilding extends ModMetaBuilding {
@@ -34,6 +35,14 @@ export class MetaEnergyTunnelBuilding extends ModMetaBuilding {
 
     getFlipOrientationAfterPlacement() {
         return true;
+    }
+
+    /**
+     * @param {import("shapez/game/root").GameRoot} root
+     * @returns {boolean}
+     */
+    getIsUnlocked(root) {
+        return root.hubGoals.isRewardUnlocked(rewards.advanced_energy_tunnels);
     }
 
     static getAllVariantCombinations() {

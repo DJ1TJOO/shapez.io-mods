@@ -32,6 +32,7 @@ import { MetaPipeTunnelBuilding } from "./buildings/pipe_tunnel";
 import { globalConfig } from "shapez/core/config";
 import { AdvancedGeneratorsToolbar } from "./toolbars/advanced_generators_toolbar";
 import { HUDToolbarSwitcher } from "./hud/toolbar_switcher";
+import { rewards } from "./reward";
 
 /**
  * @typedef {import("shapez/game/hud/parts/base_toolbar").HUDBaseToolbar & {
@@ -71,6 +72,34 @@ class ModImpl extends Mod {
         this.registerComponents();
         this.registerSystems();
         this.registerPatches();
+
+        this.signals.modifyLevelDefinitions.add(
+            /**
+             * @param { {
+             * shape: string;
+             * required: number;
+             * reward: string;
+             * }[]} levelDefinitions
+             */
+            levelDefinitions => {
+                let levelsAdded = 0;
+                levelDefinitions.splice(5 + levelsAdded++, 0, {
+                    required: 170,
+                    reward: rewards.advanced_energy_tunnels,
+                    shape: "--CuCu--",
+                });
+                levelDefinitions.splice(10 + levelsAdded++, 0, {
+                    required: 900,
+                    reward: rewards.advanced_energy_fluids,
+                    shape: "ScSpSpSc",
+                });
+                levelDefinitions.splice(18 + levelsAdded++, 0, {
+                    required: 22000,
+                    reward: rewards.advanced_energy_steam_turbine,
+                    shape: "RpRpCyCy:CyCySwSw",
+                });
+            }
+        );
     }
 
     registerToolbar() {
