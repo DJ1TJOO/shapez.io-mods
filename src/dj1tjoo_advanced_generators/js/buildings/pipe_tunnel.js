@@ -1,5 +1,11 @@
 import { Pipes } from "@dj1tjoo/shapez-pipes";
-import { enumDirection, Vector } from "shapez/core/vector";
+import {
+    enumAngleToDirection,
+    enumDirection,
+    enumDirectionToVector,
+    enumInvertedDirections,
+    Vector,
+} from "shapez/core/vector";
 import { defaultBuildingVariant } from "shapez/game/meta_building";
 import { ModMetaBuilding } from "shapez/mods/mod_meta_building";
 import { T } from "shapez/translations";
@@ -20,6 +26,10 @@ export class MetaPipeTunnelBuilding extends ModMetaBuilding {
     }
 
     getStayInPlacementMode() {
+        return true;
+    }
+
+    getFlipOrientationAfterPlacement() {
         return true;
     }
 
@@ -62,5 +72,64 @@ export class MetaPipeTunnelBuilding extends ModMetaBuilding {
                 ],
             })
         );
+    }
+
+    /**
+     * Should compute the optimal rotation variant on the given tile
+     * @param {object} param0
+     * @param {import("shapez/game/root").GameRoot} param0.root
+     * @param {Vector} param0.tile
+     * @param {number} param0.rotation
+     * @param {string} param0.variant
+     * @param {Layer} param0.layer
+     * @return {{ rotation: number, rotationVariant: number, connectedEntities?: Array<import("shapez/game/entity").Entity> }}
+     */
+    computeOptimalDirectionAndRotationVariantAtTile({ root, tile, rotation, variant, layer }) {
+        const searchDirection = enumAngleToDirection[rotation];
+        const searchVector = enumDirectionToVector[searchDirection];
+
+        for (let searchOffset = 1; searchOffset <= 6; ++searchOffset) {
+            tile = tile.addScalars(searchVector.x, searchVector.y);
+
+            const contents = root.map.getTileContent(tile, "regular");
+            if (contents) {
+                const staticComp = contents.components.StaticMapEntity;
+
+                /** @type {import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_tunnel").PipeTunnelComponent} */
+                const tunnelComp = contents.components["PipeTunnel"];
+                if (tunnelComp) {
+                    // Go over all slots and see if they are connected
+                    const tunnelSlots = tunnelComp.slots;
+                    for (let j = 0; j < tunnelSlots.length; ++j) {
+                        const tunnelSlot = tunnelSlots[j];
+
+                        // Check if the position matches
+                        const tunnelPos = staticComp.localTileToWorld(tunnelSlot.pos);
+                        if (!tunnelPos.equals(tile)) {
+                            continue;
+                        }
+
+                        // Check if the direction (inverted) matches
+                        const pinDirection = staticComp.localDirectionToWorld(tunnelSlot.tunnelDirection);
+                        if (pinDirection !== enumInvertedDirections[searchDirection]) {
+                            continue;
+                        }
+
+                        if (tunnelSlot.type === "default") {
+                            return {
+                                rotation,
+                                rotationVariant: 0,
+                                connectedEntities: [contents],
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        return {
+            rotation,
+            rotationVariant: 0,
+        };
     }
 }
