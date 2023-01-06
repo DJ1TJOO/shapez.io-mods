@@ -1,4 +1,3 @@
-import { round2Digits } from "shapez/core/utils";
 import { BaseHUDPart } from "shapez/game/hud/base_hud_part";
 import { T } from "shapez/translations";
 
@@ -76,8 +75,16 @@ export class HUDConnectorInfo extends BaseHUDPart {
                     ? T.advanced_generators.throughputAe
                     : T.advanced_generators.throughputL
             )
-                .replace("<x>", round2Digits(network.currentThroughput))
-                .replace("<y>", network.maxThoughput < 0 ? "Infinit" : round2Digits(network.maxThoughput));
+                .replace(
+                    "<x>",
+                    Intl.NumberFormat("en", { notation: "compact" }).format(network.currentThroughput)
+                )
+                .replace(
+                    "<y>",
+                    network.maxThoughput < 0
+                        ? "Infinit"
+                        : Intl.NumberFormat("en", { notation: "compact" }).format(network.maxThoughput)
+                );
             const throughputMetrics = ctx.measureText(throughputText);
             const throughputHeight =
                 throughputMetrics.actualBoundingBoxAscent + throughputMetrics.actualBoundingBoxDescent;
@@ -88,8 +95,11 @@ export class HUDConnectorInfo extends BaseHUDPart {
                     ? T.advanced_generators.volumeAe
                     : T.advanced_generators.volumeL
             )
-                .replace("<x>", round2Digits(network.currentVolume))
-                .replace("<y>", round2Digits(network.maxVolume));
+                .replace(
+                    "<x>",
+                    Intl.NumberFormat("en", { notation: "compact" }).format(network.currentVolume)
+                )
+                .replace("<y>", Intl.NumberFormat("en", { notation: "compact" }).format(network.maxVolume));
             const volumeMetrics = ctx.measureText(volumeText);
             const volumeHeight =
                 volumeMetrics.actualBoundingBoxAscent + volumeMetrics.actualBoundingBoxDescent;
