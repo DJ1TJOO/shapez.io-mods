@@ -1,0 +1,6 @@
+@mixin DarkThemeOverride {
+    @at-root html[data-theme="dark"] &,
+        &[data-theme="dark"] {
+        @content;
+    }
+}

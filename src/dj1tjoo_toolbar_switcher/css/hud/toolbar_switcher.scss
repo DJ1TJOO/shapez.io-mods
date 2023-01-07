@@ -1,0 +1,92 @@
+#ingame_HUD_Toolbar_Switcher {
+    z-index: 340;
+
+    --toolbar-switcher-length: 0;
+
+    position: absolute;
+    @include S(bottom, 10px);
+    left: max(D(10px), 50% - var(--toolbar-switcher-length) / 2);
+
+    display: grid;
+    grid-template-rows: auto auto;
+    justify-items: center;
+    @include S(grid-gap, 4px);
+
+    background: transparent;
+    transition: transform 120ms ease-in-out, left 120ms ease-in-out;
+    will-change: transform, left;
+
+    &:not(.visible) {
+        transform: translateY(#{D(100px)});
+    }
+
+    .items {
+        display: grid;
+        grid-auto-flow: column;
+        justify-items: center;
+        align-self: center;
+        grid-gap: D(2px);
+        grid-row: 2 / 3;
+
+        @include S(border-radius, $globalBorderRadius);
+        @include S(padding, 2px);
+        background-color: rgba($ingameHudBg, 0.07);
+
+        @include DarkThemeOverride {
+            background-color: rgba(darken($darkModeGameBackground, 15), 0.95);
+        }
+
+        .item {
+            display: flex;
+            @include S(width, 40px);
+            position: relative;
+            @include S(height, 40px);
+
+            .icon {
+                color: $accentColorDark;
+                display: flex;
+                flex-direction: column-reverse;
+                position: relative;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
+
+                @include S(border-radius, $globalBorderRadius * 0.9);
+
+                pointer-events: all;
+                transition: all 0.12s ease-in-out;
+                transition-property: background-color, transform;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: rgba(30, 40, 90, 0.1);
+
+                    .switcher {
+                        transform: rotate(180deg);
+                    }
+
+                    @include DarkThemeOverride {
+                        background-color: rgba(255, 255, 255, 0.07);
+                    }
+                }
+
+                .switcher {
+                    width: 100%;
+                    height: 100%;
+                    background: center center / 70% no-repeat;
+                    background-image: url("../res/icons/toolbar_changer.png") !important;
+
+                    transition: all 0.12s ease-in-out;
+                    transition-property: transform;
+                }
+
+                &.pressed {
+                    transform: scale(0.9) !important;
+                }
+            }
+        }
+    }
+}
