@@ -5,6 +5,7 @@ const MOD_ID = "dj1tjoo_toolbar_switcher";
 
 /**
  * @typedef {import("shapez/mods/mod").Mod} ToolbarSwitcherMod
+ * @typedef {import("../../js/toolbarManager").ToolbarManager} ToolbarManager
  */
 
 export class ToolbarSwitcher {

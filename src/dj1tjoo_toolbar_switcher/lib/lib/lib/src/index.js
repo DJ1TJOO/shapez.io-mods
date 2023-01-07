@@ -1,9 +1,9 @@
-const { globalConfig } = shapez;
 /** @type {{MODS: import("shapez/mods/modloader").ModLoader}} */
 const { MODS } = shapez;
 const MOD_ID = "dj1tjoo_toolbar_switcher";
 /**
  * @typedef {import("shapez/mods/mod").Mod} ToolbarSwitcherMod
+ * @typedef {import("../../js/toolbarManager").ToolbarManager} ToolbarManager
  */
 export class ToolbarSwitcher {
     /**
@@ -15,22 +15,26 @@ export class ToolbarSwitcher {
      * @param {"regular" | "wires"} param0.fallback When the toolbar switcher mod is not available where to add
      */
     static addNewBuildingToToolbar({ toolbar, location = "primary", metaClass, fallback = "regular" }) {
-        this.onLoaded(installed => {
-            /** @type {string} */
-            let actualToolbar = fallback;
-            if (installed) {
-                /** @type {import("../../js/toolbarManager").ToolbarManager} */
-                const toolbarManager = globalConfig["toolbarManager"];
-                const exists = !!toolbarManager.idToToolbar[toolbar];
-                if (exists)
-                    actualToolbar = toolbar;
-            }
+        const register = installed => {
             this.getMod().modInterface.addNewBuildingToToolbar({
                 location,
                 // @ts-expect-error Modinterface doesn't allow multiple toolbars, but that method has been replaced
-                toolbar: actualToolbar,
+                toolbar: installed ? toolbar : fallback,
                 metaClass,
             });
+        };
+        this.onLoaded(installed => {
+            if (this.toolbarsToRegister.includes(toolbar)) {
+                const timeout = setInterval(() => {
+                    if (this.toolbarsToRegister.includes(toolbar))
+                        return;
+                    clearInterval(timeout);
+                    register(installed);
+                }, 100);
+            }
+            else {
+                register(installed);
+            }
         });
     }
     /**
@@ -41,11 +45,13 @@ export class ToolbarSwitcher {
      * @returns {void}
      */
     static registerToolbar(id, toolbar, isVisible = false) {
+        this.toolbarsToRegister.push(id);
         this.onLoaded(installed => {
             if (!installed)
                 return;
             const registerToolbar = this.getMod().modInterface["registerToolbar"];
             registerToolbar.apply(this.getMod().modInterface, [id, toolbar, isVisible]);
+            this.toolbarsToRegister.splice(this.toolbarsToRegister.indexOf(id), 1);
         });
     }
     /**
@@ -116,3 +122,4 @@ export class ToolbarSwitcher {
 ToolbarSwitcher.isLoadedComlete = false;
 ToolbarSwitcher.isLoaded = [];
 ToolbarSwitcher.loadedUid = 0;
+ToolbarSwitcher.toolbarsToRegister = [];

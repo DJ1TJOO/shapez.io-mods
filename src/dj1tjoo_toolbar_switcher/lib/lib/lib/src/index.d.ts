@@ -1,10 +1,12 @@
 /**
  * @typedef {import("shapez/mods/mod").Mod} ToolbarSwitcherMod
+ * @typedef {import("../../js/toolbarManager").ToolbarManager} ToolbarManager
  */
 export class ToolbarSwitcher {
     static isLoadedComlete: boolean;
     static isLoaded: any[];
     static loadedUid: number;
+    static toolbarsToRegister: any[];
     /**
      * Registers a new building to a toolbar
      * @param {object} param0
@@ -55,3 +57,4 @@ export class ToolbarSwitcher {
     static getVersion(): string | null;
 }
 export type ToolbarSwitcherMod = import("shapez/mods/mod").Mod;
+export type ToolbarManager = import("../../js/toolbarManager").ToolbarManager;

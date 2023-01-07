@@ -15,7 +15,7 @@ globalConfig["toolbarManager"] = toolbarManager;
  * @param {boolean?} isVisible
  * @returns {void}
  */
-export function registerToolbar(id, toolbar, isVisible = false) {
+shapez.ModInterface.prototype.registerToolbar = function (id, toolbar, isVisible = false) {
     if (!this.toolbarToHUD) {
         this.toolbarToHUD = {};
     }
@@ -45,8 +45,7 @@ export function registerToolbar(id, toolbar, isVisible = false) {
             element.mtForceDisable();
         }
     });
-}
-shapez.ModInterface.prototype.registerToolbar = registerToolbar;
+};
 shapez.ModInterface.prototype.registerToolbar("regular", HUDBuildingsToolbar);
 shapez.ModInterface.prototype.registerToolbar("wires", HUDWiresToolbar);
 
