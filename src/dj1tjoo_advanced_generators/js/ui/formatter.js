@@ -1,25 +1,5 @@
 import { T } from "shapez/translations";
 
-// function nFormatter(num, digits) {
-//     const lookup = [
-//         { value: 1, symbol: "" },
-//         { value: 1e3, symbol: "k" },
-//         { value: 1e6, symbol: "M" },
-//         { value: 1e9, symbol: "G" },
-//         { value: 1e12, symbol: "T" },
-//         { value: 1e15, symbol: "P" },
-//         { value: 1e18, symbol: "E" },
-//     ];
-//     const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-//     var item = lookup
-//         .slice()
-//         .reverse()
-//         .find(function (item) {
-//             return num >= item.value;
-//         });
-//     return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
-// }
-
 /**
  * Formats a number like 2.51 to "2.51 AE/t"
  * @param {number} speed
@@ -32,7 +12,9 @@ export function formatAePerTick(speed, double = false, separator = T.global.deci
             ? T.advanced_generators.oneAePerTick
             : T.advanced_generators.aePerTick.replace(
                   "<x>",
-                  Intl.NumberFormat("en", { notation: "compact" }).format(speed).replace(".", separator)
+                  speed < 0
+                      ? "Infinite"
+                      : Intl.NumberFormat("en", { notation: "compact" }).format(speed).replace(".", separator)
               )) + (double ? "  " + T.ingame.buildingPlacement.infoTexts.itemsPerSecondDouble : "")
     );
 }
@@ -63,7 +45,9 @@ export function formatLPerTick(speed, double = false, separator = T.global.decim
             ? T.advanced_generators.oneLPerTick
             : T.advanced_generators.lPerTick.replace(
                   "<x>",
-                  Intl.NumberFormat("en", { notation: "compact" }).format(speed).replace(".", separator)
+                  speed < 0
+                      ? "Infinite"
+                      : Intl.NumberFormat("en", { notation: "compact" }).format(speed).replace(".", separator)
               )) + (double ? "  " + T.ingame.buildingPlacement.infoTexts.itemsPerSecondDouble : "")
     );
 }

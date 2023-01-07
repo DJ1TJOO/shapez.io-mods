@@ -16,6 +16,12 @@ advanced_generators:
     throughput: Throughput
     stores: Stores
 
+    fluid: "Fluid: <x>"
+
+fluids:
+    water_fluid: Water
+    steam_fluid: Steam
+
 storyRewards:
     reward_advanced_energy_tunnels:
         title: Energy and Pipe Tunnel

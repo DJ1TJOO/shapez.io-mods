@@ -70,6 +70,18 @@ export class HUDConnectorInfo extends BaseHUDPart {
             ctx.fillStyle = "#64666Ebb";
             ctx.strokeStyle = "#64666Ebb";
 
+            const fluidText =
+                typeof network["currentFluid"] === "undefined"
+                    ? ""
+                    : T.advanced_generators.fluid.replace(
+                          "<x>",
+                          T.fluids[network["currentFluid"].getFluidType()]
+                      );
+
+            const fluidMetrics = ctx.measureText(fluidText);
+            const fluidHeight = fluidMetrics.actualBoundingBoxAscent + fluidMetrics.actualBoundingBoxDescent;
+            const fluidWidth = fluidMetrics.width;
+
             const throughputText = (
                 typeof network["currentFluid"] === "undefined"
                     ? T.advanced_generators.throughputAe
@@ -82,7 +94,7 @@ export class HUDConnectorInfo extends BaseHUDPart {
                 .replace(
                     "<y>",
                     network.maxThoughput < 0
-                        ? "Infinit"
+                        ? "Infinite"
                         : Intl.NumberFormat("en", { notation: "compact" }).format(network.maxThoughput)
                 );
             const throughputMetrics = ctx.measureText(throughputText);
@@ -105,8 +117,8 @@ export class HUDConnectorInfo extends BaseHUDPart {
                 volumeMetrics.actualBoundingBoxAscent + volumeMetrics.actualBoundingBoxDescent;
             const volumeWidth = volumeMetrics.width;
 
-            const infoWidth = Math.max(throughputWidth, volumeWidth);
-            const infoHeight = throughputHeight + 5 + volumeHeight;
+            const infoWidth = Math.max(fluidWidth, throughputWidth, volumeWidth);
+            const infoHeight = fluidHeight + 5 + throughputHeight + 5 + volumeHeight;
 
             if (infoWidth > minWidth) {
                 minWidth = infoWidth;
@@ -123,8 +135,9 @@ export class HUDConnectorInfo extends BaseHUDPart {
             const innerX = x + 10;
             const innerY = y + 10;
             ctx.fillStyle = "#fff";
-            ctx.fillText(throughputText, innerX, innerY);
-            ctx.fillText(volumeText, innerX, innerY + 2 + throughputHeight);
+            ctx.fillText(fluidText, innerX, innerY);
+            ctx.fillText(throughputText, innerX, innerY + 4 + fluidHeight);
+            ctx.fillText(volumeText, innerX, innerY + fluidHeight + 4 + throughputHeight);
 
             ctx.textBaseline = "alphabetic";
 
