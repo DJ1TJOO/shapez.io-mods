@@ -23,6 +23,8 @@ import { config, materialsEnum } from "../config";
 import { createId } from "../createId";
 import { StoneMagma, BasaltMagma } from "../../../shared/fluids/magma";
 import { MaterialItem } from "../fluids/items/materials";
+import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
+import { getComponentShared } from "../../../shared/getShared";
 
 const processLabelHeater = createId("heater");
 
@@ -99,6 +101,25 @@ export class MetaHeaterBuilding extends ModMetaBuilding {
                 ],
             })
         );
+
+        if (AdvancedEnergy.isInstalled()) {
+            entity.addComponent(getComponentShared("EnergyPinRenderer"));
+            entity.addComponent(
+                new AdvancedEnergy.EnergyPinComponent({
+                    slots: [
+                        {
+                            direction: enumDirection.left,
+                            pos: new Vector(0, 1),
+                            type: "acceptor",
+                            consumptionPerTick: localConfig.energy,
+                            maxBuffer: root
+                                ? amountPerCharge(root, localConfig.energy, processLabelHeater) * 3
+                                : localConfig.energy * 3,
+                        },
+                    ],
+                })
+            );
+        }
     }
 }
 
@@ -126,16 +147,29 @@ export function setupHeater() {
      * @returns
      */
     MODS_CAN_PROCESS[enumItemProcessorRequirements[processLabelHeater]] = function ({ entity }) {
+        const localConfig = config().heater;
+
         /** @type {import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_pin").PipePinComponent} */
         const pipePinComp = entity.components["PipePin"];
 
         if (
             !pipePinComp.slots[0].linkedNetwork ||
-            pipePinComp.slots[0].buffer +
-                amountPerCharge(this.root, config().heater.magma, processLabelHeater) >
+            pipePinComp.slots[0].buffer + amountPerCharge(this.root, localConfig.magma, processLabelHeater) >
                 pipePinComp.slots[0].maxBuffer
         ) {
             return false;
+        }
+
+        if (AdvancedEnergy.isInstalled()) {
+            /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
+            const energyPinComp = entity.components["EnergyPin"];
+            if (
+                !energyPinComp.slots[0].linkedNetwork ||
+                energyPinComp.slots[0].buffer <
+                    amountPerCharge(this.root, localConfig.energy, processLabelHeater)
+            ) {
+                return false;
+            }
         }
 
         const processorComp = entity.components.ItemProcessor;
@@ -151,6 +185,21 @@ export function setupHeater() {
      * @this {import("shapez/game/systems/item_processor").ItemProcessorSystem}
      */
     MOD_ITEM_PROCESSOR_HANDLERS[enumItemProcessorTypes[processLabelHeater]] = function ({ items, entity }) {
+        const localConfig = config().heater;
+
+        if (AdvancedEnergy.isInstalled()) {
+            /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
+            const pinComp = entity.components["EnergyPin"];
+
+            if (!pinComp.slots[0].linkedNetwork) return;
+
+            entity.components["EnergyPin"].slots[0].buffer -= amountPerCharge(
+                this.root,
+                localConfig.energy,
+                processLabelHeater
+            );
+        }
+
         /** @type {import("@dj1tjoo/shapez-pipes/lib/js/components/pipe_pin").PipePinComponent} */
         const pipePinComp = entity.components["PipePin"];
 
@@ -169,7 +218,7 @@ export function setupHeater() {
 
         entity.components["PipePin"].slots[0].buffer += amountPerCharge(
             this.root,
-            config().heater.magma,
+            localConfig.magma,
             processLabelHeater
         );
     };

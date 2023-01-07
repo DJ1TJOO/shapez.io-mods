@@ -15,6 +15,7 @@ export const defaultConfig = {
     },
     heater: {
         magma: 100,
+        energy: 100,
     },
 };
 

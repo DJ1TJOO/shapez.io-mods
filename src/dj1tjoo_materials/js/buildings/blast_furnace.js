@@ -89,23 +89,28 @@ export class MetaBlastFurnaceBuilding extends ModMetaBuilding {
             })
         );
 
-        entity.addComponent(getComponentShared("EnergyPinRenderer"));
-        entity.addComponent(
-            new AdvancedEnergy.EnergyPinComponent({
-                slots: [
-                    {
-                        direction: enumDirection.left,
-                        pos: new Vector(0, 1),
-                        type: "acceptor",
-                        consumptionPerTick: config().blast_furnace.energy,
-                        maxBuffer: root
-                            ? amountPerCharge(root, config().blast_furnace.energy, processLabelBlastFurnace) *
-                              3
-                            : config().blast_furnace.energy * 3,
-                    },
-                ],
-            })
-        );
+        if (AdvancedEnergy.isInstalled()) {
+            entity.addComponent(getComponentShared("EnergyPinRenderer"));
+            entity.addComponent(
+                new AdvancedEnergy.EnergyPinComponent({
+                    slots: [
+                        {
+                            direction: enumDirection.left,
+                            pos: new Vector(0, 1),
+                            type: "acceptor",
+                            consumptionPerTick: config().blast_furnace.energy,
+                            maxBuffer: root
+                                ? amountPerCharge(
+                                      root,
+                                      config().blast_furnace.energy,
+                                      processLabelBlastFurnace
+                                  ) * 3
+                                : config().blast_furnace.energy * 3,
+                        },
+                    ],
+                })
+            );
+        }
 
         entity.addComponent(
             new ItemEjectorComponent({
@@ -159,14 +164,16 @@ export function setupBlastFurnace() {
     MODS_CAN_PROCESS[enumItemProcessorRequirements[processLabelBlastFurnace]] = function ({ entity }) {
         const localConfig = config().blast_furnace;
 
-        /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
-        const energyPinComp = entity.components["EnergyPin"];
-        if (
-            !energyPinComp.slots[0].linkedNetwork ||
-            energyPinComp.slots[0].buffer <
-                amountPerCharge(this.root, localConfig.energy, processLabelBlastFurnace)
-        ) {
-            return false;
+        if (AdvancedEnergy.isInstalled()) {
+            /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
+            const energyPinComp = entity.components["EnergyPin"];
+            if (
+                !energyPinComp.slots[0].linkedNetwork ||
+                energyPinComp.slots[0].buffer <
+                    amountPerCharge(this.root, localConfig.energy, processLabelBlastFurnace)
+            ) {
+                return false;
+            }
         }
 
         const processorComp = entity.components.ItemProcessor;
@@ -193,16 +200,18 @@ export function setupBlastFurnace() {
     }) {
         const localConfig = config().blast_furnace;
 
-        /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
-        const pinComp = entity.components["EnergyPin"];
+        if (AdvancedEnergy.isInstalled()) {
+            /** @type {import("@dj1tjoo/shapez-advanced-energy/lib/js/components/energy_pin").EnergyPinComponent} */
+            const pinComp = entity.components["EnergyPin"];
 
-        if (!pinComp.slots[0].linkedNetwork) return;
+            if (!pinComp.slots[0].linkedNetwork) return;
 
-        entity.components["EnergyPin"].slots[0].buffer -= amountPerCharge(
-            this.root,
-            localConfig.energy,
-            processLabelBlastFurnace
-        );
+            entity.components["EnergyPin"].slots[0].buffer -= amountPerCharge(
+                this.root,
+                localConfig.energy,
+                processLabelBlastFurnace
+            );
+        }
 
         const recipe = blastFurnaceRecipes.find(x => x.shape(items.get(0).definition));
 
