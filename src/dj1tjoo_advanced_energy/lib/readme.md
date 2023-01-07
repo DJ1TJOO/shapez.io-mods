@@ -35,3 +35,30 @@ The AdvancedEnergy class has the following methods. The methods with a `*` can o
 | onLoaded(cb: (installed: boolean) => void): void | Register to run callback on energy mod loaded                        |
 | enableDebug(): void                              | Enables debug rendering on connectors                                |
 | disableDebug(): void                             | Disables debug rendering on connectors                               |
+
+### Adding a energy pin
+
+The `entity.addComponent` can be called in a buildings `setupEntityComponents`
+
+```js
+entity.addComponent(
+    new AdvancedEnergy.EnergyPinComponent({
+        slots: [
+            {
+                direction: enumDirection.top,
+                pos: new Vector(0, 0),
+                type: "ejector",
+                productionPerTick: 100,
+                maxBuffer: 1000,
+            },
+            {
+                direction: enumDirection.bottom,
+                pos: new Vector(0, 0),
+                type: "acceptor",
+                consumptionPerTick: 100,
+                maxBuffer: 1000,
+            },
+        ],
+    })
+);
+```
