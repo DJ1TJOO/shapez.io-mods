@@ -1,6 +1,6 @@
 {
     "name": "@dj1tjoo/shapez-toolbar-switcher",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "A helper library for the toolbar switcher mod",
     "main": "./lib/lib/src/index.js",
     "type": "module",

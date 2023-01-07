@@ -1,5 +1,3 @@
-const { globalConfig } = shapez;
-
 /** @type {{MODS: import("shapez/mods/modloader").ModLoader}} */
 const { MODS } = shapez;
 
@@ -28,10 +26,7 @@ export class ToolbarSwitcher {
             let actualToolbar = fallback;
 
             if (installed) {
-                /** @type {import("../../js/toolbarManager").ToolbarManager} */
-                const toolbarManager = globalConfig["toolbarManager"];
-                const exists = !!toolbarManager.idToToolbar[toolbar];
-                if (exists) actualToolbar = toolbar;
+                actualToolbar = toolbar;
             }
 
             this.getMod().modInterface.addNewBuildingToToolbar({
