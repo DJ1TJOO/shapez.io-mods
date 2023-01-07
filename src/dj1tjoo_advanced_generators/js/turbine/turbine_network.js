@@ -60,7 +60,6 @@ export class TurbineNetwork {
             x => x.components.StaticMapEntity.getVariant() === turbineComponents.mixer
         );
         const efficienty = round2Digits(Math.min(1, mixers.length / tier.items));
-        console.log(efficienty);
 
         // Produce
         this.parts

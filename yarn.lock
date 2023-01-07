@@ -12,6 +12,11 @@
   resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-pipes/-/shapez-pipes-0.3.0.tgz#19889204f4e8b03b212e19fe8241de45a6ddd72a"
   integrity sha512-6C3wy+lkptyH16ickCbfFiBmODQRWiiKGnm+UxIYsCBiIKemPf5dt3cvbnxt/6GCxbnGGPZB9BFOz83tvEruJQ==
 
+"@dj1tjoo/shapez-toolbar-switcher@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-toolbar-switcher/-/shapez-toolbar-switcher-1.0.2.tgz#fb1ff6a8afce26019776920f6b6a6b1bfd52f8a9"
+  integrity sha512-hEn18ZEvGktWeXWcJApX1iaq1s5qDqIedrtToEH5oczbsvdBCU8yRXESOw051urRkFp2l+h9FNqzE7iSUvLQNQ==
+
 "@eslint/eslintrc@^1.0.5":
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/@eslint/eslintrc/-/eslintrc-1.4.1.tgz#af58772019a2d271b7e2d4c23ff4ddcba3ccfb3e"

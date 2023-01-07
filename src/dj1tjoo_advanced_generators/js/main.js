@@ -29,33 +29,11 @@ import { PipePinRendererSystem } from "../../shared/systems/pipe_pin_renderer";
 import { PipePinRendererComponent } from "../../shared/components/pipe_pin_renderer";
 import { MetaEnergyTunnelBuilding } from "./buildings/energy_tunnel";
 import { MetaPipeTunnelBuilding } from "./buildings/pipe_tunnel";
-import { globalConfig } from "shapez/core/config";
 import { AdvancedGeneratorsToolbar } from "./toolbars/advanced_generators_toolbar";
-import { HUDToolbarSwitcher } from "./hud/toolbar_switcher";
 import { rewards } from "./reward";
-
-/**
- * @typedef {import("shapez/game/hud/parts/base_toolbar").HUDBaseToolbar & {
- *  mtForceVisible: boolean
- *  mtForceToggle: () => void
- *  mtForceEnable: () => void
- *  mtForceDisable: () => void
- * }} HUDBaseToolbarMT
- */
-
-/**
- * @typedef {Object} ToolbarManager
- * @property {Record<string, HUDBaseToolbarMT>} idToToolbar
- * @property {(id: string, toolbar: import("shapez/game/hud/parts/base_toolbar").HUDBaseToolbar) => void} registerToolbar Register a new toolbar.
- * @property {(id: string) => void} toggleToolbar Toggle the visibility of the toolbar with the given id.
- * @property {(id: string) => void} enableToolbar Force show toolbarID.
- * @property {(id: string) => void} disableToolbar Force hide toolbarID.
- * @property {(id: string) => HUDBaseToolbarMT} getToolbarByID Get the toolbar with the given id.
- */
-
-/**
- * @typedef {(id: string, toolbar: typeof import("shapez/game/hud/parts/base_toolbar").HUDBaseToolbar, isVisible?: boolean) => void} registerToolbar
- */
+import { AdvancedGeneratorsToolbarWires } from "./toolbars/advanced_generators_toolbar_wires";
+import { ToolbarSwitcher } from "@dj1tjoo/shapez-toolbar-switcher";
+import { globalConfig } from "shapez/core/config";
 
 class ModImpl extends Mod {
     init() {
@@ -104,19 +82,8 @@ class ModImpl extends Mod {
     }
 
     registerToolbar() {
-        this.signals.appBooted.add(() => {
-            if (!globalConfig["toolbarManager"]) return;
-
-            /** @type {registerToolbar} */
-            const registerToolbar = this.modInterface["registerToolbar"];
-
-            registerToolbar.apply(this.modInterface, [
-                "advancedGeneratorsToolbar",
-                AdvancedGeneratorsToolbar,
-            ]);
-
-            this.modInterface.registerHudElement("toolbarSwitcher", HUDToolbarSwitcher);
-        });
+        ToolbarSwitcher.registerToolbar("advancedGeneratorsToolbar", AdvancedGeneratorsToolbar);
+        ToolbarSwitcher.registerToolbar("advancedGeneratorsToolbarWires", AdvancedGeneratorsToolbarWires);
     }
 
     registerPatches() {
@@ -217,29 +184,25 @@ class ModImpl extends Mod {
             metaClass: MetaTurbineBuilding,
         });
 
-        this.signals.appBooted.add(() => {
-            const toolbar = !globalConfig["toolbarManager"] ? "regular" : "advancedGeneratorsToolbar";
+        const buildings = [
+            MetaBasicGeneratorBuilding,
+            MetaBasicConsumerBuilding,
+            MetaEnergyConnectorBuilding,
+            MetaPipeConnectorBuilding,
+            MetaPumpBuilding,
+            MetaSteamGeneratorBuilding,
+            MetaTurbineBuilding,
+            MetaEnergyTunnelBuilding,
+            MetaPipeTunnelBuilding,
+        ];
 
-            const buildings = [
-                MetaBasicGeneratorBuilding,
-                MetaBasicConsumerBuilding,
-                MetaEnergyConnectorBuilding,
-                MetaPipeConnectorBuilding,
-                MetaPumpBuilding,
-                MetaSteamGeneratorBuilding,
-                MetaTurbineBuilding,
-                MetaEnergyTunnelBuilding,
-                MetaPipeTunnelBuilding,
-            ];
-
-            buildings.forEach(x =>
-                this.modInterface.addNewBuildingToToolbar({
-                    location: "primary",
-                    // @ts-expect-error Types only allow for two default toolbars
-                    toolbar,
-                    metaClass: x,
-                })
-            );
-        });
+        buildings.forEach(x =>
+            ToolbarSwitcher.addNewBuildingToToolbar({
+                location: "primary",
+                toolbar: "advancedGeneratorsToolbar",
+                metaClass: x,
+                fallback: "regular",
+            })
+        );
     }
 }
