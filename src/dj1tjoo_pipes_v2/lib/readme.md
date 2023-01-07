@@ -39,3 +39,89 @@ The Pipes class has the following methods. The methods with a `*` can only be ac
 | onLoaded(cb: (installed: boolean) => void): void              | Register to run callback on pipes loaded                            |
 | enableDebug(): void                                           | Enables debug rendering on connectors                               |
 | disableDebug(): void                                          | Disables debug rendering on connectors                              |
+
+### Fluid example
+
+The example uses the [shapez cli](https://www.npmjs.com/package/create-shapezio-mod). All the `shapez` imports can be swapped out for their `shapez.` equivalent
+
+```js
+import { Pipes } from "@dj1tjoo/shapez-pipes";
+import { globalConfig } from "shapez/core/config";
+import { Loader } from "shapez/core/loader";
+
+export const Water = Pipes.registerFluid(
+    () =>
+        class WaterFluid extends Pipes.BaseFluid {
+            static getId() {
+                return "water_fluid";
+            }
+
+            equalsImpl() {
+                return true;
+            }
+
+            /**
+             * Draws the item to a canvas
+             * @param {CanvasRenderingContext2D} context
+             * @param {number} size
+             */
+            drawFullSizeOnCanvas(context, size) {
+                if (!this.cachedSprite) {
+                    this.cachedSprite = Loader.getSprite("sprites/fluids/water.png");
+                }
+                this.cachedSprite.drawCentered(context, size / 2, size / 2, size);
+            }
+
+            /**
+             * @param {number} x
+             * @param {number} y
+             * @param {number} diameter
+             * @param {import("shapez/core/draw_utils").DrawParameters} parameters
+             */
+            // @ts-ignore
+            drawItemCenteredClipped(x, y, parameters, diameter = globalConfig.defaultItemDiameter) {
+                const realDiameter = diameter * 0.6;
+                if (!this.cachedSprite) {
+                    this.cachedSprite = Loader.getSprite("sprites/fluids/water.png");
+                }
+                this.cachedSprite.drawCachedCentered(parameters, x, y, realDiameter);
+            }
+
+            getBackgroundColorAsResource() {
+                return "#2389DA";
+            }
+        }
+);
+```
+
+The register will export a class with two static properties:
+`SINGLETON` and `Class`. Use the `SINGLETON` for where you need to enter fluids (e.g. in a pipe pin slot)
+
+### Adding a pipe pin
+
+The `entity.addComponent` can be called in a buildings `setupEntityComponents`
+
+```js
+entity.addComponent(
+    new Pipes.PipePinComponent({
+        slots: [
+            {
+                direction: enumDirection.top,
+                pos: new Vector(0, 0),
+                type: "ejector",
+                productionPerTick: 100,
+                maxBuffer: 1000,
+                fluid: Water.SINGLETON,
+            },
+            {
+                direction: enumDirection.bottom,
+                pos: new Vector(0, 0),
+                type: "acceptor",
+                consumptionPerTick: 100,
+                maxBuffer: 1000,
+                fluid: Steam.SINGLETON,
+            },
+        ],
+    })
+);
+```
