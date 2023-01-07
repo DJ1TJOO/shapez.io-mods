@@ -33,6 +33,8 @@ The ToolbarSwitcher class has the following methods. The methods with a `*` can 
 
 ### Usage examples
 
+The example uses the [shapez cli](https://www.npmjs.com/package/create-shapezio-mod). All the `shapez` imports can be swapped out for their `shapez.` equivalent
+
 #### Registering a toolbar
 
 ```js
@@ -52,7 +54,7 @@ export class MyToolbar extends HUDBaseToolbar {
 }
 ```
 
-Don't forget to give the toolbar a z-index
+Don't forget to change the layer if nessesary and to give the toolbar a z-index
 
 ```css
 #ingame_HUD_my_toolbar {
