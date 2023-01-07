@@ -11,6 +11,7 @@ export class ToolbarSwitcher {
     static isLoadedComlete = false;
     static isLoaded = [];
     static loadedUid = 0;
+    static toolbarsToRegister = [];
 
     /**
      * Registers a new building to a toolbar
@@ -21,20 +22,25 @@ export class ToolbarSwitcher {
      * @param {"regular" | "wires"} param0.fallback When the toolbar switcher mod is not available where to add
      */
     static addNewBuildingToToolbar({ toolbar, location = "primary", metaClass, fallback = "regular" }) {
-        this.onLoaded(installed => {
-            /** @type {string} */
-            let actualToolbar = fallback;
-
-            if (installed) {
-                actualToolbar = toolbar;
-            }
-
+        const register = installed => {
             this.getMod().modInterface.addNewBuildingToToolbar({
                 location,
                 // @ts-expect-error Modinterface doesn't allow multiple toolbars, but that method has been replaced
-                toolbar: actualToolbar,
+                toolbar: installed ? toolbar : fallback,
                 metaClass,
             });
+        };
+
+        this.onLoaded(installed => {
+            if (this.toolbarsToRegister.includes(toolbar)) {
+                const timeout = setInterval(() => {
+                    if (this.toolbarsToRegister.includes(toolbar)) return;
+                    clearInterval(timeout);
+                    register(installed);
+                }, 100);
+            } else {
+                register(installed);
+            }
         });
     }
 
@@ -46,11 +52,13 @@ export class ToolbarSwitcher {
      * @returns {void}
      */
     static registerToolbar(id, toolbar, isVisible = false) {
+        this.toolbarsToRegister.push(id);
         this.onLoaded(installed => {
             if (!installed) return;
 
             const registerToolbar = this.getMod().modInterface["registerToolbar"];
             registerToolbar.apply(this.getMod().modInterface, [id, toolbar, isVisible]);
+            this.toolbarsToRegister.splice(this.toolbarsToRegister.indexOf(id), 1);
         });
     }
 
