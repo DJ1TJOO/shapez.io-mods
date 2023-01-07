@@ -60,6 +60,7 @@ export class TurbineNetwork {
             x => x.components.StaticMapEntity.getVariant() === turbineComponents.mixer
         );
         const efficienty = round2Digits(Math.min(1, mixers.length / tier.items));
+        console.log(efficienty);
 
         // Produce
         this.parts
@@ -129,6 +130,50 @@ export class TurbineNetwork {
     }
 
     get isValid() {
+        return (
+            this.hasSufficientControllers() &&
+            this.hasSufficientEnergyOutlets() &&
+            this.hasSufficientFuelIntakes() &&
+            this.hasSufficientSteamIntakes() &&
+            this.fitsInMaxArea()
+        );
+    }
+
+    hasSufficientControllers() {
+        const controllers = this.parts.filter(
+            x => x.components.StaticMapEntity.getVariant() === defaultBuildingVariant
+        );
+        return controllers.length === 1;
+    }
+
+    hasSufficientSteamIntakes() {
+        const localConfig = config().turbine;
+
+        const steamIntakes = this.parts.filter(
+            x => x.components.StaticMapEntity.getVariant() === turbineComponents.steam_intake
+        );
+        return steamIntakes.length > 0 && steamIntakes.length <= localConfig.maxConnections.steam_intake;
+    }
+
+    hasSufficientFuelIntakes() {
+        const localConfig = config().turbine;
+
+        const fuelIntakes = this.parts.filter(
+            x => x.components.StaticMapEntity.getVariant() === turbineComponents.fuel_intake
+        );
+        return fuelIntakes.length > 0 && fuelIntakes.length <= localConfig.maxConnections.fuel_intake;
+    }
+
+    hasSufficientEnergyOutlets() {
+        const localConfig = config().turbine;
+        const energyOutlets = this.parts.filter(
+            x => x.components.StaticMapEntity.getVariant() === turbineComponents.energy_outlet
+        );
+
+        return energyOutlets.length > 0 && energyOutlets.length <= localConfig.maxConnections.energy_outlet;
+    }
+
+    fitsInMaxArea() {
         const localConfig = config().turbine;
         const posX = this.parts.flatMap(x => [
             x.components.StaticMapEntity.origin.x,
@@ -144,31 +189,6 @@ export class TurbineNetwork {
         const maxY = Math.max(...posY);
 
         const area = (maxX - minX) * (maxY - minY);
-        if (area > localConfig.maxArea) {
-            return false;
-        }
-
-        const energyOutlets = this.parts.filter(
-            x => x.components.StaticMapEntity.getVariant() === turbineComponents.energy_outlet
-        );
-        if (energyOutlets.length < 1 || energyOutlets.length > localConfig.maxConnections.energy_outlet) {
-            return false;
-        }
-
-        const fuelIntakes = this.parts.filter(
-            x => x.components.StaticMapEntity.getVariant() === turbineComponents.fuel_intake
-        );
-        if (fuelIntakes.length < 1 || fuelIntakes.length > localConfig.maxConnections.fuel_intake) {
-            return false;
-        }
-
-        const steamIntakes = this.parts.filter(
-            x => x.components.StaticMapEntity.getVariant() === turbineComponents.steam_intake
-        );
-        if (steamIntakes.length < 1 || steamIntakes.length > localConfig.maxConnections.steam_intake) {
-            return false;
-        }
-
-        return true;
+        return area <= localConfig.maxArea;
     }
 }

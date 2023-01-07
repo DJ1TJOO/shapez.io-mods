@@ -17,10 +17,19 @@ advanced_generators:
     stores: Stores
 
     fluid: "Fluid: <x>"
+    noFluid: "None"
+
+    turbine:
+        maxController: "The max number of controllers <x> has been exceeded or there are none"
+        maxArea: "The max area of <x> has been exceeded"
+        maxSteamIntake: "The max number of steam intakes <x> has been exceeded or there are none"
+        maxFuelIntake: "The max number of fuel intakes <x> has been exceeded or there are none"
+        maxEnergyOutlet: "The max number of energy outlets <x> has been exceeded or there are none"
 
 fluids:
     water_fluid: Water
     steam_fluid: Steam
+    stone_magma_fluid: Stone Magma
 
 storyRewards:
     reward_advanced_energy_tunnels:

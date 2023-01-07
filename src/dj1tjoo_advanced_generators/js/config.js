@@ -28,7 +28,7 @@ const defaultConfig = {
             steam_intake: 2000,
             energy_outlet: 1000000,
         },
-        maxArea: 200,
+        maxArea: 20,
         tier1: { shape: "CuRuCuRu", items: 3, energy: 5000, steam: 100 },
         tier2: { shape: "CgRyCgRy:CyRbCyRb", items: 5, energy: 22500, steam: 300 },
         tier3: { shape: "SyCcSyCc:ScCyScCy:CwRcCwRc", items: 9, energy: 70000, steam: 700 },
@@ -40,7 +40,7 @@ const defaultConfig = {
     },
     basic_generator: {
         default: { energy: 50, magma: 0 },
-        basic_magma: { energy: 125, magma: 100 },
+        basic_magma: { energy: 300, magma: 100 },
     },
 
     // Consumers

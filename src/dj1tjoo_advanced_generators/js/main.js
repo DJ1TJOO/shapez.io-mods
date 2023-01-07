@@ -64,8 +64,8 @@ class ModImpl extends Mod {
         AdvancedEnergy.requireInstalled();
         Pipes.requireInstalled();
 
-        // AdvancedEnergy.enableDebug();
-        // Pipes.enableDebug();
+        AdvancedEnergy.enableDebug();
+        Pipes.enableDebug();
 
         this.registerHuds();
         this.registerToolbar();
@@ -84,17 +84,17 @@ class ModImpl extends Mod {
              */
             levelDefinitions => {
                 let levelsAdded = 0;
-                levelDefinitions.splice(5 + levelsAdded++, 0, {
+                levelDefinitions.splice(4 + levelsAdded++, 0, {
                     required: 170,
                     reward: rewards.advanced_energy_tunnels,
                     shape: "--CuCu--",
                 });
-                levelDefinitions.splice(10 + levelsAdded++, 0, {
+                levelDefinitions.splice(7 + levelsAdded++, 0, {
                     required: 900,
                     reward: rewards.advanced_energy_fluids,
                     shape: "ScSpSpSc",
                 });
-                levelDefinitions.splice(18 + levelsAdded++, 0, {
+                levelDefinitions.splice(10 + levelsAdded++, 0, {
                     required: 22000,
                     reward: rewards.advanced_energy_steam_turbine,
                     shape: "RpRpCyCy:CyCySwSw",

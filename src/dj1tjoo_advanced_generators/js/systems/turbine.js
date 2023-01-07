@@ -29,11 +29,10 @@ export class TurbineSystem extends GameSystemWithFilter {
         this.recomputeAreas = [];
         this.isFirstRecompute = true;
 
-        // TODO: later when sprites
         this.staleArea = new StaleAreaDetector({
             root: this.root,
             name: "turbine",
-            recomputeMethod: () => {}, // this.updateSurroundingPlacement.bind(this),
+            recomputeMethod: this.updateSurroundingPlacement.bind(this),
         });
 
         /**
