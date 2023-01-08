@@ -6086,7 +6086,7 @@ declare module "shapez/game/entity" {
 }
 declare module "shapez/game/meta_building" {
     export const defaultBuildingVariant: "default";
-    export abstract class MetaBuilding {
+    export class MetaBuilding {
         /**
          * Should return all possible variants of this building, no matter
          * if they are already available or will be unlocked later on

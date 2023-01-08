@@ -33,7 +33,6 @@ import { AdvancedGeneratorsToolbar } from "./toolbars/advanced_generators_toolba
 import { rewards } from "./reward";
 import { AdvancedGeneratorsToolbarWires } from "./toolbars/advanced_generators_toolbar_wires";
 import { ToolbarSwitcher } from "@dj1tjoo/shapez-toolbar-switcher";
-import { globalConfig } from "shapez/core/config";
 
 class ModImpl extends Mod {
     init() {
