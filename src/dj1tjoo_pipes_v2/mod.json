@@ -1,10 +1,11 @@
 {
     "entry": "main.js",
     "id": "dj1tjoo_pipes",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "name": "Pipes",
     "author": "DJ1TJOO",
     "description": "",
     "website": "",
-    "settings": {}
+    "settings": {},
+    "modId": "1845083"
 }
