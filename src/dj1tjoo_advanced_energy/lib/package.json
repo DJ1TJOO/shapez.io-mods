@@ -1,6 +1,6 @@
 {
     "name": "@dj1tjoo/shapez-advanced-energy",
-    "version": "0.7.1",
+    "version": "0.7.2",
     "description": "A helper library for the advanced energy mod",
     "main": "./lib/lib/src/index.js",
     "type": "module",

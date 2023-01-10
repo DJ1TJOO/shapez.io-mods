@@ -6285,7 +6285,7 @@ declare module "shapez/game/meta_building" {
          * @param {GameRoot} root
          * @abstract
          */
-        abstract setupEntityComponents(entity: Entity, root: GameRoot): void;
+        setupEntityComponents(entity: Entity, root: GameRoot): void;
     }
     import { Vector } from "shapez/core/vector";
     import { Entity } from "shapez/game/entity";
