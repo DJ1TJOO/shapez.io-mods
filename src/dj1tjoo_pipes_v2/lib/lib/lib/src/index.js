@@ -46,22 +46,23 @@ export class Pipes {
         let singleton = null;
         class Fluid {
             static get SINGLETON() {
-                if (singleton) return singleton;
+                if (singleton)
+                    return singleton;
                 return (singleton = new this.Class());
             }
             static get Class() {
-                if (fluidClass) return fluidClass;
+                if (fluidClass)
+                    return fluidClass;
                 fluidClass = createFluidClass();
                 fluidClass.resolver = () => this.SINGLETON;
                 return fluidClass;
             }
         }
         this.onLoaded(installed => {
-            if (!installed) return;
+            if (!installed)
+                return;
             if (this.gFluidRegistry.hasId(Fluid.Class.getId()))
-                return console.error(
-                    "Couldn't register '" + Fluid.Class.getId() + "', because it already exists"
-                );
+                return console.error("Couldn't register '" + Fluid.Class.getId() + "', because it already exists");
             this.gFluidRegistry.register(Fluid.Class);
         });
         return Fluid;
@@ -71,16 +72,20 @@ export class Pipes {
      */
     static requireInstalled() {
         this.onLoaded(installed => {
-            if (installed) return;
-            /** @type {import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs | null} */
-            const dialogs = MODS.app.stateMgr.currentState["dialogs"];
-            if (!dialogs) return;
-            const title = "Pipes Not Found!";
-            if (dialogs.dialogStack.some(x => x.title === title)) return;
-            dialogs.showWarning(
-                title,
-                "The Pipes mod was not found. This mod is required by other mods you installed."
-            );
+            if (installed)
+                return;
+            MODS.signals.stateEntered.add(gameState => {
+                if (gameState.getKey() !== "MainMenuState")
+                    return;
+                /** @type {import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs | null} */
+                const dialogs = gameState["dialogs"];
+                if (!dialogs)
+                    return;
+                const title = "Pipes Not Found!";
+                if (dialogs.dialogStack.some(x => x.title === title))
+                    return;
+                dialogs.showWarning(title, "The Pipes mod was not found. This mod is required by other mods you installed.");
+            });
         });
     }
     static enableDebug() {
@@ -99,7 +104,8 @@ export class Pipes {
         }
         const uid = this.loadedUid++;
         MODS.signals.appBooted.add(() => {
-            if (this.isLoaded.includes(uid)) return;
+            if (this.isLoaded.includes(uid))
+                return;
             this.isLoadedComplete = true;
             this.isLoaded.push(uid);
             cb(this.isInstalled());
@@ -125,7 +131,8 @@ export class Pipes {
      */
     static getVersion() {
         const mod = this.getMod();
-        if (!mod) return null;
+        if (!mod)
+            return null;
         return mod.metadata.version;
     }
 }

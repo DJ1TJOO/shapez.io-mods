@@ -86,17 +86,20 @@ export class Pipes {
         this.onLoaded(installed => {
             if (installed) return;
 
-            /** @type {import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs | null} */
-            const dialogs = MODS.app.stateMgr.currentState["dialogs"];
-            if (!dialogs) return;
+            MODS.signals.stateEntered.add(gameState => {
+                if (gameState.getKey() !== "MainMenuState") return;
+                /** @type {import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs | null} */
+                const dialogs = gameState["dialogs"];
+                if (!dialogs) return;
 
-            const title = "Pipes Not Found!";
-            if (dialogs.dialogStack.some(x => x.title === title)) return;
+                const title = "Pipes Not Found!";
+                if (dialogs.dialogStack.some(x => x.title === title)) return;
 
-            dialogs.showWarning(
-                title,
-                "The Pipes mod was not found. This mod is required by other mods you installed."
-            );
+                dialogs.showWarning(
+                    title,
+                    "The Pipes mod was not found. This mod is required by other mods you installed."
+                );
+            });
         });
     }
 
