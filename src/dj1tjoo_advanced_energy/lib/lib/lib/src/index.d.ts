@@ -6,7 +6,7 @@
  * }} AdvancedEnergyMod
  */
 export class AdvancedEnergy {
-    static isLoadedComlete: boolean;
+    static isLoadedComplete: boolean;
     static isLoaded: any[];
     static loadedUid: number;
     static get EnergyConnectorComponent(): typeof import("../../js/components/energy_connector").EnergyConnectorComponent;

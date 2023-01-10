@@ -10,7 +10,7 @@
  * }} PipesMod
  */
 export class Pipes {
-    static isLoadedComlete: boolean;
+    static isLoadedComplete: boolean;
     static isLoaded: any[];
     static loadedUid: number;
     static get gFluidRegistry(): import("shapez/core/factory").Factory;

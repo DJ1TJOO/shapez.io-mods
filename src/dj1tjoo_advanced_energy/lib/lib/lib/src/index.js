@@ -11,7 +11,9 @@ const MOD_ID = "dj1tjoo_advanced_energy";
 export class AdvancedEnergy {
     static get EnergyConnectorComponent() {
         var _a;
-        return ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.EnergyConnectorComponent) || null;
+        return (
+            ((_a = this.getMod()) === null || _a === void 0 ? void 0 : _a.EnergyConnectorComponent) || null
+        );
     }
     static get EnergyPinComponent() {
         var _a;
@@ -26,16 +28,16 @@ export class AdvancedEnergy {
      */
     static requireInstalled() {
         this.onLoaded(installed => {
-            if (installed)
-                return;
+            if (installed) return;
             /** @type {import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs | null} */
             const dialogs = MODS.app.stateMgr.currentState["dialogs"];
-            if (!dialogs)
-                return;
+            if (!dialogs) return;
             const title = "Advanced Energy Not Found!";
-            if (dialogs.dialogStack.some(x => x.title === title))
-                return;
-            dialogs.showWarning(title, "The Advanced Energy mod was not found. This mod is required by other mods you installed.");
+            if (dialogs.dialogStack.some(x => x.title === title)) return;
+            dialogs.showWarning(
+                title,
+                "The Advanced Energy mod was not found. This mod is required by other mods you installed."
+            );
         });
     }
     static enableDebug() {
@@ -49,14 +51,13 @@ export class AdvancedEnergy {
      * @param {(installed: boolean) => void} cb
      */
     static onLoaded(cb) {
-        if (this.isLoadedComlete) {
+        if (this.isLoadedComplete) {
             return cb(this.isInstalled());
         }
         const uid = this.loadedUid++;
         MODS.signals.appBooted.add(() => {
-            if (this.isLoaded.includes(uid))
-                return;
-            this.isLoadedComlete = true;
+            if (this.isLoaded.includes(uid)) return;
+            this.isLoadedComplete = true;
             this.isLoaded.push(uid);
             cb(this.isInstalled());
         });
@@ -81,11 +82,10 @@ export class AdvancedEnergy {
      */
     static getVersion() {
         const mod = this.getMod();
-        if (!mod)
-            return null;
+        if (!mod) return null;
         return mod.metadata.version;
     }
 }
-AdvancedEnergy.isLoadedComlete = false;
+AdvancedEnergy.isLoadedComplete = false;
 AdvancedEnergy.isLoaded = [];
 AdvancedEnergy.loadedUid = 0;

@@ -34,6 +34,9 @@ import { rewards } from "./reward";
 import { AdvancedGeneratorsToolbarWires } from "./toolbars/advanced_generators_toolbar_wires";
 import { ToolbarSwitcher } from "@dj1tjoo/shapez-toolbar-switcher";
 
+import icon from "../../../advanced-generators-icon.png";
+import banner from "../../../advanced-generators.png";
+
 class ModImpl extends Mod {
     init() {
         this.config = config();
@@ -78,6 +81,74 @@ class ModImpl extends Mod {
                 });
             }
         );
+
+        // Add mod extra's metadata
+        this.metadata["extra"] = {
+            library: false,
+            authors: [
+                {
+                    name: "DJ1TJOO",
+                    icon: "https://avatars.githubusercontent.com/u/44841260?s=64",
+                },
+            ],
+            source: "https://github.com/DJ1TJOO/shapez.io-mods/",
+            icon: icon,
+            changelog: {
+                "1.0.0": ["Added basic generator", "Added steam generator", "Added turbine generator"],
+            },
+            readme: `<table> 
+                        <thead> 
+                            <tr> 
+                                <th align="center">
+                                    <img src="${banner}" alt="Advanced Generators">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td align="center">
+                                    <h2>Advanced Generators</h2>
+                                </td> 
+                            </tr> 
+                            <tr> 
+                                <td align="center">Need energy in shapez, advanced generators will be helping you along the way.</td>
+                            </tr>
+                        </tbody>
+                        </table> 
+                        <hr> 
+                        <h3 id="name-does-it-all">Energy produced:</h3> 
+                        <hr> 
+                        <ul> 
+                            <li>
+                                <strong>BASIC GENERATOR</strong>: 50AE/t.
+                            </li>
+                            <li>
+                                <strong>BASIC MAGMA GENERATOR</strong>: 300AE/t.
+                            </li>
+                            <li>
+                                <strong>TURBINE T1 (CuRuCuRu)</strong>: 5000AE/t.
+                            </li>
+                            <li>
+                                <strong>TURBINE T2 (CgRyCgRy:CyRbCyRb)</strong>: 22500AE/t.
+                            </li>
+                            <li>
+                                <strong>TURBINE T3 (SyCcSyCc:ScCyScCy:CwRcCwRc)</strong>: 70000AE/t.
+                            </li>
+                            <li>
+                                <strong>TURBINE T4 (CgSyCgSy:SpCySpCy:--RcCwRc:Cy------)</strong>: 137500AE/t.
+                            </li>
+                        </ul>
+                        <h3 id="name-does-it-all">Energy used:</h3> 
+                        <hr> 
+                        <ul> 
+                            <li>
+                                <strong>PUMP</strong>: 100AE/t.
+                            </li>
+                            <li>
+                                <strong>STEAM GENERATOR</strong>: 2500AE/t.
+                            </li>
+                        </ul>`,
+        };
     }
 
     registerToolbar() {

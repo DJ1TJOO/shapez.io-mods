@@ -12,7 +12,7 @@ const MOD_ID = "dj1tjoo_advanced_energy";
  */
 
 export class AdvancedEnergy {
-    static isLoadedComlete = false;
+    static isLoadedComplete = false;
     static isLoaded = [];
     static loadedUid = 0;
 
@@ -61,7 +61,7 @@ export class AdvancedEnergy {
      * @param {(installed: boolean) => void} cb
      */
     static onLoaded(cb) {
-        if (this.isLoadedComlete) {
+        if (this.isLoadedComplete) {
             return cb(this.isInstalled());
         }
 
@@ -69,7 +69,7 @@ export class AdvancedEnergy {
         MODS.signals.appBooted.add(() => {
             if (this.isLoaded.includes(uid)) return;
 
-            this.isLoadedComlete = true;
+            this.isLoadedComplete = true;
             this.isLoaded.push(uid);
             cb(this.isInstalled());
         });

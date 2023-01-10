@@ -9,7 +9,7 @@ const MOD_ID = "dj1tjoo_toolbar_switcher";
  */
 
 export class ToolbarSwitcher {
-    static isLoadedComlete = false;
+    static isLoadedComplete = false;
     static isLoaded = [];
     static loadedUid = 0;
     static toolbarsToRegister = [];
@@ -97,7 +97,7 @@ export class ToolbarSwitcher {
      * @param {(installed: boolean) => void} cb
      */
     static onLoaded(cb) {
-        if (this.isLoadedComlete) {
+        if (this.isLoadedComplete) {
             return cb(this.isInstalled());
         }
 
@@ -105,7 +105,7 @@ export class ToolbarSwitcher {
         MODS.signals.appBooted.add(() => {
             if (this.isLoaded.includes(uid)) return;
 
-            this.isLoadedComlete = true;
+            this.isLoadedComplete = true;
             this.isLoaded.push(uid);
             cb(this.isInstalled());
         });

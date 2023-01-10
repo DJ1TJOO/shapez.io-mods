@@ -15,7 +15,7 @@ const MOD_ID = "dj1tjoo_pipes";
  */
 
 export class Pipes {
-    static isLoadedComlete = false;
+    static isLoadedComplete = false;
     static isLoaded = [];
     static loadedUid = 0;
 
@@ -113,7 +113,7 @@ export class Pipes {
      * @param {(installed: boolean) => void} cb
      */
     static onLoaded(cb) {
-        if (this.isLoadedComlete) {
+        if (this.isLoadedComplete) {
             return cb(this.isInstalled());
         }
 
@@ -121,7 +121,7 @@ export class Pipes {
         MODS.signals.appBooted.add(() => {
             if (this.isLoaded.includes(uid)) return;
 
-            this.isLoadedComlete = true;
+            this.isLoadedComplete = true;
             this.isLoaded.push(uid);
             cb(this.isInstalled());
         });

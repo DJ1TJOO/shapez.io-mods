@@ -6,6 +6,9 @@ import { Mod } from "shapez/mods/mod";
 import { ToolbarManager } from "./toolbarManager";
 import { HUDToolbarSwitcher } from "./toolbar_switcher";
 
+import icon from "../../../toolbar-switcher-icon.png";
+import banner from "../../../toolbar-switcher.png";
+
 const toolbarManager = new ToolbarManager();
 globalConfig["toolbarManager"] = toolbarManager;
 
@@ -29,10 +32,10 @@ shapez.ModInterface.prototype.registerToolbar = function (id, toolbar, isVisible
     const modLoader = this["modLoader"];
 
     modLoader.signals.hudInitializer.add(root => {
+        // @ts-expect-error Absract class error from ts
         const hud = new toolbar(root);
 
         root.hud.parts[id] = hud;
-        // @ts-expect-error The toolbars should call the super them selves
         toolbarManager.registerToolbar(id, hud);
     });
 
@@ -97,5 +100,44 @@ class ModImpl extends Mod {
                 this.mtForceVisible = false;
             },
         }));
+
+        // Add mod extra's metadata
+        this.metadata["extra"] = {
+            library: true,
+            authors: [
+                {
+                    name: "DJ1TJOO",
+                    icon: "https://avatars.githubusercontent.com/u/44841260?s=64",
+                },
+            ],
+            source: "https://github.com/DJ1TJOO/shapez.io-mods/",
+            icon: icon,
+            changelog: {
+                "1.0.1": ["Added SkUpdate support and Mod Extra's"],
+                "1.0.0": [
+                    "Added support for registering new toolbars",
+                    "Added support for swapping toolbars",
+                ],
+            },
+            readme: `<table> 
+                        <thead> 
+                            <tr> 
+                                <th align="center">
+                                    <img src="${banner}" alt="Toolbar Switcher">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td align="center">
+                                    <h2>Toolbar Switcher</h2>
+                                </td> 
+                            </tr> 
+                            <tr> 
+                                <td align="center">To have less conflicts between mods and toolbars an api was created.</td>
+                            </tr>
+                        </tbody>
+                        </table>`,
+        };
     }
 }
