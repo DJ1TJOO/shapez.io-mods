@@ -2,20 +2,20 @@
 # yarn lockfile v1
 
 
-"@dj1tjoo/shapez-advanced-energy@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-advanced-energy/-/shapez-advanced-energy-0.7.0.tgz#b9073f28529dd46521b10eb4e023b6a91c72d1eb"
-  integrity sha512-0uJgSo0iCubScTUQb05H6eGwW36wqBfS+zRlojzMbpnkYiVs7p/soCneSfoCvTq8EDRnawu/g50/ArKWq0WEUQ==
+"@dj1tjoo/shapez-advanced-energy@^0.7.2":
+  version "0.7.2"
+  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-advanced-energy/-/shapez-advanced-energy-0.7.2.tgz#3101a353931be23cd457a045e5a7763c7593168a"
+  integrity sha512-+w1KKd8xPpN0fwSmIjIZaIkcSvd1z4KGCQBVjr8hsGrWYVcA9SQc6obR2J77p9jGogr0qtiNFokIyZDpLS6GPA==
 
-"@dj1tjoo/shapez-pipes@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-pipes/-/shapez-pipes-0.3.0.tgz#19889204f4e8b03b212e19fe8241de45a6ddd72a"
-  integrity sha512-6C3wy+lkptyH16ickCbfFiBmODQRWiiKGnm+UxIYsCBiIKemPf5dt3cvbnxt/6GCxbnGGPZB9BFOz83tvEruJQ==
+"@dj1tjoo/shapez-pipes@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-pipes/-/shapez-pipes-0.3.2.tgz#351f7a5bbd311f8080e5cdb970bc64730c625d1d"
+  integrity sha512-gbRvmeypkJPhklSHmtKakqkqRK+efm3ITnTKglcBebYI8rjxDWuXtozo7yGuOijqDQe8BRDvdE4zSESnSdqxCg==
 
-"@dj1tjoo/shapez-toolbar-switcher@^1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-toolbar-switcher/-/shapez-toolbar-switcher-1.2.1.tgz#c0ba31b8027c76aa0abe6702c6ea0b127b84c8d4"
-  integrity sha512-g7i6t4rQm/p/ktYXSRyNwSjwCU2rOpuNx7lFuU8idElR4ttnzvxQxbm4BvRGAeo2ldLKPe6Tmj0Zg+N85dzdRg==
+"@dj1tjoo/shapez-toolbar-switcher@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@dj1tjoo/shapez-toolbar-switcher/-/shapez-toolbar-switcher-1.2.2.tgz#a265580cde7166f6d9abd063f00924d543e068dd"
+  integrity sha512-0P4sqs0bfReAiw7juyFGKulfZUwHyLeGR39Jz+4ynqC6rf+wSLn/ZsDLG5LqNODrJJq1f/oCa9GAec1NBYywFg==
 
 "@eslint/eslintrc@^1.0.5":
   version "1.4.1"

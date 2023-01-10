@@ -6,5 +6,6 @@
     "author": "DJ1TJOO",
     "description": "Adds energy to vanilla buildings",
     "website": "",
-    "settings": {}
+    "settings": {},
+    "disabled": true
 }

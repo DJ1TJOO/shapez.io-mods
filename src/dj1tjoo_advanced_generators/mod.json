@@ -6,5 +6,6 @@
     "author": "DJ1TJOO",
     "description": "Need energy in shapez, advanced generators will be helping you along the way",
     "website": "",
-    "settings": {}
+    "settings": {},
+    "disabled": true
 }
