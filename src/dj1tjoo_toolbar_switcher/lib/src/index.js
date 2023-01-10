@@ -70,17 +70,20 @@ export class ToolbarSwitcher {
         this.onLoaded(installed => {
             if (installed) return;
 
-            /** @type {import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs | null} */
-            const dialogs = MODS.app.stateMgr.currentState["dialogs"];
-            if (!dialogs) return;
+            MODS.signals.stateEntered.add(gameState => {
+                if (gameState.getKey() !== "MainMenuState") return;
+                /** @type {import("shapez/game/hud/parts/modal_dialogs").HUDModalDialogs | null} */
+                const dialogs = gameState["dialogs"];
+                if (!dialogs) return;
 
-            const title = "Toolbar Switcher Not Found!";
-            if (dialogs.dialogStack.some(x => x.title === title)) return;
+                const title = "Toolbar Switcher Not Found!";
+                if (dialogs.dialogStack.some(x => x.title === title)) return;
 
-            dialogs.showWarning(
-                title,
-                "The Toolbar Switcher mod was not found. This mod is required by other mods you installed."
-            );
+                dialogs.showWarning(
+                    title,
+                    "The Toolbar Switcher mod was not found. This mod is required by other mods you installed."
+                );
+            });
         });
     }
 

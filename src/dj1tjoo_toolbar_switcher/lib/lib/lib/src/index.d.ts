@@ -15,12 +15,7 @@ export class ToolbarSwitcher {
      * @param {typeof import("shapez/game/meta_building").MetaBuilding} param0.metaClass
      * @param {"regular" | "wires"} param0.fallback When the toolbar switcher mod is not available where to add
      */
-    static addNewBuildingToToolbar({
-        toolbar,
-        location,
-        metaClass,
-        fallback,
-    }: {
+    static addNewBuildingToToolbar({ toolbar, location, metaClass, fallback }: {
         toolbar: string;
         location: "primary" | "secondary";
         metaClass: typeof import("shapez/game/meta_building").MetaBuilding;
@@ -33,11 +28,7 @@ export class ToolbarSwitcher {
      * @param {boolean?} isVisible
      * @returns {void}
      */
-    static registerToolbar(
-        id: string,
-        toolbar: typeof import("shapez/game/hud/parts/base_toolbar").HUDBaseToolbar,
-        isVisible?: boolean | null
-    ): void;
+    static registerToolbar(id: string, toolbar: typeof import("shapez/game/hud/parts/base_toolbar").HUDBaseToolbar, isVisible?: boolean | null): void;
     /**
      * Shows a dialog on the main menu when the toolbar switcher mod is not installed
      */
