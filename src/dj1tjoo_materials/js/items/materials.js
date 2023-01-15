@@ -1,7 +1,7 @@
 import { globalConfig } from "shapez/core/config";
 import { BaseItem } from "shapez/game/base_item";
 import { types } from "shapez/savegame/serialization";
-import { config, materialsEnum } from "../../config";
+import { config, materialsEnum } from "../config";
 
 export class MaterialItem extends BaseItem {
     static getId() {

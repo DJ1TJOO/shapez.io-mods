@@ -3,12 +3,8 @@ import { MODS } from "shapez/mods/modloader";
 export const defaultConfig = {
     materials: {
         stone: "#918E85",
-        basalt: "#201C2C",
-        granite: "#B87366",
-        onyx: "#242834",
-        marble: "#F3FFFF",
-        clean_marble: "#FAFBFB",
-        travertine: "#CDCABB",
+        sand: "#C2B280",
+        steel: "#71797E",
     },
     blast_furnace: {
         energy: 100,
@@ -17,13 +13,26 @@ export const defaultConfig = {
         magma: 100,
         energy: 100,
     },
+    water_sprayer: {
+        water: 100,
+        energy: 100,
+    },
+    pump: {
+        water: 100,
+        energy: 100,
+    },
+    pipe: {
+        volume: 2000,
+        maxThroughputPerTick: -1000, // Inifinit
+    },
 };
 
 /**
- * @returns {Record<keyof typeof defaultConfig.materials, keyof typeof defaultConfig.materials>}
+ * @template {keyof typeof defaultConfig.materials} material
+ * @returns {Record<material, material>}
  */
 export const materialsEnum = () => {
-    return /** @type {Record<keyof typeof defaultConfig.materials, keyof typeof defaultConfig.materials>} */ (
+    return /** @type {Record<material, material>} */ (
         Object.keys(config().materials).reduce((enumObject, curr) => {
             enumObject[curr] = curr;
             return enumObject;
