@@ -31,7 +31,6 @@ import { MetaEnergyTunnelBuilding } from "./buildings/energy_tunnel";
 import { MetaPipeTunnelBuilding } from "./buildings/pipe_tunnel";
 import { AdvancedGeneratorsToolbar } from "./toolbars/advanced_generators_toolbar";
 import { rewards } from "./reward";
-import { AdvancedGeneratorsToolbarWires } from "./toolbars/advanced_generators_toolbar_wires";
 import { ToolbarSwitcher } from "@dj1tjoo/shapez-toolbar-switcher";
 
 import icon from "../../../advanced-generators-icon.png";
@@ -153,7 +152,6 @@ class ModImpl extends Mod {
 
     registerToolbar() {
         ToolbarSwitcher.registerToolbar("advancedGeneratorsToolbar", AdvancedGeneratorsToolbar);
-        ToolbarSwitcher.registerToolbar("advancedGeneratorsToolbarWires", AdvancedGeneratorsToolbarWires);
     }
 
     registerPatches() {
