@@ -8,6 +8,7 @@ import { HUDToolbarSwitcher } from "./toolbar_switcher";
 
 import icon from "../../../toolbar-switcher-icon.png";
 import banner from "../../../toolbar-switcher.png";
+import { KEYCODES } from "shapez/game/key_action_mapper";
 
 const toolbarManager = new ToolbarManager();
 globalConfig["toolbarManager"] = toolbarManager;
@@ -101,6 +102,14 @@ class ModImpl extends Mod {
             },
         }));
 
+        // Add keybind
+        this.modInterface.registerIngameKeybinding({
+            id: "toolbarswitcher",
+            keyCode: KEYCODES.F1,
+            translation: "Toggle toolbar",
+            handler: root => root.hud.parts.toolbarSwitcher.cycleToolbar(),
+        });
+
         // Add mod extra's metadata
         this.metadata["extra"] = {
             library: true,
@@ -113,6 +122,7 @@ class ModImpl extends Mod {
             source: "https://github.com/DJ1TJOO/shapez.io-mods/",
             icon: icon,
             changelog: {
+                "1.0.2": ["Added keybind for switching toolbars"],
                 "1.0.1": ["Added SkUpdate support and Mod Extra's"],
                 "1.0.0": [
                     "Added support for registering new toolbars",
