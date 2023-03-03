@@ -53,32 +53,32 @@ export class PipeConnectorRendererSystem extends GameSystemWithFilter {
 
                     const staticComp = entity.components.StaticMapEntity;
 
-                    const canvas = parameters.root.buffers.getForKey({
-                        key: "pipe-overlay",
-                        subKey:
-                            staticComp.getRotationVariant() +
-                            "-" +
-                            staticComp.rotation +
-                            "-" +
-                            connectorComp.linkedNetwork.currentFluid.getBackgroundColorAsResource() +
-                            "-" +
-                            connectorComp.linkedNetwork.currentVolume,
-                        w: globalConfig.tileSize,
-                        h: globalConfig.tileSize,
-                        dpi: 1,
-                        redrawMethod: this.overlayGenerator.bind(
-                            this,
-                            spriteOverlay,
-                            connectorComp,
-                            staticComp
-                        ),
-                    });
-
                     if (
                         connectorComp.linkedNetwork &&
                         connectorComp.linkedNetwork.currentFluid !== null &&
                         connectorComp.pipeVolume >= 1
                     ) {
+                        const canvas = parameters.root.buffers.getForKey({
+                            key: "pipe-overlay",
+                            subKey:
+                                staticComp.getRotationVariant() +
+                                "-" +
+                                staticComp.rotation +
+                                "-" +
+                                connectorComp.linkedNetwork.currentFluid.getBackgroundColorAsResource() +
+                                "-" +
+                                connectorComp.linkedNetwork.currentVolume,
+                            w: globalConfig.tileSize,
+                            h: globalConfig.tileSize,
+                            dpi: 1,
+                            redrawMethod: this.overlayGenerator.bind(
+                                this,
+                                spriteOverlay,
+                                connectorComp,
+                                staticComp
+                            ),
+                        });
+
                         parameters.context.drawImage(
                             canvas,
                             staticComp.origin.x * globalConfig.tileSize,
