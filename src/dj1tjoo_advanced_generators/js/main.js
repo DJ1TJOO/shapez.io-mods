@@ -43,8 +43,8 @@ class ModImpl extends Mod {
         AdvancedEnergy.requireInstalled();
         Pipes.requireInstalled();
 
-        AdvancedEnergy.enableDebug();
-        Pipes.enableDebug();
+        // AdvancedEnergy.enableDebug();
+        // Pipes.enableDebug();
 
         this.registerHuds();
         this.registerToolbar();

@@ -21,6 +21,7 @@ import { AdvancedEnergy } from "@dj1tjoo/shapez-advanced-energy";
 import { amountPerCharge } from "../amountPerCharge";
 import { config } from "../config";
 import { rewards } from "../reward";
+import { getComponentShared } from "../../../shared/getShared";
 
 const overlayMatrix = generateMatrixRotations([1, 1, 1, 1, 0, 1, 1, 1, 1]);
 
@@ -82,6 +83,8 @@ export class MetaPumpBuilding extends ModMetaBuilding {
 
         const localConfig = config().pump;
 
+        entity.addComponent(getComponentShared("EnergyPinRenderer"));
+
         entity.addComponent(
             new AdvancedEnergy.EnergyPinComponent({
                 slots: [
@@ -117,6 +120,7 @@ export class MetaPumpBuilding extends ModMetaBuilding {
         }
         if (!fluid) return;
 
+        entity.addComponent(getComponentShared("PipePinRenderer"));
         entity.addComponent(
             new Pipes.PipePinComponent({
                 slots: [

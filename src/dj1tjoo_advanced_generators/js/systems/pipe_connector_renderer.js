@@ -1,5 +1,11 @@
+import { makeOffscreenBuffer } from "shapez/core/buffer_utils";
 import { globalConfig } from "shapez/core/config";
+import { smoothenDpi } from "shapez/core/dpi_manager";
+import { DrawParameters } from "shapez/core/draw_parameters";
 import { Loader } from "shapez/core/loader";
+import { Rectangle } from "shapez/core/rectangle";
+import { ORIGINAL_SPRITE_SCALE } from "shapez/core/sprites";
+import { Vector } from "shapez/core/vector";
 import { GameSystemWithFilter } from "shapez/game/game_system_with_filter";
 import { PipeConnectorRendererComponent } from "../components/pipe_connector_renderer";
 import { enumConnectorType, arrayConnectorRotationVariantToType } from "../connectorTypes";
@@ -9,8 +15,12 @@ export class PipeConnectorRendererSystem extends GameSystemWithFilter {
         super(root, [PipeConnectorRendererComponent]);
 
         this.sprites = {};
+        this.spriteOverlays = {};
         for (const type in enumConnectorType) {
             this.sprites[type] = Loader.getSprite("sprites/connectors/pipe/pipe_" + type + ".png");
+            this.spriteOverlays[type] = Loader.getSprite(
+                "sprites/connectors/pipe/pipe_" + type + "_overlay.png"
+            );
         }
     }
 
@@ -39,139 +49,121 @@ export class PipeConnectorRendererSystem extends GameSystemWithFilter {
                             entity.components.StaticMapEntity.getRotationVariant()
                         ];
                     const sprite = this.sprites[type];
+                    const spriteOverlay = this.spriteOverlays[type];
 
                     const staticComp = entity.components.StaticMapEntity;
-                    staticComp.drawSpriteOnBoundsClipped(parameters, sprite);
+
+                    const canvas = parameters.root.buffers.getForKey({
+                        key: "pipe-overlay",
+                        subKey:
+                            staticComp.getRotationVariant() +
+                            "-" +
+                            staticComp.rotation +
+                            "-" +
+                            connectorComp.linkedNetwork.currentFluid.getBackgroundColorAsResource() +
+                            "-" +
+                            connectorComp.linkedNetwork.currentVolume,
+                        w: globalConfig.tileSize,
+                        h: globalConfig.tileSize,
+                        dpi: 1,
+                        redrawMethod: this.overlayGenerator.bind(
+                            this,
+                            spriteOverlay,
+                            connectorComp,
+                            staticComp
+                        ),
+                    });
 
                     if (
-                        !connectorComp.linkedNetwork ||
-                        connectorComp.linkedNetwork.currentFluid === null ||
-                        connectorComp.pipeVolume < 1
-                    )
-                        continue;
-
-                    parameters.context.fillStyle =
-                        connectorComp.linkedNetwork.currentFluid.getBackgroundColorAsResource();
-                    parameters.context.globalAlpha = connectorComp.pipeVolume / connectorComp.maxPipeVolume;
-                    const size = 5;
-
-                    switch (type) {
-                        case enumConnectorType.cross:
-                            parameters.context.fillRect(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize - size / 2,
-                                staticComp.origin.y * globalConfig.tileSize - 0.1,
-                                size,
-                                globalConfig.tileSize + 0.2
-                            );
-                            parameters.context.fillRect(
-                                staticComp.origin.x * globalConfig.tileSize - 0.1,
-                                (staticComp.origin.y + 0.5) * globalConfig.tileSize - size / 2,
-                                (globalConfig.tileSize - size) / 2 + 0.2,
-                                size
-                            );
-                            parameters.context.fillRect(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize - 0.1 + size / 2,
-                                (staticComp.origin.y + 0.5) * globalConfig.tileSize - size / 2,
-                                (globalConfig.tileSize - size) / 2 + 0.2,
-                                size
-                            );
-                            break;
-                        case enumConnectorType.forward:
-                            parameters.context.save();
-                            parameters.context.translate(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.5) * globalConfig.tileSize
-                            );
-                            parameters.context.rotate((staticComp.rotation * Math.PI) / 180);
-                            parameters.context.fillRect(
-                                -size / 2,
-                                -globalConfig.tileSize / 2 - 0.1,
-                                size,
-                                globalConfig.tileSize + 0.2
-                            );
-                            parameters.context.restore();
-                            break;
-                        case enumConnectorType.turn:
-                            parameters.context.save();
-                            parameters.context.translate(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.5) * globalConfig.tileSize
-                            );
-                            parameters.context.rotate((staticComp.rotation * Math.PI) / 180);
-                            parameters.context.fillRect(
-                                -size / 2,
-                                -0.1 - size / 2,
-                                size,
-                                globalConfig.tileSize / 2 + size / 2 + 0.2
-                            );
-                            parameters.context.restore();
-
-                            parameters.context.save();
-                            parameters.context.translate(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.5) * globalConfig.tileSize
-                            );
-                            parameters.context.rotate(((staticComp.rotation + 90) * Math.PI) / 180);
-                            parameters.context.fillRect(
-                                -size / 2,
-                                -globalConfig.tileSize / 2 - 0.1,
-                                size,
-                                globalConfig.tileSize / 2 - size / 2 + 0.2
-                            );
-                            parameters.context.restore();
-                            break;
-                        case enumConnectorType.split:
-                            parameters.context.save();
-                            parameters.context.translate(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.5) * globalConfig.tileSize
-                            );
-                            parameters.context.rotate((staticComp.rotation * Math.PI) / 180);
-                            parameters.context.fillRect(
-                                -size / 2,
-                                size / 2 - 0.1,
-                                size,
-                                globalConfig.tileSize / 2 - size / 2 + 0.2
-                            );
-                            parameters.context.restore();
-
-                            parameters.context.save();
-                            parameters.context.translate(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.5) * globalConfig.tileSize
-                            );
-                            parameters.context.rotate(((staticComp.rotation + 90) * Math.PI) / 180);
-                            parameters.context.fillRect(
-                                -size / 2,
-                                -globalConfig.tileSize / 2 - 0.1,
-                                size,
-                                globalConfig.tileSize + 0.2
-                            );
-                            parameters.context.restore();
-                            break;
-                        case enumConnectorType.stub:
-                            parameters.context.save();
-                            parameters.context.translate(
-                                (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                                (staticComp.origin.y + 0.5) * globalConfig.tileSize
-                            );
-                            parameters.context.rotate((staticComp.rotation * Math.PI) / 180);
-                            parameters.context.fillRect(
-                                -size / 2,
-                                -globalConfig.tileSize / 2 - 0.1 + size * 1.5,
-                                size,
-                                globalConfig.tileSize - size * 1.5 + 0.2
-                            );
-                            parameters.context.restore();
-                            break;
-
-                        default:
-                            break;
+                        connectorComp.linkedNetwork &&
+                        connectorComp.linkedNetwork.currentFluid !== null &&
+                        connectorComp.pipeVolume >= 1
+                    ) {
+                        parameters.context.drawImage(
+                            canvas,
+                            staticComp.origin.x * globalConfig.tileSize,
+                            staticComp.origin.y * globalConfig.tileSize,
+                            globalConfig.tileSize,
+                            globalConfig.tileSize
+                        );
                     }
 
-                    parameters.context.globalAlpha = 1;
+                    staticComp.drawSpriteOnBoundsClipped(parameters, sprite);
                 }
             }
+        }
+    }
+
+    /**
+     *
+     * @param {HTMLCanvasElement} canvas
+     * @param {CanvasRenderingContext2D} context
+     * @param {number} w
+     * @param {number} h
+     * @param {number} dpi
+     */
+    overlayGenerator(spriteOverlay, connectorComp, staticComp, canvas, context, w, h, dpi) {
+        context.fillStyle = connectorComp.linkedNetwork.currentFluid.getBackgroundColorAsResource();
+        context.globalAlpha = connectorComp.pipeVolume / connectorComp.maxPipeVolume;
+
+        context.fillRect(0, 0, globalConfig.tileSize, globalConfig.tileSize);
+
+        context.globalCompositeOperation = "destination-in";
+
+        this.drawSpriteOnBoundsClipped(
+            staticComp,
+            new Vector(0, 0),
+            new DrawParameters({
+                context,
+                root: this.root,
+                visibleRect: new Rectangle(0, 0, globalConfig.tileSize, globalConfig.tileSize),
+                desiredAtlasScale: ORIGINAL_SPRITE_SCALE,
+                zoomLevel: 0,
+            }),
+            spriteOverlay
+        );
+    }
+
+    /**
+     * Draws a sprite over the whole space of the entity
+     * @param {import("shapez/game/components/static_map_entity").StaticMapEntityComponent} staticComponent
+     * @param {import("shapez/core/vector").Vector} pos Whether to drwa the entity at a different location
+     * @param {import("shapez/core/draw_utils").DrawParameters} parameters
+     * @param {import("shapez/core/draw_utils").AtlasSprite} sprite
+     * @param {number=} extrudePixels How many pixels to extrude the sprite
+     */
+    drawSpriteOnBoundsClipped(staticComponent, pos, parameters, sprite, extrudePixels = 0) {
+        let worldX = pos.x * globalConfig.tileSize;
+        let worldY = pos.y * globalConfig.tileSize;
+
+        const rotation = staticComponent.rotation;
+
+        if (rotation % 360 === 0) {
+            // Early out, is faster
+            sprite.drawCached(
+                parameters,
+                worldX - extrudePixels,
+                worldY - extrudePixels,
+                globalConfig.tileSize + 2 * extrudePixels,
+                globalConfig.tileSize + 2 * extrudePixels
+            );
+        } else {
+            const rotationCenterX = worldX + globalConfig.halfTileSize;
+            const rotationCenterY = worldY + globalConfig.halfTileSize;
+
+            parameters.context.translate(rotationCenterX, rotationCenterY);
+
+            parameters.context.rotate((rotation * Math.PI) / 180);
+            sprite.drawCached(
+                parameters,
+                -globalConfig.halfTileSize - extrudePixels,
+                -globalConfig.halfTileSize - extrudePixels,
+                globalConfig.tileSize + 2 * extrudePixels,
+                globalConfig.tileSize + 2 * extrudePixels,
+                false // no clipping possible here
+            );
+            parameters.context.rotate(-(rotation * Math.PI) / 180);
+            parameters.context.translate(-rotationCenterX, -rotationCenterY);
         }
     }
 }

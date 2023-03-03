@@ -12,7 +12,7 @@ export class BasicGeneratorSystem extends GameSystemWithFilter {
         super(root, [BasicGeneratorComponent]);
 
         this.pinSprite = Loader.getSprite("sprites/buildings/basic_generator_pin.png");
-        this.fullSprite = Loader.getSprite("sprites/buildings/basic_generator_3.png");
+        this.fullSprite = Loader.getSprite("sprites/buildings/basic_generator_overlay.png");
     }
 
     update() {}

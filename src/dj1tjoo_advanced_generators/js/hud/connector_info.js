@@ -135,6 +135,11 @@ export class HUDConnectorInfo extends BaseHUDPart {
             ctx.fillStyle = "#64666Ebb";
             ctx.strokeStyle = "#64666Ebb";
 
+            // No fluid so no info
+            if (typeof network["currentFluid"] !== "undefined" && network["currentFluid"] === null) {
+                return;
+            }
+
             const fluidText =
                 typeof network["currentFluid"] === "undefined"
                     ? ""
