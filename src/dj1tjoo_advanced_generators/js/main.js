@@ -46,6 +46,11 @@ class ModImpl extends Mod {
         // AdvancedEnergy.enableDebug();
         // Pipes.enableDebug();
 
+        // @TODO:
+        // - sprites
+        // - tunnel overlay
+        // - info images
+
         this.registerHuds();
         this.registerToolbar();
         this.registerBuildings();

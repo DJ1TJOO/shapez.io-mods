@@ -27,7 +27,7 @@ class ModImpl extends Mod {
         this.materialSingletons = {};
 
         Pipes.requireInstalled();
-        Pipes.enableDebug();
+        // Pipes.enableDebug();
 
         this.modInterface.registerItem(MaterialItem, itemData => this.materialSingletons[itemData]);
 
@@ -64,7 +64,7 @@ class ModImpl extends Mod {
     registerComponents() {
         registerComponentShared.bind(this)(EnergyPinRendererComponent);
         registerComponentShared.bind(this)(PipePinRendererComponent);
-        this.modInterface.registerComponent(PipeConnectorRendererComponent);
+        // this.modInterface.registerComponent(PipeConnectorRendererComponent);
     }
 
     registerSystems() {
@@ -80,12 +80,12 @@ class ModImpl extends Mod {
             before: "end",
             drawHooks: ["staticAfter"],
         });
-        this.modInterface.registerGameSystem({
-            id: "pipe_connector_renderer",
-            systemClass: PipeConnectorRendererSystem,
-            before: "end",
-            drawHooks: ["staticBefore"],
-        });
+        // this.modInterface.registerGameSystem({
+        //     id: "pipe_connector_renderer",
+        //     systemClass: PipeConnectorRendererSystem,
+        //     before: "end",
+        //     drawHooks: ["staticBefore"],
+        // });
     }
 
     registerBuildings() {
@@ -102,19 +102,19 @@ class ModImpl extends Mod {
             metaClass: MetaWaterSprayerBuilding,
         });
 
-        this.modInterface.registerNewBuilding({
-            metaClass: MetaPipeConnectorBuilding,
-        });
-        this.modInterface.registerNewBuilding({
-            metaClass: MetaPipeTunnelBuilding,
-        });
-        setupPump.apply(this);
-        this.modInterface.registerNewBuilding({
-            metaClass: MetaPumpBuilding,
-        });
+        // this.modInterface.registerNewBuilding({
+        //     metaClass: MetaPipeConnectorBuilding,
+        // });
+        // this.modInterface.registerNewBuilding({
+        //     metaClass: MetaPipeTunnelBuilding,
+        // });
+        // setupPump.apply(this);
+        // this.modInterface.registerNewBuilding({
+        //     metaClass: MetaPumpBuilding,
+        // });
 
         const buildings = [MetaBlastFurnaceBuilding, MetaHeaterBuilding, MetaWaterSprayerBuilding];
-        const temp = [MetaPipeTunnelBuilding, MetaPipeConnectorBuilding, MetaPumpBuilding];
+        const temp = []; //[MetaPipeTunnelBuilding, MetaPipeConnectorBuilding, MetaPumpBuilding];
 
         const register = [...buildings, ...temp].forEach(x =>
             ToolbarSwitcher.addNewBuildingToToolbar({

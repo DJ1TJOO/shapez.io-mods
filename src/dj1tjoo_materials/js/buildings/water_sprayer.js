@@ -143,8 +143,8 @@ export class MetaWaterSprayerBuilding extends ModMetaBuilding {
  * @this { import("../main").ModImpl }
  */
 export function setupWaterSprayer() {
-    enumItemProcessorTypes[processLabelWaterSprayer] = "heater";
-    enumItemProcessorRequirements[processLabelWaterSprayer] = "heater";
+    enumItemProcessorTypes[processLabelWaterSprayer] = processLabelWaterSprayer;
+    enumItemProcessorRequirements[processLabelWaterSprayer] = processLabelWaterSprayer;
 
     const waterSprayerRecipes = [
         {
