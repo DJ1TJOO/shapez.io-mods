@@ -11,7 +11,6 @@ export class BasicGeneratorSystem extends GameSystemWithFilter {
     constructor(root) {
         super(root, [BasicGeneratorComponent]);
 
-        this.pinSprite = Loader.getSprite("sprites/buildings/basic_generator_pin.png");
         this.fullSprite = Loader.getSprite("sprites/buildings/basic_generator_overlay.png");
     }
 
@@ -39,23 +38,6 @@ export class BasicGeneratorSystem extends GameSystemWithFilter {
             const staticComp = entity.components.StaticMapEntity;
 
             const connectedSlots = pinComp.slots.filter(x => x.type === "ejector");
-
-            if (connectedSlots.some(x => x.linkedNetwork)) {
-                entity.components.StaticMapEntity.drawSpriteOnBoundsClipped(parameters, this.pinSprite, 2);
-                parameters.context.fillStyle = "#04FC84";
-                parameters.context.globalAlpha =
-                    connectedSlots[0].linkedNetwork.currentVolume / connectedSlots[0].linkedNetwork.maxVolume;
-
-                parameters.context.save();
-                parameters.context.translate(
-                    (staticComp.origin.x + 0.5) * globalConfig.tileSize,
-                    (staticComp.origin.y + 0.5) * globalConfig.tileSize
-                );
-                parameters.context.rotate((staticComp.rotation * Math.PI) / 180);
-                parameters.context.fillRect(-globalConfig.tileSize / 2, -10.5 / 2, 6.5, 10.5);
-                parameters.context.restore();
-                parameters.context.globalAlpha = 1;
-            }
 
             const processorComp = entity.components.ItemProcessor;
             if (!processorComp || processorComp.ongoingCharges.length < 1) continue;

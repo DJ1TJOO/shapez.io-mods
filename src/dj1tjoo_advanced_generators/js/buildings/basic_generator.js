@@ -26,6 +26,7 @@ import { config } from "../config";
 import { Pipes } from "@dj1tjoo/shapez-pipes";
 import { StoneMagma } from "../../../shared/fluids/magma";
 import { rewards } from "../reward";
+import { getComponentShared } from "../../../shared/getShared";
 
 const overlayMatrix = generateMatrixRotations([1, 1, 1, 1, 0, 1, 1, 1, 1]);
 
@@ -91,6 +92,9 @@ export class MetaBasicGeneratorBuilding extends ModMetaBuilding {
      */
     updateVariants(entity, rotationVariant, variant) {
         const localConfig = config().basic_generator[variant];
+
+        entity.addComponent(getComponentShared("EnergyPinRenderer"));
+        entity.addComponent(getComponentShared("PipePinRenderer"));
 
         entity.components["EnergyPin"].setSlots([
             {

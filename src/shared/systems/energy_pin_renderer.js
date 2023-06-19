@@ -9,7 +9,7 @@ export class EnergyPinRendererSystem extends GameSystemWithFilter {
         super(root, [EnergyPinRendererComponent]);
 
         this.pinSprite = Loader.getSprite("sprites/energy/pin.png");
-        this.pinConnectedSprite = Loader.getSprite("sprites/energy/pin_connected.png");
+        this.pinOverlaySprite = Loader.getSprite("sprites/energy/pin_overlay.png");
     }
 
     update() {}
@@ -37,39 +37,28 @@ export class EnergyPinRendererSystem extends GameSystemWithFilter {
                 const slot = pinComp.slots[i];
                 const pos = staticComp.localTileToWorld(slot.pos);
 
-                if (!slot.linkedNetwork) {
-                    this.drawSpriteOnBoundsClipped(
-                        staticComp,
-                        pos,
-                        slot.direction,
-                        parameters,
-                        this.pinSprite,
-                        2
-                    );
-                } else {
-                    this.drawSpriteOnBoundsClipped(
-                        staticComp,
-                        pos,
-                        slot.direction,
-                        parameters,
-                        this.pinConnectedSprite,
-                        2
-                    );
+                this.drawSpriteOnBoundsClipped(
+                    staticComp,
+                    pos,
+                    slot.direction,
+                    parameters,
+                    this.pinSprite,
+                    2
+                );
 
-                    parameters.context.save();
-                    parameters.context.translate(
-                        (pos.x + 0.5) * globalConfig.tileSize,
-                        (pos.y + 0.5) * globalConfig.tileSize
-                    );
-                    const rotation = staticComp.rotation + enumDirectionToAngle[slot.direction];
-                    parameters.context.rotate((rotation * Math.PI) / 180);
-
-                    parameters.context.fillStyle = "#04FC84";
+                if (slot.linkedNetwork) {
                     parameters.context.globalAlpha =
                         slot.linkedNetwork.currentVolume / slot.linkedNetwork.maxVolume;
-                    parameters.context.fillRect(-10.5 / 2, -globalConfig.tileSize / 2, 10.5, 6.5);
 
-                    parameters.context.restore();
+                    this.drawSpriteOnBoundsClipped(
+                        staticComp,
+                        pos,
+                        slot.direction,
+                        parameters,
+                        this.pinOverlaySprite,
+                        2
+                    );
+
                     parameters.context.globalAlpha = 1;
                 }
             }
